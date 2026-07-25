@@ -19,4 +19,11 @@ enum TestHooks {
     static var usesInMemoryStore: Bool {
         ProcessInfo.processInfo.environment["RAILANGYER_IN_MEMORY"] == "1"
     }
+
+    /// 起動時に進行記録を消す（例: `RAILANGYER_RESET=1`）。
+    /// 中断・復帰のテストでは、**保存を効かせたまま**初期状態から始める必要があるため、
+    /// メモリ上の起動ではなくこちらを使う
+    static var resetsProgressOnLaunch: Bool {
+        ProcessInfo.processInfo.environment["RAILANGYER_RESET"] == "1"
+    }
 }

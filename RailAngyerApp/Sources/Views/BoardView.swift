@@ -5,6 +5,7 @@ import RailAngyerCore
 struct BoardView: View {
     @Bindable var store: GameSessionStore
     @Binding var showingSettings: Bool
+    @State private var selectedStation: Int?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -12,6 +13,9 @@ struct BoardView: View {
             Divider()
             route
             footer
+        }
+        .sheet(item: $selectedStation) { order in
+            StationDetailView(store: store, order: order)
         }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
@@ -52,13 +56,19 @@ struct BoardView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(store.stationsInOrder) { station in
-                    StationRow(station: station,
-                               isCurrent: station.orderNo == store.currentOrder,
-                               isVisited: store.visitedOrders.contains(station.orderNo),
-                               isLanded: store.landedOrders.contains(station.orderNo),
-                               isGoal: station.orderNo == store.engine?.goalOrder,
-                               isStart: station.orderNo == store.engine?.startOrder,
-                               missionCount: store.missionCandidates(at: station.orderNo).count)
+                    Button {
+                        selectedStation = station.orderNo
+                    } label: {
+                        StationRow(station: station,
+                                   isCurrent: station.orderNo == store.currentOrder,
+                                   isVisited: store.visitedOrders.contains(station.orderNo),
+                                   isLanded: store.landedOrders.contains(station.orderNo),
+                                   isGoal: station.orderNo == store.engine?.goalOrder,
+                                   isStart: station.orderNo == store.engine?.startOrder,
+                                   missionCount: store.missionCandidates(at: station.orderNo).count,
+                                   photoCount: store.photoFileNames(at: station.orderNo).count)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.vertical, 8)
@@ -102,6 +112,7 @@ private struct StationRow: View {
     let isGoal: Bool
     let isStart: Bool
     let missionCount: Int
+    let photoCount: Int
 
     var body: some View {
         HStack(spacing: 12) {
@@ -129,6 +140,11 @@ private struct StationRow: View {
                     .font(.caption2).foregroundStyle(Theme.mission)
             }
             Spacer()
+            if photoCount > 0 {
+                Label("\(photoCount)", systemImage: "photo")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
             if missionCount > 0 {
                 Text("\(missionCount)")
                     .font(.caption2.monospacedDigit())
@@ -152,6 +168,11 @@ private struct StationRow: View {
             .background(Theme.line.opacity(0.15), in: Capsule())
             .foregroundStyle(Theme.line)
     }
+}
+
+/// `sheet(item:)` に使うため
+extension Int: @retroactive Identifiable {
+    public var id: Int { self }
 }
 
 /// ロゴから取った配色（assets/logo.png）

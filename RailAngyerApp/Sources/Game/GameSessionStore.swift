@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 import RailAngyerCore
 
 /// ゲームの進行を担う。SwiftData への読み書きと、局面の導出を引き受ける。
@@ -17,6 +18,9 @@ final class GameSessionStore {
     var lastError: String?
     /// 着地駅の告知（SC-06）を出しているか
     var showingAnnouncement = false
+    /// 通り道の駅に着いたところ。写真を撮る間を置くための一時状態。
+    /// 保存はしない（落ちて失われても、次の駅へ向かう画面に戻るだけで害がない）
+    private(set) var pendingPassingStation: Int?
 
     init(context: ModelContext) {
         self.context = context
@@ -31,6 +35,7 @@ final class GameSessionStore {
             let room = try MasterSeeder.seedLocalRoomIfNeeded(context, course: course)
             if sampleMissions { try MasterSeeder.seedSampleMissionsIfNeeded(context, room: room) }
             self.room = room
+            if TestHooks.resetsProgressOnLaunch { resetProgress() }
         } catch {
             lastError = String(describing: error)
         }
@@ -81,6 +86,9 @@ final class GameSessionStore {
         guard let turn = activeTurn else {
             return engine.isCleared(currentOrder) ? .cleared : .waiting(current: currentOrder)
         }
+        // 通り道の駅に着いた直後は、写真を撮る間を置く
+        if let pending = pendingPassingStation { return .arrivedPassing(station: pending) }
+
         let landing = turn.landingStation?.orderNo ?? currentOrder
 
         // 出目による移動中
@@ -120,6 +128,7 @@ final class GameSessionStore {
     func roll(dice: Int) {
         guard let room, let engine, activeTurn == nil else { return }
         do {
+            pendingPassingStation = nil
             try recordStartVisitIfNeeded(room)
 
             let landing = engine.landingOrder(from: currentOrder, dice: dice)
@@ -151,13 +160,18 @@ final class GameSessionStore {
                 guard expected == nil || expected == next else { return }
                 let isLanding = next == turn.landingStation?.orderNo
                 try record(visit: isLanding ? .landing : .passing, at: next, turn: turn)
-                if isLanding { turn.arrivedAt = Date() }
+                if isLanding {
+                    turn.arrivedAt = Date()
+                } else {
+                    pendingPassingStation = next   // 写真を撮る間を置く
+                }
                 try context.save()
 
             case .effectWalking(let next, let destination):
                 guard expected == nil || expected == next else { return }
                 let isArrival = next == destination
                 try record(visit: isArrival ? .effectArrival : .effectPassing, at: next, turn: turn)
+                if !isArrival { pendingPassingStation = next }
                 try context.save()
                 if isArrival { try complete(turn, at: destination) }
 
@@ -167,6 +181,11 @@ final class GameSessionStore {
         } catch {
             lastError = String(describing: error)
         }
+    }
+
+    /// 通り道の駅での一拍を終えて、次の駅へ向かう
+    func continueWalking() {
+        pendingPassingStation = nil
     }
 
     /// 着地駅のミッション候補（R-07 / R-14 既出は除外）
@@ -214,11 +233,55 @@ final class GameSessionStore {
         }
     }
 
-    /// 記録をリセットして最初からやり直す（SC-20）
+    // MARK: - 写真
+
+    /// いま写真を紐づけるべき訪問。
+    /// 進行中ターンの最後の訪問（＝いる駅）に付ける
+    var currentVisit: Visit? {
+        guard let turn = activeTurn else { return nil }
+        return turn.visits.max { $0.arrivedAt < $1.arrivedAt }
+    }
+
+    /// 撮った写真を保存し、いる駅の訪問に紐づける（F-05）
+    func attachPhoto(_ image: UIImage) {
+        guard let visit = currentVisit, let room else { return }
+        do {
+            let fileName = try PhotoStore.save(image)
+            let photo = Photo(localFileName: fileName)
+            photo.visit = visit
+            photo.member = room.members.first { $0.isMe } ?? room.members.first
+            context.insert(photo)
+            try context.save()
+        } catch {
+            lastError = String(describing: error)
+        }
+    }
+
+    /// ある駅で撮った写真のファイル名（新しい順）
+    func photoFileNames(at order: Int) -> [String] {
+        (room?.visits ?? [])
+            .filter { $0.station?.orderNo == order }
+            .flatMap(\.photos)
+            .sorted { $0.takenAt > $1.takenAt }
+            .map(\.localFileName)
+    }
+
+    /// ある駅への訪問記録（古い順）。再訪していれば複数件
+    func visits(at order: Int) -> [Visit] {
+        (room?.visits ?? [])
+            .filter { $0.station?.orderNo == order }
+            .sorted { $0.arrivedAt < $1.arrivedAt }
+    }
+
+    /// 記録をリセットして最初からやり直す（SC-20）。
+    /// 写真の実体もここで消す（DBの行だけ消すとファイルが孤児になる）
     func resetProgress() {
         guard let room else { return }
         do {
-            for visit in room.visits { context.delete(visit) }   // Photo は cascade
+            for visit in room.visits {
+                for photo in visit.photos { PhotoStore.delete(photo.localFileName) }
+                context.delete(visit)          // Photo の行は cascade で消える
+            }
             for turn in room.turns { context.delete(turn) }
             try context.save()
         } catch {
@@ -277,6 +340,7 @@ final class GameSessionStore {
     private func complete(_ turn: Turn, at order: Int) throws {
         turn.endStation = station(order)
         turn.completedAt = Date()
+        pendingPassingStation = nil
         try context.save()
     }
 

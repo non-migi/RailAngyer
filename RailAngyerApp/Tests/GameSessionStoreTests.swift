@@ -22,15 +22,20 @@ struct GameSessionStoreTests {
         return store
     }
 
-    /// 着地するまで到着ボタンを押し続ける
-    private func walkToLanding(_ store: GameSessionStore) {
-        var guardCount = 0
-        while case .walking = store.phase {
-            store.arriveAtNextStop()
-            guardCount += 1
-            if guardCount > 20 { break }
+    /// 移動が止まるまで進める。
+    /// 通り道の駅では写真を撮る一拍が入るため、そこも送る
+    private func walk(_ store: GameSessionStore, limit: Int = 40) {
+        for _ in 0..<limit {
+            switch store.phase {
+            case .walking, .effectWalking: store.arriveAtNextStop()
+            case .arrivedPassing: store.continueWalking()
+            default: return
+            }
         }
     }
+
+    /// 着地するまで進める
+    private func walkToLanding(_ store: GameSessionStore) { walk(store) }
 
     // MARK: - 基本
 
@@ -156,8 +161,7 @@ struct GameSessionStoreTests {
         }
         #expect(destination == 2)
 
-        store.arriveAtNextStop()   // 3
-        store.arriveAtNextStop()   // 2 に到達 → ターン完了
+        walk(store)   // 3 を通り、2 に到達 → ターン完了
 
         #expect(store.activeTurn == nil)
         #expect(store.currentOrder == 2, "コマが戻っている")
@@ -193,9 +197,40 @@ struct GameSessionStoreTests {
         // 2 から5駅戻ろうとしてもスタート1で止まる。移動は1駅ぶん
         if case .effectWalking(_, let destination) = store.phase {
             #expect(destination == 1)
-            store.arriveAtNextStop()
+            walk(store)
         }
         #expect(store.currentOrder == 1)
+    }
+
+    // MARK: - 通り道での一拍
+
+    @Test("通り道の駅に着いたら、写真を撮る間が入る（SC-08）")
+    func passingStationPauses() throws {
+        let store = try makeStore(diceMax: 3)
+        store.roll(dice: 3)          // 1 → 4。通り道は 2, 3
+
+        store.arriveAtNextStop()     // 2 に到着
+        #expect(store.phase == .arrivedPassing(station: 2),
+                "通り過ぎずに一度止まる")
+        #expect(store.currentVisit?.station?.orderNo == 2,
+                "写真はこの駅に紐づく")
+
+        store.continueWalking()
+        guard case .walking(let next, _) = store.phase else {
+            Issue.record("次の駅へ向かっていない: \(store.phase)")
+            return
+        }
+        #expect(next == 3)
+    }
+
+    @Test("一拍の最中に到着通知が来ても先へ進まない")
+    func arrivalIgnoredWhilePaused() throws {
+        let store = try makeStore(diceMax: 3)
+        store.roll(dice: 3)
+        store.arriveAtNextStop()          // 2 に到着して一拍
+        store.arriveAtNextStop(expected: 3)   // 次の駅の通知が先に来ても無視
+        #expect(store.phase == .arrivedPassing(station: 2))
+        #expect(store.visitedOrders == [1, 2])
     }
 
     // MARK: - クリアとリセット

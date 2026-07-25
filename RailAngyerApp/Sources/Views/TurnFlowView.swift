@@ -6,6 +6,7 @@ import RailAngyerCore
 struct TurnFlowView: View {
     @Bindable var store: GameSessionStore
     let location: LocationService
+    @State private var showingCamera = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -15,6 +16,10 @@ struct TurnFlowView: View {
         }
         .padding()
         .background(Color(.systemGroupedBackground))
+        .sheet(isPresented: $showingCamera) {
+            CameraPicker { store.attachPhoto($0) }
+                .ignoresSafeArea()
+        }
     }
 
     // MARK: - 本文
@@ -27,6 +32,8 @@ struct TurnFlowView: View {
             switch store.phase {
             case .walking(let next, let remaining):
                 walking(next: next, remaining: remaining)
+            case .arrivedPassing(let station):
+                arrivedPassing(station)
             case .landed(let station):
                 landed(station)
             case .mission(let station):
@@ -135,6 +142,18 @@ struct TurnFlowView: View {
         }
     }
 
+    /// SC-08 通り道の駅に到着。ミッションは引かないが、写真は撮れる
+    private func arrivedPassing(_ station: Int) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("\(store.stationName(station)) に到着")
+                .font(.largeTitle.weight(.bold))
+            Text("通り道の駅です。ミッションはありません")
+                .font(.subheadline).foregroundStyle(.secondary)
+            photoSection
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     /// SC-08 着地。ミッションを引く前
     private func landed(_ station: Int) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -146,8 +165,30 @@ struct TurnFlowView: View {
                  : "この駅にミッションはありません")
                 .font(.subheadline)
                 .foregroundStyle(count > 0 ? Theme.mission : .secondary)
+            photoSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 撮影と、この訪問で撮った写真の一覧（F-05）。
+    /// 写真は任意なので、主ボタンにはせず控えめに置く（R-19）
+    @ViewBuilder
+    private var photoSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                showingCamera = true
+            } label: {
+                Label(CameraPicker.isCameraAvailable ? "写真を撮る" : "写真を選ぶ",
+                      systemImage: "camera")
+                    .font(.subheadline)
+            }
+            .buttonStyle(.bordered)
+
+            PhotoStrip(fileNames: store.currentVisit?.photos
+                .sorted { $0.takenAt > $1.takenAt }
+                .map(\.localFileName) ?? [])
+        }
+        .padding(.top, 4)
     }
 
     /// SC-09 ミッションの実行
@@ -171,6 +212,7 @@ struct TurnFlowView: View {
             } else {
                 Text("ミッションはありません").foregroundStyle(.secondary)
             }
+            photoSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -203,6 +245,8 @@ struct TurnFlowView: View {
             switch store.phase {
             case .walking(let next, _):
                 arrivalButton(next)
+            case .arrivedPassing:
+                primary("次の駅へ") { store.continueWalking() }
             case .landed(let station):
                 primary(store.missionCandidates(at: station).isEmpty
                         ? "次へ" : "ミッションを引く") { store.drawMission() }

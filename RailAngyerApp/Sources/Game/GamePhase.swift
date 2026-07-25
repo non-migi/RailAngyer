@@ -9,6 +9,8 @@ enum GamePhase: Equatable {
     case waiting(current: Int)
     /// ST-3 移動中。`next` へ向かっている。`remaining` は着地までの残り駅数
     case walking(next: Int, remaining: Int)
+    /// 通り道の駅に着いたところ。写真を撮る間を置いてから次へ進む（SC-08）
+    case arrivedPassing(station: Int)
     /// ST-4 着地。ミッションの抽選前
     case landed(station: Int)
     /// ST-5 ミッション実行中
@@ -22,7 +24,7 @@ enum GamePhase: Equatable {
     var isInTurn: Bool {
         switch self {
         case .notReady, .waiting, .cleared: false
-        case .walking, .landed, .mission, .effectWalking: true
+        case .walking, .arrivedPassing, .landed, .mission, .effectWalking: true
         }
     }
 }
