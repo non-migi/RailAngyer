@@ -105,6 +105,16 @@ struct GameEngineTests {
 
     // MARK: - 区間
 
+    @Test("範囲外の最大出目は丸める（保存データから作るため落とさない）")
+    func diceMaxIsClamped() {
+        #expect(GameEngine(startOrder: 1, goalOrder: 16, diceMax: 0).diceMax == 1)
+        #expect(GameEngine(startOrder: 1, goalOrder: 16, diceMax: 99).diceMax == 9)
+        #expect(GameEngine(startOrder: 1, goalOrder: 16, diceMax: -5).diceMax == 1)
+        // 丸めたあとも出目は必ずその範囲に収まる
+        let engine = GameEngine(startOrder: 1, goalOrder: 16, diceMax: 99)
+        for _ in 0..<100 { #expect((1...9).contains(engine.roll())) }
+    }
+
     @Test("区間の駅数と並び")
     func rangeProperties() {
         #expect(full.stationCount == 16)

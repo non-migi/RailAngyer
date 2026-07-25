@@ -8,7 +8,7 @@ import RailAngyerCore
 /// （フェーズ1の検証項目「駅座標の精度」）。一覧では1駅ずつしか見られない。
 struct BoardMapView: View {
     @Bindable var store: GameSessionStore
-    @Binding var selectedStation: Int?
+    @Binding var selectedStation: StationSelection?
 
     @State private var camera: MapCameraPosition = .automatic
 
@@ -25,15 +25,15 @@ struct BoardMapView: View {
             }
 
             // 歩いた区間の線（濃い）。飛び飛びになることもあるので区間ごとに引く
-            ForEach(walkedSegments, id: \.first!.latitude) { segment in
-                MapPolyline(coordinates: segment)
+            ForEach(walkedSegments) { segment in
+                MapPolyline(coordinates: segment.points)
                     .stroke(Theme.line, style: lineStyle)
             }
 
             ForEach(stations) { station in
                 Annotation(station.name, coordinate: coordinate(station)) {
                     marker(for: station)
-                        .onTapGesture { selectedStation = station.orderNo }
+                        .onTapGesture { selectedStation = StationSelection(id: station.orderNo) }
                 }
             }
         }
@@ -76,20 +76,34 @@ struct BoardMapView: View {
 
     private var coordinates: [CLLocationCoordinate2D] { stations.map(coordinate) }
 
+    /// 連続して訪問済みの区間
+    struct WalkedSegment: Identifiable {
+        let id: Int              // 区間の先頭の駅番号
+        let points: [CLLocationCoordinate2D]
+    }
+
     /// 訪問済みの駅が隣り合っている区間だけを濃く描く。
     /// 戻る効果やジャンプで飛び飛びに訪れることがあるため、単純な前方一致では表せない
-    private var walkedSegments: [[CLLocationCoordinate2D]] {
-        var segments: [[CLLocationCoordinate2D]] = []
-        var current: [CLLocationCoordinate2D] = []
+    private var walkedSegments: [WalkedSegment] {
+        var segments: [WalkedSegment] = []
+        var current: [Station] = []
+
+        func flush() {
+            if current.count >= 2, let head = current.first {
+                segments.append(WalkedSegment(id: head.orderNo,
+                                              points: current.map(coordinate)))
+            }
+            current = []
+        }
+
         for station in stations {
             if store.visitedOrders.contains(station.orderNo) {
-                current.append(coordinate(station))
+                current.append(station)
             } else {
-                if current.count >= 2 { segments.append(current) }
-                current = []
+                flush()
             }
         }
-        if current.count >= 2 { segments.append(current) }
+        flush()
         return segments
     }
 

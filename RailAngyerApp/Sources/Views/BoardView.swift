@@ -5,7 +5,7 @@ import RailAngyerCore
 struct BoardView: View {
     @Bindable var store: GameSessionStore
     @Binding var showingSettings: Bool
-    @State private var selectedStation: Int?
+    @State private var selectedStation: StationSelection?
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -20,8 +20,8 @@ struct BoardView: View {
             }
             footer
         }
-        .sheet(item: $selectedStation) { order in
-            StationDetailView(store: store, order: order)
+        .sheet(item: $selectedStation) { selection in
+            StationDetailView(store: store, order: selection.id)
         }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
@@ -71,7 +71,7 @@ struct BoardView: View {
             LazyVStack(spacing: 0) {
                 ForEach(store.stationsInOrder) { station in
                     Button {
-                        selectedStation = station.orderNo
+                        selectedStation = StationSelection(id: station.orderNo)
                     } label: {
                         StationRow(station: station,
                                    isCurrent: station.orderNo == store.currentOrder,
@@ -184,14 +184,8 @@ private struct StationRow: View {
     }
 }
 
-/// `sheet(item:)` に使うため
-extension Int: @retroactive Identifiable {
-    public var id: Int { self }
-}
-
-/// ロゴから取った配色（assets/logo.png）
-enum Theme {
-    static let line = Color(red: 0.16, green: 0.48, blue: 0.25)     // 濃い緑
-    static let ink = Color(red: 0.09, green: 0.15, blue: 0.25)      // 濃紺
-    static let mission = Color(red: 0.66, green: 0.33, blue: 0.11)  // 焦茶
+/// `sheet(item:)` に渡すための包み。
+/// `Int` に直接 `Identifiable` を後付けすると、他のライブラリと衝突しうるため避ける
+struct StationSelection: Identifiable, Equatable {
+    let id: Int
 }

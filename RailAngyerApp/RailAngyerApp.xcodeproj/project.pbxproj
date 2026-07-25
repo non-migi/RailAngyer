@@ -28,6 +28,7 @@
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
 		C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */; };
 		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
+		E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156CFFC9852BBD282BE20DE /* Theme.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
@@ -53,6 +54,7 @@
 /* Begin PBXFileReference section */
 		04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrivalUITests.swift; sourceTree = "<group>"; };
 		114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1156CFFC9852BBD282BE20DE /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		17E8C15DCE6423AA6C330097 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_slow_asabu.gpx; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 				CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */,
 				3C804299584BFF82C68B12EA /* StationDetailView.swift */,
 				3904705B0EEBD442E11E0313 /* StationMapView.swift */,
+				1156CFFC9852BBD282BE20DE /* Theme.swift */,
 				3A20C935B2EE85D434D111CF /* TurnFlowView.swift */,
 			);
 			path = Views;
@@ -361,6 +364,7 @@
 				E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */,
 				7F846552B332E52C174977BA /* StationMapView.swift in Sources */,
 				3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */,
+				E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */,
 				9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

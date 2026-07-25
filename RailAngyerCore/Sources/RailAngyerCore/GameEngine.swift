@@ -16,12 +16,13 @@ public struct GameEngine: Sendable, Equatable {
     /// サイコロの最大出目（1〜9）
     public let diceMax: Int
 
+    /// - Note: `diceMax` は 1〜9 に丸める。
+    ///   保存されたデータから作るため、範囲外の値で落ちるより丸めて動き続けるほうがよい。
     public init(startOrder: Int, goalOrder: Int, diceMax: Int = 6) {
         precondition(startOrder != goalOrder, "スタートとゴールが同じ駅では区間にならない")
-        precondition((1...9).contains(diceMax), "最大出目は 1〜9")
         self.startOrder = startOrder
         self.goalOrder = goalOrder
-        self.diceMax = diceMax
+        self.diceMax = Swift.min(Swift.max(diceMax, 1), 9)
     }
 
     // MARK: - 区間
