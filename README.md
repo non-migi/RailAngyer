@@ -23,8 +23,10 @@
 | [files/09_アプリ用ユーザー.sql](files/09_アプリ用ユーザー.sql) | アプリ／API用の最小権限ユーザーとロール |
 | [files/10_アプリ設計.md](files/10_アプリ設計.md) | SwiftDataモデル・状態管理・位置判定・GPXテスト手順 |
 | [files/11_API設計.md](files/11_API設計.md) | フェーズ2のAPI。認証・エンドポイント・冪等性・Blob |
+| [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（**未適用**） |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
+| [RailAngyerApi/](RailAngyerApi/) | ASP.NET Core の API（フェーズ2。`dotnet test` で検証） |
 | [tools/](tools/) | シミュレータ用のGPXルート（南北線の歩行を再現） |
 
 `.html` はブラウザで開いてください。
@@ -36,3 +38,14 @@
 - Azure SQL Database 作成済み（無料オファー / Japan East / サーバーレス）
 - スキーマ適用済み（10テーブル、南北線16駅を投入）
 - アプリ用の最小権限ユーザー作成済み
+- iOSアプリ：フェーズ1の実装は完了。**実地テスト待ち**
+- API：参加とトークン認証まで実装。Azureへのデプロイは未着手
+
+## テスト
+
+```bash
+swift test --package-path RailAngyerCore     # ルール計算 35件
+xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 27件 + UI 3件
+dotnet test RailAngyerApi.Tests               # API 15件
+```
