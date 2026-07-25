@@ -22,6 +22,9 @@
 | [files/08_画面仕様.html](files/08_画面仕様.html) | 全21画面の表示項目・操作・遷移・実装範囲 |
 | [files/09_アプリ用ユーザー.sql](files/09_アプリ用ユーザー.sql) | アプリ／API用の最小権限ユーザーとロール |
 | [files/10_アプリ設計.md](files/10_アプリ設計.md) | SwiftDataモデル・状態管理・位置判定・GPXテスト手順 |
+| [files/11_API設計.md](files/11_API設計.md) | フェーズ2のAPI。認証・エンドポイント・冪等性・Blob |
+| [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
+| [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
 | [tools/](tools/) | シミュレータ用のGPXルート（南北線の歩行を再現） |
 
 `.html` はブラウザで開いてください。
