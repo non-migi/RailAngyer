@@ -18,6 +18,7 @@
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
 		61D5521E731DFC7E0520012D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155472042CCA7F23234F9556 /* LocationService.swift */; };
+		7F846552B332E52C174977BA /* StationMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3904705B0EEBD442E11E0313 /* StationMapView.swift */; };
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
@@ -45,7 +46,10 @@
 		04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrivalUITests.swift; sourceTree = "<group>"; };
 		114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_slow_asabu.gpx; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
+		22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_full.gpx; sourceTree = "<group>"; };
+		3904705B0EEBD442E11E0313 /* StationMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationMapView.swift; sourceTree = "<group>"; };
 		3A20C935B2EE85D434D111CF /* TurnFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnFlowView.swift; sourceTree = "<group>"; };
 		52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RailAngyerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
@@ -57,6 +61,7 @@
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
+		D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_sapporo_nakanoshima.gpx; sourceTree = "<group>"; };
 		DC4114A3D977E18BF4C5CD2F /* RailAngyerAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA6A195889CC18D3B9AEE608 /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStoreTests.swift; sourceTree = "<group>"; };
@@ -90,6 +95,15 @@
 				83B5B044FA4688B323E2DFAA /* RailAngyerCore */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		4C992AE3B0F92B4AC09F8D7D /* TekuTekuRailway */ = {
+			isa = PBXGroup;
+			children = (
+				EBB47FF49764298D16886708 /* tools */,
+			);
+			name = TekuTekuRailway;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		5C621E7524853A340511638A /* Game */ = {
@@ -136,6 +150,7 @@
 			children = (
 				32B8061008BEF13180574D80 /* Packages */,
 				756A44AD1015702C57180D09 /* Sources */,
+				4C992AE3B0F92B4AC09F8D7D /* TekuTekuRailway */,
 				DCDBB0DF0B6A5C4C1B1F264A /* Tests */,
 				9FEF600C016C3AD118D85AB4 /* UITests */,
 				053D5625118FCD9F80A50A25 /* Products */,
@@ -156,6 +171,7 @@
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				A23AB8C2D3BC3C1C41272684 /* RootView.swift */,
 				CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */,
+				3904705B0EEBD442E11E0313 /* StationMapView.swift */,
 				3A20C935B2EE85D434D111CF /* TurnFlowView.swift */,
 			);
 			path = Views;
@@ -168,6 +184,16 @@
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
 			);
 			path = Tests;
+			sourceTree = "<group>";
+		};
+		EBB47FF49764298D16886708 /* tools */ = {
+			isa = PBXGroup;
+			children = (
+				22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */,
+				D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */,
+				17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */,
+			);
+			path = tools;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -301,6 +327,7 @@
 				E686C96515C035CA38FB915A /* Models.swift in Sources */,
 				00F134CDB673ECC381CA12DB /* RootView.swift in Sources */,
 				0FB2755F66F5820C34CE4DCB /* RuleSettingsView.swift in Sources */,
+				7F846552B332E52C174977BA /* StationMapView.swift in Sources */,
 				3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */,
 				9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */,
 			);

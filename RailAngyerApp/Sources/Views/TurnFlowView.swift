@@ -8,9 +8,9 @@ struct TurnFlowView: View {
     let location: LocationService
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             content
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             action
         }
         .padding()
@@ -71,17 +71,38 @@ struct TurnFlowView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// SC-07 ナビ相当
+    /// SC-07 ナビ
     private func walking(next: Int, remaining: Int) -> some View {
         let total = store.activeTurn?.diceValue ?? 1
-        return VStack(alignment: .leading, spacing: 16) {
+        return VStack(alignment: .leading, spacing: 12) {
             Text("次の駅へ　\(total - remaining + 1) / \(total)")
                 .font(.footnote).foregroundStyle(.secondary)
             Text(store.stationName(next))
-                .font(.largeTitle.weight(.bold))
+                .font(.title.weight(.bold))
             locationStatus
+            map
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 地図と、純正マップへの受け渡し。
+    /// 経路案内は自前で作らず、マップアプリに任せる
+    @ViewBuilder
+    private var map: some View {
+        if let target = location.target {
+            StationMapView(target: target,
+                           userLocation: location.lastLocation,
+                           radius: location.rule.radius)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(maxHeight: .infinity)
+
+            Button {
+                target.openInMaps()
+            } label: {
+                Label("マップで経路を見る", systemImage: "map")
+                    .font(.subheadline)
+            }
+        }
     }
 
     /// 測位の状態。判定の基準を隠さずに見せる
@@ -163,9 +184,11 @@ struct TurnFlowView: View {
             }
             Divider()
             Text("次の駅へ").font(.footnote).foregroundStyle(.secondary)
-            Text(store.stationName(next)).font(.largeTitle.weight(.bold))
+            Text(store.stationName(next)).font(.title.weight(.bold))
             Text("\(store.stationName(destination)) まで歩きます。ここではミッションを引きません")
                 .font(.footnote).foregroundStyle(.secondary)
+            locationStatus
+            map
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

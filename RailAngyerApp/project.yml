@@ -19,6 +19,12 @@ packages:
   RailAngyerCore:
     path: ../RailAngyerCore
 
+# シミュレータの位置シミュレーション用。
+# ターゲットには含めず、プロジェクトに置くだけで
+# Xcode の Debug → Simulate Location から選べるようになる
+fileGroups:
+  - ../tools
+
 targets:
 
   RailAngyerApp:
