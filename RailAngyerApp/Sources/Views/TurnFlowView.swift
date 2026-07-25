@@ -5,6 +5,7 @@ import RailAngyerCore
 /// タブや盤面を隠し、次にやることを画面下端に1つだけ置く（CM-01 / CM-02）。
 struct TurnFlowView: View {
     @Bindable var store: GameSessionStore
+    let location: LocationService
 
     var body: some View {
         VStack(spacing: 0) {
@@ -70,7 +71,7 @@ struct TurnFlowView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// SC-07 ナビ相当。位置情報を入れるまでは手動で到着させる（E-01）
+    /// SC-07 ナビ相当
     private func walking(next: Int, remaining: Int) -> some View {
         let total = store.activeTurn?.diceValue ?? 1
         return VStack(alignment: .leading, spacing: 16) {
@@ -78,12 +79,39 @@ struct TurnFlowView: View {
                 .font(.footnote).foregroundStyle(.secondary)
             Text(store.stationName(next))
                 .font(.largeTitle.weight(.bold))
-            Label("半径150mに入ると到着になります", systemImage: "location.circle")
-                .font(.footnote).foregroundStyle(.secondary)
-            Text("※ 位置情報はまだ組み込んでいません。手動で到着させてください")
-                .font(.caption).foregroundStyle(Theme.mission)
+            locationStatus
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 測位の状態。判定の基準を隠さずに見せる
+    @ViewBuilder
+    private var locationStatus: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !location.isAuthorized {
+                Label("位置情報が使えません。下のボタンで到着を記録してください",
+                      systemImage: "location.slash")
+                    .font(.footnote).foregroundStyle(Theme.mission)
+            } else if let distance = location.distanceToTarget {
+                Text(distance >= 1000
+                     ? String(format: "残り 約 %.1f km", distance / 1000)
+                     : String(format: "残り 約 %.0f m", distance))
+                    .font(.title3.monospacedDigit().weight(.semibold))
+            } else {
+                Label("現在地を取得しています…", systemImage: "location")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+
+            Label("半径 \(Int(location.rule.radius))m に入ると到着になります",
+                  systemImage: "location.circle")
+                .font(.footnote).foregroundStyle(.secondary)
+
+            if location.accuracyIsPoor {
+                Label("電波が悪いようです。地下では判定できないことがあります",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.footnote).foregroundStyle(Theme.mission)
+            }
+        }
     }
 
     /// SC-08 着地。ミッションを引く前
@@ -151,7 +179,7 @@ struct TurnFlowView: View {
         } else {
             switch store.phase {
             case .walking(let next, _):
-                primary("\(store.stationName(next)) に到着した") { store.arriveAtNextStop() }
+                arrivalButton(next)
             case .landed(let station):
                 primary(store.missionCandidates(at: station).isEmpty
                         ? "次へ" : "ミッションを引く") { store.drawMission() }
@@ -162,10 +190,18 @@ struct TurnFlowView: View {
                         .font(.subheadline)
                 }
             case .effectWalking(let next, _):
-                primary("\(store.stationName(next)) に到着した") { store.arriveAtNextStop() }
+                arrivalButton(next)
             default:
                 EmptyView()
             }
+        }
+    }
+
+    /// 到着の記録。半径に入れば自動で進むが、手動でも押せるようにしておく（E-01）。
+    /// 地下駅では手動が主要な手段になる想定。
+    private func arrivalButton(_ next: Int) -> some View {
+        primary("\(store.stationName(next)) に到着した") {
+            store.arriveAtNextStop(expected: next)
         }
     }
 

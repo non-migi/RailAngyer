@@ -13,8 +13,11 @@
 		0FB2755F66F5820C34CE4DCB /* RuleSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */; };
 		2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E8A6CD54AD50C8860C443 /* ModelsTests.swift */; };
 		22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 02DE3152D31178D49884EE7D /* RailAngyerCore */; };
+		3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836563870DB4BE41BCFBBCCE /* TestHooks.swift */; };
+		389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */; };
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
+		61D5521E731DFC7E0520012D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155472042CCA7F23234F9556 /* LocationService.swift */; };
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
@@ -22,6 +25,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		1B63B3BC5B88AF2BF8A1F793 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 234C3EDF47630F7BD057A0C3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CCEF20FDF0C405A6F41295D2;
+			remoteInfo = RailAngyerApp;
+		};
 		CA9411F0A0091622257B9148 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 234C3EDF47630F7BD057A0C3 /* Project object */;
@@ -32,9 +42,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrivalUITests.swift; sourceTree = "<group>"; };
+		114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		3A20C935B2EE85D434D111CF /* TurnFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnFlowView.swift; sourceTree = "<group>"; };
 		52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RailAngyerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
 		86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
 		902E8A6CD54AD50C8860C443 /* ModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsTests.swift; sourceTree = "<group>"; };
@@ -65,6 +79,7 @@
 			children = (
 				52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */,
 				DC4114A3D977E18BF4C5CD2F /* RailAngyerAppTests.xctest */,
+				114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,6 +97,8 @@
 			children = (
 				C36DD89E35D1609C0821E07B /* GamePhase.swift */,
 				86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */,
+				155472042CCA7F23234F9556 /* LocationService.swift */,
+				836563870DB4BE41BCFBBCCE /* TestHooks.swift */,
 			);
 			path = Game;
 			sourceTree = "<group>";
@@ -120,8 +137,17 @@
 				32B8061008BEF13180574D80 /* Packages */,
 				756A44AD1015702C57180D09 /* Sources */,
 				DCDBB0DF0B6A5C4C1B1F264A /* Tests */,
+				9FEF600C016C3AD118D85AB4 /* UITests */,
 				053D5625118FCD9F80A50A25 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		9FEF600C016C3AD118D85AB4 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */,
+			);
+			path = UITests;
 			sourceTree = "<group>";
 		};
 		A5BFFB878130A1D100436850 /* Views */ = {
@@ -184,6 +210,24 @@
 			productReference = 52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E0148440E85B003E6638EB5B /* RailAngyerAppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E47729BED4DA88CE44B92CC4 /* Build configuration list for PBXNativeTarget "RailAngyerAppUITests" */;
+			buildPhases = (
+				690E6287758CEB64720D00B9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AB1028A267A15A8E501737B2 /* PBXTargetDependency */,
+			);
+			name = RailAngyerAppUITests;
+			packageProductDependencies = (
+			);
+			productName = RailAngyerAppUITests;
+			productReference = 114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -196,6 +240,9 @@
 					CCEF20FDF0C405A6F41295D2 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
+					};
+					E0148440E85B003E6638EB5B = {
+						TestTargetID = CCEF20FDF0C405A6F41295D2;
 					};
 				};
 			};
@@ -218,11 +265,20 @@
 			targets = (
 				CCEF20FDF0C405A6F41295D2 /* RailAngyerApp */,
 				8758DBB3BC58E5740D32772F /* RailAngyerAppTests */,
+				E0148440E85B003E6638EB5B /* RailAngyerAppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		690E6287758CEB64720D00B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9478957569901CD05C0FB8A8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -240,10 +296,12 @@
 				966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */,
 				04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */,
 				B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */,
+				61D5521E731DFC7E0520012D /* LocationService.swift in Sources */,
 				0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */,
 				E686C96515C035CA38FB915A /* Models.swift in Sources */,
 				00F134CDB673ECC381CA12DB /* RootView.swift in Sources */,
 				0FB2755F66F5820C34CE4DCB /* RuleSettingsView.swift in Sources */,
+				3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */,
 				9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -251,6 +309,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AB1028A267A15A8E501737B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CCEF20FDF0C405A6F41295D2 /* RailAngyerApp */;
+			targetProxy = 1B63B3BC5B88AF2BF8A1F793 /* PBXContainerItemProxy */;
+		};
 		BF70E2A4B4246DCC6DF8E530 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CCEF20FDF0C405A6F41295D2 /* RailAngyerApp */;
@@ -336,6 +399,24 @@
 			};
 			name = Debug;
 		};
+		83E25D1968E646748B2D0052 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.non-migi.RailAngyerAppUITests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RailAngyerApp;
+			};
+			name = Debug;
+		};
 		8BC0674339BFEEFD528A23EE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -351,6 +432,24 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RailAngyerApp.app/RailAngyerApp";
+			};
+			name = Release;
+		};
+		9B7FBD571794C2D2C84E250F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.non-migi.RailAngyerAppUITests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RailAngyerApp;
 			};
 			name = Release;
 		};
@@ -482,6 +581,15 @@
 			buildConfigurations = (
 				9DCA37B94D2834EA2673AAC8 /* Debug */,
 				3996D31C35CCBCA0ED71896C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E47729BED4DA88CE44B92CC4 /* Build configuration list for PBXNativeTarget "RailAngyerAppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83E25D1968E646748B2D0052 /* Debug */,
+				9B7FBD571794C2D2C84E250F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

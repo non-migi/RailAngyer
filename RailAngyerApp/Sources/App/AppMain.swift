@@ -9,7 +9,13 @@ struct AppMain: App {
     init() {
         let schema = Schema(AppSchema.all)
         do {
-            container = try ModelContainer(for: schema)
+            if TestHooks.usesInMemoryStore {
+                container = try ModelContainer(
+                    for: schema,
+                    configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            } else {
+                container = try ModelContainer(for: schema)
+            }
         } catch {
             // ディスク上にストアを作れない場合（テストホストや保護された環境）でも
             // 起動を止めない。記録は残らないが、画面は動く。

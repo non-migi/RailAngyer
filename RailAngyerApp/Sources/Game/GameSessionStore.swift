@@ -113,7 +113,7 @@ final class GameSessionStore {
     /// アプリが落ちても出目と行き先が残る。
     func roll() {
         guard let engine else { return }
-        roll(dice: engine.roll())
+        roll(dice: TestHooks.fixedDice ?? engine.roll())
     }
 
     /// 出目を指定して振る。テストで進行を再現するために分けてある
@@ -139,18 +139,23 @@ final class GameSessionStore {
     }
 
     /// 次の駅に到着した（F-04 / F-06）。
-    /// 位置情報が使えるようになったら `LocationService` から呼ぶ。手動到着（E-01）でも同じ。
-    func arriveAtNextStop() {
+    /// `LocationService` の到着判定からも、手動到着（E-01）からも同じ入口を通る。
+    ///
+    /// - Parameter expected: 到着したはずの駅。いま向かっている駅と食い違う場合は無視する。
+    ///   短時間に同じ到着が二度届いても、次の駅まで進んでしまわないための保険（E-04）。
+    func arriveAtNextStop(expected: Int? = nil) {
         guard let turn = activeTurn else { return }
         do {
             switch phase {
             case .walking(let next, _):
+                guard expected == nil || expected == next else { return }
                 let isLanding = next == turn.landingStation?.orderNo
                 try record(visit: isLanding ? .landing : .passing, at: next, turn: turn)
                 if isLanding { turn.arrivedAt = Date() }
                 try context.save()
 
             case .effectWalking(let next, let destination):
+                guard expected == nil || expected == next else { return }
                 let isArrival = next == destination
                 try record(visit: isArrival ? .effectArrival : .effectPassing, at: next, turn: turn)
                 try context.save()

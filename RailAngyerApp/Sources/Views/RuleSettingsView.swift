@@ -1,4 +1,5 @@
 import SwiftUI
+import RailAngyerCore
 
 /// 区間と最大出目の設定（SC-02 のローカル版）。
 /// プレイ開始後（ターンが1件でもある間）は変更できない（T-06）。
@@ -10,6 +11,7 @@ struct RuleSettingsView: View {
     @State private var goalOrder = 16
     @State private var diceMax = 6
     @State private var showResetConfirm = false
+    @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     private var allStations: [Station] {
         (store.room?.course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
@@ -57,6 +59,19 @@ struct RuleSettingsView: View {
                                    value: "\(max(1, sectionCount / max(1, (diceMax + 1) / 2))) 回前後")
                 }
                 .disabled(locked)
+
+                Section("到着判定") {
+                    Stepper("半径　\(Int(arrivalRadius)) m",
+                            value: $arrivalRadius,
+                            in: ArrivalRule.radiusRange,
+                            step: 10)
+                    Text("南北線の最短駅間は約655m（大通〜すすきの）。"
+                         + "半径を大きくしすぎると隣の駅の圏内と重なるため、"
+                         + "\(Int(ArrivalRule.radiusRange.upperBound))m までに制限しています。")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text("座標は概値のため、現地で判定が合わない駅があれば調整してください。")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
 
                 Section {
                     Button("記録をリセット", role: .destructive) { showResetConfirm = true }

@@ -72,12 +72,27 @@ targets:
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
 
+  # 位置情報の到着判定は、実際に歩かせないと確かめられないため UIテストで検証する
+  RailAngyerAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: RailAngyerApp
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   RailAngyerApp:
     build:
       targets:
         RailAngyerApp: all
         RailAngyerAppTests: [test]
+        RailAngyerAppUITests: [test]
     test:
       targets:
         - RailAngyerAppTests
+        - RailAngyerAppUITests
