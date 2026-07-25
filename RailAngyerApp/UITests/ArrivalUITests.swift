@@ -42,6 +42,15 @@ final class ArrivalUITests: XCTestCase {
         // まだ圏外なので、勝手に進んではいけない
         XCTAssertFalse(app.staticTexts["北34条 に到着"].exists, "圏外なのに到着している")
 
+        // 経路の取得を待って画面を記録する（地図と経路線の目視確認用）
+        _ = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '徒歩 約'"))
+            .firstMatch.waitForExistence(timeout: 15)
+        Thread.sleep(forTimeInterval: 3)   // 地図の描画が追いつくのを待つ
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "walking"
+        shot.lifetime = .keepAlways
+        add(shot)
+
         // 半径150mの外側（約300m手前）まで近づく → まだ到着しない
         setLocation(interpolate(from: asabu, to: kita34, fraction: 0.68))
         XCTAssertFalse(app.staticTexts["北34条 に到着"].waitForExistence(timeout: 3),

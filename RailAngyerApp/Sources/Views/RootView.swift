@@ -41,17 +41,36 @@ private struct MainView: View {
         }
         .task {
             // 到着判定は LocationService から。手動到着と同じ入口を通す
-            location.onArrive = { [weak store] order in
-                store?.arriveAtNextStop(expected: order)
+            location.onArrive = { order in
+                store.arriveAtNextStop(expected: order)
+                notifyArrival(at: order)
             }
             location.rule = ArrivalRule(radius: arrivalRadius)
             location.requestAuthorization()
+            NotificationService.requestAuthorization()
             syncTarget()
         }
         .onChange(of: store.phase) { syncTarget() }
         .onChange(of: arrivalRadius) {
             location.rule = ArrivalRule(radius: arrivalRadius)
             syncTarget()
+        }
+    }
+
+    /// 位置情報が拾った到着を知らせる。
+    /// 手動で到着させたときは画面を見ているので通知しない
+    private func notifyArrival(at order: Int) {
+        let name = store.stationName(order)
+        switch store.phase {
+        case .arrivedPassing:
+            NotificationService.notifyPassingArrival(station: name)
+        case .landed(let station):
+            NotificationService.notifyLanding(station: name,
+                                              missionCount: store.missionCandidates(at: station).count)
+        case .cleared:
+            NotificationService.notifyCleared(station: name)
+        default:
+            NotificationService.notifyPassingArrival(station: name)
         }
     }
 

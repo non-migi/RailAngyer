@@ -7,6 +7,7 @@ struct TurnFlowView: View {
     @Bindable var store: GameSessionStore
     let location: LocationService
     @State private var showingCamera = false
+    @State private var routes = RouteProvider()
 
     var body: some View {
         VStack(spacing: 12) {
@@ -99,15 +100,29 @@ struct TurnFlowView: View {
         if let target = location.target {
             StationMapView(target: target,
                            userLocation: location.lastLocation,
-                           radius: location.rule.radius)
+                           radius: location.rule.radius,
+                           route: routes.route)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .frame(maxHeight: .infinity)
+                .task(id: target.orderNo) {
+                    await routes.ensureRoute(from: location.lastLocation, to: target)
+                }
+                .onChange(of: location.lastLocation) {
+                    Task { await routes.ensureRoute(from: location.lastLocation, to: target) }
+                }
 
-            Button {
-                target.openInMaps()
-            } label: {
-                Label("マップで経路を見る", systemImage: "map")
-                    .font(.subheadline)
+            HStack {
+                if let instruction = routes.firstInstruction {
+                    Label(instruction, systemImage: "arrow.turn.up.right")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Button {
+                    target.openInMaps()
+                } label: {
+                    Label("マップで開く", systemImage: "map").font(.subheadline)
+                }
             }
         }
     }
@@ -120,11 +135,27 @@ struct TurnFlowView: View {
                 Label("位置情報が使えません。下のボタンで到着を記録してください",
                       systemImage: "location.slash")
                     .font(.footnote).foregroundStyle(Theme.mission)
+            } else if let routeDistance = routes.distanceText {
+                // 経路が取れていれば、直線ではなく実際に歩く距離を出す
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(routeDistance).font(.title3.monospacedDigit().weight(.semibold))
+                    if let duration = routes.durationText {
+                        Text(duration).font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
             } else if let distance = location.distanceToTarget {
-                Text(distance >= 1000
-                     ? String(format: "残り 約 %.1f km", distance / 1000)
-                     : String(format: "残り 約 %.0f m", distance))
-                    .font(.title3.monospacedDigit().weight(.semibold))
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(distance >= 1000
+                         ? String(format: "直線 約 %.1f km", distance / 1000)
+                         : String(format: "直線 約 %.0f m", distance))
+                        .font(.title3.monospacedDigit().weight(.semibold))
+                    if routes.isLoading {
+                        ProgressView().controlSize(.small)
+                    } else if routes.didFail {
+                        Text("経路を取得できません")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
             } else {
                 Label("現在地を取得しています…", systemImage: "location")
                     .font(.footnote).foregroundStyle(.secondary)

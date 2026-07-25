@@ -13,6 +13,8 @@ struct StationMapView: View {
     let userLocation: CLLocation?
     /// 到着判定の半径（メートル）
     let radius: Double
+    /// 徒歩経路。取れていなければ線は描かない
+    var route: MKRoute?
 
     @State private var camera: MapCameraPosition = .automatic
 
@@ -23,6 +25,13 @@ struct StationMapView: View {
     var body: some View {
         Map(position: $camera) {
             UserAnnotation()
+
+            if let route {
+                MapPolyline(route.polyline)
+                    .stroke(Theme.line.opacity(0.85), style: StrokeStyle(lineWidth: 6,
+                                                                         lineCap: .round,
+                                                                         lineJoin: .round))
+            }
 
             Annotation(target.name, coordinate: targetCoordinate) {
                 ZStack {
