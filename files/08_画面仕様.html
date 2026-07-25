@@ -223,7 +223,8 @@
     <tbody>
       <tr><td>ルーム名</td><td>ナビゲーションバーのタイトル</td><td class="m">MissionSet.Name</td><td>常時</td></tr>
       <tr><td>踏破率</td><td>「6 / 16」と割合。<strong>分母は区間内の駅数</strong></td><td>DV-06</td><td>常時</td></tr>
-      <tr><td>路線図</td><td>駅を縦一列に。訪問済みは塗る、未訪問は薄く。<strong>並び順は進む向きに従う（逆走コースなら上下が反転する）</strong></td><td class="m">Station + Visit</td><td>常時</td></tr>
+      <tr><td><strong>地図（既定）</strong></td><td><strong>区間の全駅を地図に出し、進捗を一目で見せる。</strong>歩いた区間の線を濃く、未踏を薄く描く（戻る効果で飛び飛びになるため区間ごとに描く）。駅をタップで詳細へ。<strong>現地でマスタ座標が実際の駅とどれだけズレているかを確認する用途も兼ねる</strong></td><td class="m">Station + Visit</td><td>常時</td></tr>
+      <tr><td>路線図（一覧）</td><td>駅を縦一列に。訪問済みは塗る、未訪問は薄く。<strong>並び順は進む向きに従う（逆走コースなら上下が反転する）</strong>。ミッション数と写真枚数を添える</td><td class="m">Station + Visit</td><td>左上のボタンで地図と切り替え</td></tr>
       <tr><td>区間の範囲</td><td><strong>スタート駅とゴール駅に旗を立てる。区間外の駅はさらに薄く表示し、遊ぶ範囲を明示する</strong></td><td class="m">MissionSet.Start/GoalStationId</td><td>常時（Q-14）</td></tr>
       <tr><td>現在位置</td><td>コマのいる駅を大きなマーカーで示す</td><td>DV-01</td><td>常時</td></tr>
       <tr><td>着地駅の印</td><td>ミッションを行った駅を区別（通り道と見分ける）</td><td class="m">Visit.VisitKind=2</td><td>着地済みの駅</td></tr>
@@ -249,6 +250,7 @@
     <tbody>
       <tr><td>出発駅</td><td>現在位置の駅名を上部に表示（「さっぽろ から」）</td></tr>
       <tr><td>サイコロ</td><td><strong><code>1〜DiceMax</code> の乱数。ルーム設定の最大出目に従う（1〜9）。</strong>面の数が6でない場合は、サイコロの見た目もそれに合わせる（9面なら数字表示など）</td></tr>
+      <tr><td>演出</td><td><strong>3Dのサイコロを転がすアニメーション</strong>を出す。振った実感がゲームの手応えに直結するため。<br>実装案: SceneKit か RealityKit で立方体を回転させ、出目の面を上に向けて止める。7〜9面のときは多面体か、数字が回転して止まる演出で代替する<br><span class="flag todo">未実装 — フェーズ1の検証項目に影響しないため実地テスト後に着手</span></td></tr>
       <tr><td>最大出目の表示</td><td><strong>「1〜3 のサイコロ」と明示する。</strong>既定の6以外を設定しているとき、参加者が誤解しないようにするため</td></tr>
       <tr><td>主ボタン</td><td>[振る] → 出目確定後は自動で SC-06 へ</td></tr>
       <tr><td>注意</td><td><strong>振り直しは不可</strong>。誤操作を防ぐため、振る操作は明示的なタップにする</td></tr>

@@ -6,12 +6,18 @@ struct BoardView: View {
     @Bindable var store: GameSessionStore
     @Binding var showingSettings: Bool
     @State private var selectedStation: Int?
+    /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
+    @AppStorage("boardShowsMap") private var showsMap = true
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
-            route
+            if showsMap {
+                BoardMapView(store: store, selectedStation: $selectedStation)
+            } else {
+                route
+            }
             footer
         }
         .sheet(item: $selectedStation) { order in
@@ -20,6 +26,14 @@ struct BoardView: View {
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showsMap.toggle()
+                } label: {
+                    Image(systemName: showsMap ? "list.bullet" : "map")
+                }
+                .accessibilityLabel(showsMap ? "一覧で見る" : "地図で見る")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingSettings = true } label: { Image(systemName: "gearshape") }
             }

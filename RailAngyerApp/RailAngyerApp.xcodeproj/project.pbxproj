@@ -27,6 +27,7 @@
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
 		C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */; };
+		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
 /* End PBXBuildFile section */
@@ -54,6 +55,7 @@
 		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		17E8C15DCE6423AA6C330097 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_slow_asabu.gpx; sourceTree = "<group>"; };
+		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_full.gpx; sourceTree = "<group>"; };
 		257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreUITests.swift; sourceTree = "<group>"; };
@@ -184,6 +186,7 @@
 		A5BFFB878130A1D100436850 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */,
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				9577A67BEAAF07D613F921B7 /* CameraPicker.swift */,
 				A23AB8C2D3BC3C1C41272684 /* RootView.swift */,
@@ -338,6 +341,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */,
+				CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */,
 				966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */,
 				128DFB62618F00A15A292B2C /* CameraPicker.swift in Sources */,
 				04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */,

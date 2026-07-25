@@ -27,6 +27,7 @@ private struct MainView: View {
     @Bindable var store: GameSessionStore
     @State private var location = LocationService()
     @State private var showingSettings = false
+    @State private var didAskForNotifications = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     var body: some View {
@@ -47,14 +48,24 @@ private struct MainView: View {
             }
             location.rule = ArrivalRule(radius: arrivalRadius)
             location.requestAuthorization()
-            NotificationService.requestAuthorization()
             syncTarget()
         }
-        .onChange(of: store.phase) { syncTarget() }
+        .onChange(of: store.phase) {
+            syncTarget()
+            askForNotificationsIfNeeded()
+        }
         .onChange(of: arrivalRadius) {
             location.rule = ArrivalRule(radius: arrivalRadius)
             syncTarget()
         }
+    }
+
+    /// 通知の許可は、歩き始めて初めて必要になった時点で聞く。
+    /// 起動直後に位置情報と続けて聞くと押し付けがましく、拒否されやすい
+    private func askForNotificationsIfNeeded() {
+        guard !didAskForNotifications, case .walking = store.phase else { return }
+        didAskForNotifications = true
+        NotificationService.requestAuthorization()
     }
 
     /// 位置情報が拾った到着を知らせる。
