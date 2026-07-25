@@ -29,13 +29,11 @@ public static class RoomEndpoints
         {
             if (req.StartStationId == req.GoalStationId)
             {
-                return Results.Json(new ApiError("invalid_range", "スタートとゴールは別の駅にしてください"),
-                                    statusCode: StatusCodes.Status400BadRequest);
+                return ApiResults.BadRequest("invalid_range", "スタートとゴールは別の駅にしてください");
             }
             if (req.DiceMax is < 1 or > 9)
             {
-                return Results.Json(new ApiError("invalid_dice_max", "最大出目は1〜9です"),
-                                    statusCode: StatusCodes.Status400BadRequest);
+                return ApiResults.BadRequest("invalid_dice_max", "最大出目は1〜9です");
             }
 
             // 区間の駅が、指定したコースのものか確かめる（DBのCHECKでは表現できない）
@@ -45,8 +43,7 @@ public static class RoomEndpoints
                 .ToListAsync(ct);
             if (stationCourseIds.Count != 2 || stationCourseIds.Any(id => id != req.CourseId))
             {
-                return Results.Json(new ApiError("invalid_range", "区間の駅がコースと一致しません"),
-                                    statusCode: StatusCodes.Status400BadRequest);
+                return ApiResults.BadRequest("invalid_range", "区間の駅がコースと一致しません");
             }
 
             var now = DateTime.UtcNow;
@@ -89,16 +86,14 @@ public static class RoomEndpoints
                 .FirstOrDefaultAsync(r => r.InviteCode == req.InviteCode, ct);
             if (room is null)
             {
-                return Results.Json(new ApiError("invalid_invite_code", "招待コードが違います"),
-                                    statusCode: StatusCodes.Status404NotFound);
+                return ApiResults.NotFound("invalid_invite_code", "招待コードが違います");
             }
 
             var taken = await db.Members.AnyAsync(
                 m => m.MissionSetId == room.MissionSetId && m.DisplayName == req.DisplayName, ct);
             if (taken)
             {
-                return Results.Json(new ApiError("display_name_taken", "その名前はすでに使われています"),
-                                    statusCode: StatusCodes.Status409Conflict);
+                return ApiResults.Conflict("display_name_taken", "その名前はすでに使われています");
             }
 
             var token = MemberTokens.Generate();
@@ -124,7 +119,7 @@ public static class RoomEndpoints
         authed.MapGet("", async (Guid roomId, HttpContext http, RailAngyerDbContext db, CancellationToken ct) =>
         {
             var me = http.Member();
-            if (me.MissionSetId != roomId) return Forbidden();
+            if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
             var room = await db.MissionSets.AsNoTracking()
                 .FirstOrDefaultAsync(r => r.MissionSetId == roomId, ct);
@@ -147,7 +142,7 @@ public static class RoomEndpoints
                                    RailAngyerDbContext db, CancellationToken ct) =>
         {
             var me = http.Member();
-            if (me.MissionSetId != roomId) return Forbidden();
+            if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
             var room = await db.MissionSets.FirstOrDefaultAsync(r => r.MissionSetId == roomId, ct);
             if (room is null) return Results.NotFound();
@@ -155,16 +150,14 @@ public static class RoomEndpoints
             // プレイ開始後は変えられない（T-06）。区間外を指す効果や訪問記録が残って整合しなくなる
             if (await db.Turns.AnyAsync(t => t.MissionSetId == roomId, ct))
             {
-                return Results.Json(new ApiError("rules_locked", "プレイ中は区間と最大出目を変更できません"),
-                                    statusCode: StatusCodes.Status409Conflict);
+                return ApiResults.Conflict("rules_locked", "プレイ中は区間と最大出目を変更できません");
             }
 
             if (req.DiceMax is { } dice)
             {
                 if (dice is < 1 or > 9)
                 {
-                    return Results.Json(new ApiError("invalid_dice_max", "最大出目は1〜9です"),
-                                        statusCode: StatusCodes.Status400BadRequest);
+                    return ApiResults.BadRequest("invalid_dice_max", "最大出目は1〜9です");
                 }
                 room.DiceMax = (byte)dice;
             }
@@ -173,18 +166,13 @@ public static class RoomEndpoints
 
             if (room.StartStationId == room.GoalStationId)
             {
-                return Results.Json(new ApiError("invalid_range", "スタートとゴールは別の駅にしてください"),
-                                    statusCode: StatusCodes.Status400BadRequest);
+                return ApiResults.BadRequest("invalid_range", "スタートとゴールは別の駅にしてください");
             }
 
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
     }
-
-    private static IResult Forbidden() =>
-        Results.Json(new ApiError("forbidden", "このルームにはアクセスできません"),
-                     statusCode: StatusCodes.Status403Forbidden);
 
     private static async Task<string> GenerateUniqueInviteCodeAsync(RailAngyerDbContext db, CancellationToken ct)
     {

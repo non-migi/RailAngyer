@@ -39,7 +39,7 @@
 - スキーマ適用済み（10テーブル、南北線16駅を投入）
 - アプリ用の最小権限ユーザー作成済み
 - iOSアプリ：フェーズ1の実装は完了。**実地テスト待ち**
-- API：参加とトークン認証まで実装。Azureへのデプロイは未着手
+- API：参加・ミッション・進行まで実装（34テスト）。写真とデプロイは未着手
 
 ## テスト
 
@@ -47,5 +47,5 @@
 swift test --package-path RailAngyerCore     # ルール計算 35件
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 27件 + UI 3件
-dotnet test RailAngyerApi.Tests               # API 15件
+dotnet test RailAngyerApi.Tests               # API 34件
 ```
