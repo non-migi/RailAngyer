@@ -1,0 +1,98 @@
+import SwiftUI
+
+/// 区間と最大出目の設定（SC-02 のローカル版）。
+/// プレイ開始後（ターンが1件でもある間）は変更できない（T-06）。
+struct RuleSettingsView: View {
+    @Bindable var store: GameSessionStore
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var startOrder = 1
+    @State private var goalOrder = 16
+    @State private var diceMax = 6
+    @State private var showResetConfirm = false
+
+    private var allStations: [Station] {
+        (store.room?.course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
+    }
+    private var locked: Bool { !(store.room?.turns.isEmpty ?? true) }
+    private var sectionCount: Int { abs(goalOrder - startOrder) + 1 }
+    private var direction: String { goalOrder > startOrder ? "順方向" : "逆方向" }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if locked {
+                    Section {
+                        Label("プレイ中は変更できません。記録をリセットすると変更できます。",
+                              systemImage: "lock")
+                            .font(.footnote)
+                    }
+                }
+
+                Section("区間") {
+                    Picker("スタート", selection: $startOrder) {
+                        ForEach(allStations) { Text($0.name).tag($0.orderNo) }
+                    }
+                    Picker("ゴール", selection: $goalOrder) {
+                        ForEach(allStations) { Text($0.name).tag($0.orderNo) }
+                    }
+                    if startOrder == goalOrder {
+                        Text("スタートとゴールは別の駅にしてください")
+                            .font(.caption).foregroundStyle(.red)
+                    } else {
+                        LabeledContent("区間", value: "\(sectionCount) 駅（\(direction)）")
+                    }
+                }
+                .disabled(locked)
+
+                Section("サイコロ") {
+                    Stepper("最大出目　\(diceMax)", value: $diceMax, in: 1...9)
+                    if diceMax == 1 {
+                        Text("毎ターン必ず1駅ずつ進むため、区間の全駅でミッションを行います")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    LabeledContent("1ターンの最大距離の目安",
+                                   value: String(format: "約 %.1f km", Double(diceMax) * 0.94))
+                    LabeledContent("着地回数の見込み",
+                                   value: "\(max(1, sectionCount / max(1, (diceMax + 1) / 2))) 回前後")
+                }
+                .disabled(locked)
+
+                Section {
+                    Button("記録をリセット", role: .destructive) { showResetConfirm = true }
+                        .disabled(store.room?.turns.isEmpty ?? true)
+                } footer: {
+                    Text("訪問記録と写真がすべて消えます。ミッションと設定は残ります。")
+                }
+            }
+            .navigationTitle("ルール設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") { save() }
+                        .disabled(locked || startOrder == goalOrder)
+                }
+            }
+            .confirmationDialog("記録をリセットしますか",
+                                isPresented: $showResetConfirm, titleVisibility: .visible) {
+                Button("リセットする", role: .destructive) { store.resetProgress() }
+            } message: {
+                Text("訪問記録と写真が消えます。取り消せません。")
+            }
+            .onAppear {
+                startOrder = store.room?.startStation?.orderNo ?? 1
+                goalOrder = store.room?.goalStation?.orderNo ?? allStations.last?.orderNo ?? 16
+                diceMax = store.room?.diceMax ?? 6
+            }
+        }
+    }
+
+    private func save() {
+        let start = allStations.first { $0.orderNo == startOrder }
+        let goal = allStations.first { $0.orderNo == goalOrder }
+        if store.updateRule(start: start, goal: goal, diceMax: diceMax) { dismiss() }
+    }
+}
