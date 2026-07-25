@@ -8,6 +8,8 @@ struct TurnFlowView: View {
     let location: LocationService
     @State private var showingCamera = false
     @State private var routes = RouteProvider()
+    /// サイコロが止まったか。止まるまで行き先を伏せる
+    @State private var diceSettled = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -56,27 +58,35 @@ struct TurnFlowView: View {
         return VStack(alignment: .leading, spacing: 20) {
             Text("\(store.stationName(from)) から").foregroundStyle(.secondary)
 
-            DiceFace(value: turn.diceValue)
+            DiceRollView(value: turn.diceValue) {
+                withAnimation(.easeOut(duration: 0.35)) { diceSettled = true }
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .id(turn.id)   // ターンが変わったら振り直す
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("\(turn.diceValue) 駅 進む").font(.subheadline).foregroundStyle(.secondary)
-                Text("\(store.stationName(landing)) まで")
-                    .font(.largeTitle.weight(.bold))
-                if passing.isEmpty {
-                    Text("となりの駅です")
-                        .font(.footnote).foregroundStyle(.secondary)
-                } else {
-                    Text("途中の " + passing.map(store.stationName).joined(separator: "・")
-                         + " も1駅ずつ歩いて訪れます")
-                        .font(.footnote).foregroundStyle(.secondary)
+            if diceSettled {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(turn.diceValue) 駅 進む").font(.subheadline).foregroundStyle(.secondary)
+                    Text("\(store.stationName(landing)) まで")
+                        .font(.largeTitle.weight(.bold))
+                    if passing.isEmpty {
+                        Text("となりの駅です")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    } else {
+                        Text("途中の " + passing.map(store.stationName).joined(separator: "・")
+                             + " も1駅ずつ歩いて訪れます")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                    if store.engine?.isCleared(landing) == true {
+                        Text("この区間の終点です。到達するとクリアになります")
+                            .font(.footnote).foregroundStyle(Theme.line)
+                    }
                 }
-                if store.engine?.isCleared(landing) == true {
-                    Text("この区間の終点です。到達するとクリアになります")
-                        .font(.footnote).foregroundStyle(Theme.line)
-                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .task(id: turn.id) { diceSettled = false }
     }
 
     /// SC-07 ナビ
@@ -271,7 +281,10 @@ struct TurnFlowView: View {
     @ViewBuilder
     private var action: some View {
         if store.showingAnnouncement {
+            // 転がり終わるまでは押させない
             primary("向かう") { store.showingAnnouncement = false }
+                .disabled(!diceSettled)
+                .opacity(diceSettled ? 1 : 0.4)
         } else {
             switch store.phase {
             case .walking(let next, _):

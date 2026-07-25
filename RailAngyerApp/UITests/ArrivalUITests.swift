@@ -30,9 +30,10 @@ final class ArrivalUITests: XCTestCase {
         rollFromBoard()
 
         // 着地駅の告知（SC-06）。通り道が無いので「となりの駅です」
-        XCTAssertTrue(app.staticTexts["北34条 まで"].waitForExistence(timeout: 5),
+        XCTAssertTrue(app.staticTexts["北34条 まで"].waitForExistence(timeout: 10),
                       "着地駅の告知が出ていない")
-        app.buttons["向かう"].tap()
+        attach(name: "dice")   // 転がり終わったサイコロの目視確認用
+        proceedFromAnnouncement()
 
         // ナビ（SC-07）。現在地から目的地までの距離が出る
         XCTAssertTrue(app.staticTexts["北34条"].waitForExistence(timeout: 5))
@@ -46,10 +47,7 @@ final class ArrivalUITests: XCTestCase {
         _ = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '徒歩 約'"))
             .firstMatch.waitForExistence(timeout: 15)
         Thread.sleep(forTimeInterval: 3)   // 地図の描画が追いつくのを待つ
-        let shot = XCTAttachment(screenshot: app.screenshot())
-        shot.name = "walking"
-        shot.lifetime = .keepAlways
-        add(shot)
+        attach(name: "walking")
 
         // 半径150mの外側（約300m手前）まで近づく → まだ到着しない
         setLocation(interpolate(from: asabu, to: kita34, fraction: 0.68))
@@ -68,8 +66,7 @@ final class ArrivalUITests: XCTestCase {
         app.launch()
 
         rollFromBoard()
-        XCTAssertTrue(app.buttons["向かう"].waitForExistence(timeout: 5))
-        app.buttons["向かう"].tap()
+        proceedFromAnnouncement()
 
         let arrivalButton = app.buttons["北34条 に到着した"]
         XCTAssertTrue(arrivalButton.waitForExistence(timeout: 5))
@@ -80,6 +77,15 @@ final class ArrivalUITests: XCTestCase {
     }
 
     // MARK: - 補助
+
+    /// 画面をテスト結果に残す。
+    /// アニメーションや地図の描画は、テストの真偽だけでは確認できないため
+    private func attach(name: String) {
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
 
     private func setLocation(_ coordinate: CLLocationCoordinate2D) {
         XCUIDevice.shared.location = XCUILocation(
@@ -100,5 +106,17 @@ final class ArrivalUITests: XCTestCase {
         let rollButton = app.buttons["サイコロを振る"]
         XCTAssertTrue(rollButton.waitForExistence(timeout: 15), "盤面が出ていない")
         rollButton.tap()
+    }
+
+    /// 着地駅の告知から先へ進む。
+    /// **サイコロが転がり終わるまで「向かう」は押せない**ので、
+    /// 存在ではなく有効になるのを待つ
+    private func proceedFromAnnouncement() {
+        let button = app.buttons["向かう"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10))
+        let enabled = expectation(for: NSPredicate(format: "isEnabled == true"),
+                                  evaluatedWith: button)
+        wait(for: [enabled], timeout: 10)
+        button.tap()
     }
 }

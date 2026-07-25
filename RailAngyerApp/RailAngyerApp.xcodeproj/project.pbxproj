@@ -30,6 +30,7 @@
 		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
+		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
 		D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_sapporo_nakanoshima.gpx; sourceTree = "<group>"; };
+		D80CE7F62882767E29A8AC06 /* DiceRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollView.swift; sourceTree = "<group>"; };
 		DC4114A3D977E18BF4C5CD2F /* RailAngyerAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA6A195889CC18D3B9AEE608 /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
@@ -189,6 +191,7 @@
 				1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */,
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				9577A67BEAAF07D613F921B7 /* CameraPicker.swift */,
+				D80CE7F62882767E29A8AC06 /* DiceRollView.swift */,
 				A23AB8C2D3BC3C1C41272684 /* RootView.swift */,
 				CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */,
 				3C804299584BFF82C68B12EA /* StationDetailView.swift */,
@@ -344,6 +347,7 @@
 				CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */,
 				966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */,
 				128DFB62618F00A15A292B2C /* CameraPicker.swift in Sources */,
+				ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */,
 				04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */,
 				B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */,
 				61D5521E731DFC7E0520012D /* LocationService.swift in Sources */,

@@ -39,8 +39,11 @@ final class RestoreUITests: XCTestCase {
         rollButton.tap()
 
         // 出目3なので 麻生(1) → 北18条(4)。通り道は 北34条・北24条
-        XCTAssertTrue(app.staticTexts["北18条 まで"].waitForExistence(timeout: 5))
-        app.buttons["向かう"].tap()
+        XCTAssertTrue(app.staticTexts["北18条 まで"].waitForExistence(timeout: 10))
+        let go = app.buttons["向かう"]
+        wait(for: [expectation(for: NSPredicate(format: "isEnabled == true"), evaluatedWith: go)],
+             timeout: 10)
+        go.tap()
 
         let arrivalButton = app.buttons["北34条 に到着した"]
         XCTAssertTrue(arrivalButton.waitForExistence(timeout: 5))
