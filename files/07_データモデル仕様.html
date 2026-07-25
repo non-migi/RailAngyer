@@ -1,0 +1,659 @@
+<meta charset="utf-8">
+<title>RailAngyer データモデル仕様</title>
+
+<style>
+  :root {
+    --bg:#FBFBF9; --panel:#FFFFFF; --ink:#1A1D1A; --ink2:#545C55; --ink3:#868E87;
+    --rule:#D9DDD6; --rule2:#EEF0EB; --accent:#0B6E3F; --accent-bg:#E9F2EC;
+    --warn:#9E3A11; --warn-bg:#FAEDE6; --hl:#F2F5F0;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#131614; --panel:#1A1E1B; --ink:#E6EAE5; --ink2:#A6AEA7; --ink3:#7C847D;
+      --rule:#2F352F; --rule2:#232823; --accent:#4FC489; --accent-bg:#18291F;
+      --warn:#DE8A5A; --warn-bg:#2B1F17; --hl:#1E231F; }
+  }
+  :root[data-theme="dark"] { --bg:#131614; --panel:#1A1E1B; --ink:#E6EAE5; --ink2:#A6AEA7; --ink3:#7C847D;
+    --rule:#2F352F; --rule2:#232823; --accent:#4FC489; --accent-bg:#18291F;
+    --warn:#DE8A5A; --warn-bg:#2B1F17; --hl:#1E231F; }
+  :root[data-theme="light"] { --bg:#FBFBF9; --panel:#FFFFFF; --ink:#1A1D1A; --ink2:#545C55; --ink3:#868E87;
+    --rule:#D9DDD6; --rule2:#EEF0EB; --accent:#0B6E3F; --accent-bg:#E9F2EC;
+    --warn:#9E3A11; --warn-bg:#FAEDE6; --hl:#F2F5F0; }
+
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans);
+    font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .doc { max-width:78rem; margin:0 auto; padding:2.5rem 1.5rem 6rem;
+    display:flex; flex-direction:column; gap:2.5rem; }
+
+  .head { display:flex; flex-direction:column; gap:.75rem;
+    border-bottom:2px solid var(--ink); padding-bottom:1rem; }
+  .head h1 { font-size:1.65rem; font-weight:700; }
+  .head .sub { color:var(--ink2); font-size:.9rem; }
+  .head dl { display:grid; grid-template-columns:max-content 1fr; gap:.15rem 1rem;
+    font-size:.8rem; font-family:var(--mono); color:var(--ink2); }
+  .head dt { color:var(--ink3); }
+
+  nav.toc { background:var(--panel); border:1px solid var(--rule); padding:.75rem 1rem;
+    display:flex; flex-wrap:wrap; gap:.35rem 1.25rem; font-size:.85rem; }
+  nav.toc a { color:var(--accent); text-decoration:none; }
+  nav.toc a:hover, nav.toc a:focus-visible { text-decoration:underline; }
+
+  section { display:flex; flex-direction:column; gap:.9rem; scroll-margin-top:1rem; }
+  h2 { font-size:1.15rem; font-weight:700; padding-bottom:.35rem;
+    border-bottom:1px solid var(--ink); display:flex; align-items:baseline; gap:.6rem; }
+  h2 .n { font-family:var(--mono); color:var(--accent); font-size:.9rem; }
+  h3 { font-size:1rem; font-weight:700; margin-top:.7rem;
+    display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+  h3 .n { font-family:var(--mono); color:var(--accent); font-size:.85rem; }
+  h3 .jp { font-weight:400; font-size:.85rem; color:var(--ink3); }
+  p { font-size:.9rem; color:var(--ink2); max-width:62em; }
+  p strong, td strong, li strong { color:var(--ink); font-weight:600; }
+
+  .tw { overflow-x:auto; border:1px solid var(--rule); background:var(--panel); }
+  table { width:100%; border-collapse:collapse; font-size:.83rem; line-height:1.6; }
+  th, td { border:1px solid var(--rule); padding:.4rem .55rem; text-align:left; vertical-align:top; }
+  th { background:var(--rule2); font-weight:600; white-space:nowrap; }
+  tbody tr:hover { background:var(--hl); }
+  td.id, th.id { font-family:var(--mono); white-space:nowrap; color:var(--accent); font-weight:600; }
+  td.m, th.m { font-family:var(--mono); white-space:nowrap; }
+  td.c { text-align:center; }
+  code { font-family:var(--mono); font-size:.92em; background:var(--accent-bg);
+    padding:.05em .35em; border-radius:2px; }
+  .nw { white-space:nowrap; }
+
+  .k { font-family:var(--mono); font-size:.72rem; padding:.05em .35em;
+    border:1px solid currentColor; border-radius:2px; white-space:nowrap; }
+  .k.pk { color:var(--accent); }
+  .k.fk { color:var(--warn); }
+  .k.uq { color:var(--ink3); }
+  .new { font-family:var(--mono); font-size:.72rem; color:var(--accent);
+    border:1px solid currentColor; background:var(--accent-bg); padding:.05em .35em; border-radius:2px; }
+
+  .note { border-left:3px solid var(--warn); background:var(--warn-bg);
+    padding:.65rem .9rem; font-size:.85rem; color:var(--ink2); }
+  .note b { color:var(--warn); }
+
+  pre { background:var(--panel); border:1px solid var(--rule); padding:.7rem .9rem;
+    overflow-x:auto; font-family:var(--mono); font-size:.8rem; line-height:1.65; color:var(--ink2); }
+  pre .c { color:var(--ink3); }
+
+  .foot { border-top:1px solid var(--rule); padding-top:.9rem;
+    font-family:var(--mono); font-size:.78rem; color:var(--ink3);
+    display:flex; flex-wrap:wrap; gap:.3rem 1.5rem; }
+</style>
+
+<div class="doc">
+
+<header class="head">
+  <h1>データモデル仕様 <span style="font-size:.7em; color:var(--accent); font-family:var(--mono);">ver.2</span></h1>
+  <div class="sub">RailAngyer ／ Azure SQL Database</div>
+  <dl>
+    <dt>DDL</dt><dd>06_schema.sql（この文書と1対1で対応）</dd>
+    <dt>テーブル数</dt><dd>10（ver.1 から Turn を追加）</dd>
+    <dt>ver.2</dt><dd>区間の自由設定 ／ 最大出目 1〜9 ／ ミッション効果 ／ 再訪の許可</dd>
+  </dl>
+</header>
+
+<nav class="toc">
+  <a href="#s0">0 ver.1からの変更</a>
+  <a href="#s1">1 テーブル一覧</a>
+  <a href="#s2">2 関連</a>
+  <a href="#s3">3 列定義</a>
+  <a href="#s4">4 制約一覧</a>
+  <a href="#s5">5 インデックス</a>
+  <a href="#s6">6 導出値</a>
+  <a href="#s7">7 主要SQL</a>
+  <a href="#s8">8 削除・リセット</a>
+  <a href="#s9">9 設計判断</a>
+</nav>
+
+<!-- ================= 0 ================= -->
+<section id="s0">
+  <h2><span class="n">0</span>ver.1 からの変更と、その理由</h2>
+  <p>「飛ばす・戻る」「区間の自由設定」「最大出目の可変」を入れるにあたり、ver.1 のモデルでは<strong>4か所が構造的に成立しなくなった</strong>。その解消のための変更。</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>ver.1 の作り</th><th>何が壊れるか</th><th>ver.2 での対応</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nw">現在位置 ＝ 着地駅の <code>OrderNo</code> 最大値</td>
+        <td><strong>戻ると成立しない。</strong>10番地から8番地へ戻っても、最大値は10のままで現在位置が更新されない</td>
+        <td><code>Turn</code>（手番）テーブルを新設し、<strong>最後に完了したターンの終了位置</strong>を現在位置とする。時系列で決まるので前後どちらへ動いてもよい</td>
+      </tr>
+      <tr>
+        <td class="nw"><code>UNIQUE(MissionSetId, StationId)</code></td>
+        <td><strong>再訪ができない。</strong>戻る・ジャンプでは同じ駅を必ず通り直すため、2回目の記録で制約違反になる</td>
+        <td>一意制約を外し、<code>Visit</code> を「訪問イベントを積む」テーブルに変更。踏破率は <code>DISTINCT</code> で数える</td>
+      </tr>
+      <tr>
+        <td class="nw"><code>CHECK (DiceValue BETWEEN 1 AND 6)</code></td>
+        <td>最大出目を7以上にすると制約違反</td>
+        <td>1〜9に緩和。ルームごとの上限は <code>MissionSet.DiceMax</code> に持ち、アプリ側で乱数の範囲を決める</td>
+      </tr>
+      <tr>
+        <td class="nw">区間の概念がない</td>
+        <td>始点はコースの先頭、終端はコースの末尾に固定。一部区間・逆走ができない</td>
+        <td><code>MissionSet</code> に <code>StartStationId</code> / <code>GoalStationId</code> を追加。<strong>進む向きは両者の前後関係から導出</strong>する</td>
+      </tr>
+      <tr>
+        <td class="nw">出目が着地時にしか保存されない</td>
+        <td>（ver.1 からの積み残し）移動中にアプリが落ちると着地駅が復元できない</td>
+        <td><strong>副次的に解消。</strong><code>Turn</code> はサイコロを振った時点で INSERT されるため、出目と行き先が残る</td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 1 ================= -->
+<section id="s1">
+  <h2><span class="n">1</span>テーブル一覧</h2>
+
+  <div class="tw"><table>
+    <thead><tr>
+      <th class="m">物理名</th><th>論理名</th><th>層</th><th>いつ書き込まれるか</th><th>想定行数</th><th>親</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="m">Course</td><td>コース</td><td>マスタ</td><td>路線を追加するときのみ</td><td class="c">1〜数</td><td>—</td></tr>
+      <tr><td class="m">Station</td><td>駅</td><td>マスタ</td><td>路線を追加するときのみ</td><td class="c">16〜数百</td><td>Course</td></tr>
+      <tr><td class="m">MissionSet</td><td>ミッションセット（ルーム）</td><td>ルーム</td><td>ルーム作成時。<strong>区間と最大出目もここ</strong></td><td class="c">1〜数十</td><td>Course / Station×2</td></tr>
+      <tr><td class="m">Member</td><td>メンバー</td><td>ルーム</td><td>招待コードでの参加時</td><td class="c">1ルーム 2〜10</td><td>MissionSet</td></tr>
+      <tr><td class="m">Mission</td><td>ミッション</td><td>ルーム</td><td>準備フェーズ。<strong>効果もここ</strong></td><td class="c">1ルーム 0〜(駅数×人数)</td><td>MissionSet / Member / Station</td></tr>
+      <tr><td class="m">Schedule</td><td>予定</td><td>ルーム</td><td>予定作成時</td><td class="c">1ルーム 0〜数</td><td>MissionSet</td></tr>
+      <tr><td class="m">ScheduleAttendee</td><td>出欠</td><td>ルーム</td><td>出欠回答時</td><td class="c">予定数 × 人数</td><td>Schedule / Member</td></tr>
+      <tr><td class="m"><span class="new">NEW</span> Turn</td><td>手番</td><td>記録</td><td><strong>サイコロを振った時点で1行。着地・ミッション・効果で更新</strong></td><td class="c">1ルーム 2〜20</td><td>MissionSet / Station×3 / Mission</td></tr>
+      <tr><td class="m">Visit</td><td>訪問記録</td><td>記録</td><td>駅に到着するたび。<strong>再訪もそのつど積む</strong></td><td class="c">1ルーム 区間駅数〜（再訪ぶん増える）</td><td>MissionSet / Turn / Station</td></tr>
+      <tr><td class="m">Photo</td><td>写真メタ</td><td>記録</td><td>撮影・アップロード時</td><td class="c">1ルーム 0〜数百</td><td>Visit / Member</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section id="s2">
+  <h2><span class="n">2</span>テーブル間の関連</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>親</th><th>子</th><th>多重度</th><th>外部キー列</th><th>意味</th><th>削除時</th></tr></thead>
+    <tbody>
+      <tr><td class="id">RL-01</td><td class="m">Course</td><td class="m">Station</td><td class="c">1 : N</td><td class="m">Station.CourseId</td><td>コースに駅が並ぶ</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-02</td><td class="m">Course</td><td class="m">MissionSet</td><td class="c">1 : N</td><td class="m">MissionSet.CourseId</td><td>ルームが遊ぶコース</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-03</td><td class="m">Station</td><td class="m">MissionSet</td><td class="c">1 : N</td><td class="m">MissionSet.StartStationId</td><td><span class="new">NEW</span> 区間のスタート駅</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-04</td><td class="m">Station</td><td class="m">MissionSet</td><td class="c">1 : N</td><td class="m">MissionSet.GoalStationId</td><td><span class="new">NEW</span> 区間のゴール駅</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-05</td><td class="m">MissionSet</td><td class="m">Member</td><td class="c">1 : N</td><td class="m">Member.MissionSetId</td><td>ルームの参加者</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-06</td><td class="m">Member</td><td class="m">MissionSet</td><td class="c">1 : 0..1</td><td class="m">MissionSet.CreatedBy</td><td>ルームの作成者（相互参照）</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-07</td><td class="m">MissionSet</td><td class="m">Mission</td><td class="c">1 : N</td><td class="m">Mission.MissionSetId</td><td>ルームに貯まるお題</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-08</td><td class="m">Member</td><td class="m">Mission</td><td class="c">1 : N</td><td class="m">Mission.MemberId</td><td>お題を書いた人</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-09</td><td class="m">Station</td><td class="m">Mission</td><td class="c">1 : N</td><td class="m">Mission.StationId</td><td>お題の対象駅</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-10</td><td class="m">Station</td><td class="m">Mission</td><td class="c">0..1 : N</td><td class="m">Mission.EffectStationId</td><td><span class="new">NEW</span> ジャンプ効果の移動先</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-11</td><td class="m">MissionSet</td><td class="m">Turn</td><td class="c">1 : N</td><td class="m">Turn.MissionSetId</td><td><span class="new">NEW</span> ルームの手番の履歴</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-12</td><td class="m">Station</td><td class="m">Turn</td><td class="c">1 : N</td><td class="m">Turn.FromStationId</td><td><span class="new">NEW</span> 振った時点の位置</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-13</td><td class="m">Station</td><td class="m">Turn</td><td class="c">1 : N</td><td class="m">Turn.LandingStationId</td><td><span class="new">NEW</span> 出目による着地駅</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-14</td><td class="m">Station</td><td class="m">Turn</td><td class="c">0..1 : N</td><td class="m">Turn.EndStationId</td><td><span class="new">NEW</span> 効果適用後の終了位置。NULLなら進行中</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-15</td><td class="m">Mission</td><td class="m">Turn</td><td class="c">0..1 : N</td><td class="m">Turn.SelectedMissionId</td><td>抽選で当たったお題</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-16</td><td class="m">MissionSet</td><td class="m">Visit</td><td class="c">1 : N</td><td class="m">Visit.MissionSetId</td><td>チームの足あと</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-17</td><td class="m">Turn</td><td class="m">Visit</td><td class="c">0..1 : N</td><td class="m">Visit.TurnId</td><td><span class="new">NEW</span> どの手番での訪問か。始点のみ NULL</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-18</td><td class="m">Station</td><td class="m">Visit</td><td class="c">1 : N</td><td class="m">Visit.StationId</td><td>到達した駅。<strong>同じ駅が何度でも現れる</strong></td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-19</td><td class="m">Visit</td><td class="m">Photo</td><td class="c">1 : N</td><td class="m">Photo.VisitId</td><td>その訪問で撮った写真</td><td class="nw"><strong>CASCADE</strong></td></tr>
+      <tr><td class="id">RL-20</td><td class="m">Member</td><td class="m">Photo</td><td class="c">1 : N</td><td class="m">Photo.MemberId</td><td>撮影者</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-21</td><td class="m">MissionSet</td><td class="m">Schedule</td><td class="c">1 : N</td><td class="m">Schedule.MissionSetId</td><td>ルームの予定</td><td class="nw">NO ACTION</td></tr>
+      <tr><td class="id">RL-22</td><td class="m">Schedule</td><td class="m">ScheduleAttendee</td><td class="c">1 : N</td><td class="m">ScheduleAttendee.ScheduleId</td><td>予定への回答</td><td class="nw"><strong>CASCADE</strong></td></tr>
+      <tr><td class="id">RL-23</td><td class="m">Member</td><td class="m">ScheduleAttendee</td><td class="c">1 : N</td><td class="m">ScheduleAttendee.MemberId</td><td>回答者</td><td class="nw">NO ACTION</td></tr>
+    </tbody>
+  </table></div>
+
+  <pre>Course ──┬─▶ Station ─────┬──▶ Mission ──┬─────────────▶ Turn ──▶ Visit ──▶ Photo
+         │      │        │  (対象駅/     │ (抽選結果)      ▲  ▲          ▲
+         │      │        │   ジャンプ先)  │                │  │          │
+         │      └────────┼───────────────┼────────────────┘  │          │
+         │        (From/Landing/End)     │                   │          │
+         │                               │                   │          │
+         └─▶ MissionSet ──┬─▶ Member ────┴───────────────────┼──────────┘
+                 ▲        ├─▶ Mission                        │  (撮影者)
+                 │        ├─▶ Schedule ──▶ ScheduleAttendee   │
+          (Start/Goal)    ├─▶ Turn ──────────────────────────┘
+             Station      └─▶ Visit</pre>
+</section>
+
+<!-- ================= 3 ================= -->
+<section id="s3">
+  <h2><span class="n">3</span>列定義</h2>
+
+  <h3><span class="n">3.1</span>Course<span class="jp">コース</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">CourseId</td><td class="m">INT IDENTITY</td><td class="c">×</td><td>コースID</td></tr>
+      <tr><td></td><td class="m">Name</td><td class="m">NVARCHAR(50)</td><td class="c">×</td><td>「南北線」など。一意</td></tr>
+      <tr><td></td><td class="m">LineColor</td><td class="m">NVARCHAR(9)</td><td class="c">○</td><td>路線カラー <code>#RRGGBB</code></td></tr>
+      <tr><td></td><td class="m">CreatedAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td>作成日時（UTC）</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.2</span>Station<span class="jp">駅</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">StationId</td><td class="m">INT IDENTITY</td><td class="c">×</td><td>駅ID</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">CourseId</td><td class="m">INT</td><td class="c">×</td><td>所属コース</td></tr>
+      <tr><td></td><td class="m">Name</td><td class="m">NVARCHAR(50)</td><td class="c">×</td><td>駅名</td></tr>
+      <tr><td><span class="k uq">UQ</span></td><td class="m">OrderNo</td><td class="m">INT</td><td class="c">×</td><td><strong>路線の端から通しで振る並び順。区間の指定とは独立で、区間を変えてもこの値は変わらない。</strong>すべての位置計算はこの列で行う</td></tr>
+      <tr><td></td><td class="m">Latitude / Longitude</td><td class="m">FLOAT</td><td class="c">×</td><td>到着判定用。<strong>現状は概値。現地実測での更新が必要</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.3</span>MissionSet<span class="jp">ミッションセット／ルーム</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th class="m">既定</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">MissionSetId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td class="m">NEWID()</td><td>ルームID</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">CourseId</td><td class="m">INT</td><td class="c">×</td><td></td><td>遊ぶコース</td></tr>
+      <tr><td></td><td class="m">Name</td><td class="m">NVARCHAR(100)</td><td class="c">×</td><td></td><td>ルーム名</td></tr>
+      <tr><td><span class="k uq">UQ</span></td><td class="m">InviteCode</td><td class="m">NVARCHAR(10)</td><td class="c">×</td><td></td><td>招待コード。実質的な認証</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">StartStationId</td><td class="m">INT</td><td class="c">×</td><td></td><td><span class="new">NEW</span> <strong>区間のスタート駅。コース内の任意の駅。戻る効果でもここより手前へは行かない</strong></td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">GoalStationId</td><td class="m">INT</td><td class="c">×</td><td></td><td><span class="new">NEW</span> <strong>区間のゴール駅。ここに到達でクリア。Start と Goal の前後関係が進む向きを決める</strong></td></tr>
+      <tr><td></td><td class="m">DiceMax</td><td class="m">TINYINT</td><td class="c">×</td><td class="m">6</td><td><span class="new">NEW</span> <strong>最大出目。1〜9。乱数は 1〜この値。1なら毎ターン1駅ずつ進む</strong></td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">CreatedBy</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">○</td><td></td><td>作成者。Member との相互参照のため後付けの列</td></tr>
+      <tr><td></td><td class="m">CreatedAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td class="m">SYSUTCDATETIME()</td><td>作成日時</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">
+    <b>DBで守れないもの</b> ── <code>StartStationId</code> / <code>GoalStationId</code> が <code>CourseId</code> と同じコースの駅であることは、
+    CHECK制約では表現できない（他テーブルの参照が必要）。アプリ側で担保する。
+  </div>
+
+  <h3><span class="n">3.4</span>Member<span class="jp">メンバー</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">MemberId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>メンバーID</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">MissionSetId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>所属ルーム。ルームをまたいだ同一人物の概念は持たない</td></tr>
+      <tr><td><span class="k uq">UQ</span></td><td class="m">DisplayName</td><td class="m">NVARCHAR(50)</td><td class="c">×</td><td>表示名。同一ルーム内で一意</td></tr>
+      <tr><td></td><td class="m">JoinedAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td>参加日時</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.5</span>Mission<span class="jp">ミッション</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th class="m">既定</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">MissionId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td class="m">NEWID()</td><td>ミッションID</td></tr>
+      <tr><td><span class="k fk uq">FK UQ</span></td><td class="m">MissionSetId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td></td><td>所属ルーム</td></tr>
+      <tr><td><span class="k fk uq">FK UQ</span></td><td class="m">MemberId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td></td><td>書いた人</td></tr>
+      <tr><td><span class="k fk uq">FK UQ</span></td><td class="m">StationId</td><td class="m">INT</td><td class="c">×</td><td></td><td><strong>対象駅。この3列の組み合わせが一意＝「駅ごとに1人1個まで」</strong></td></tr>
+      <tr><td></td><td class="m">Content</td><td class="m">NVARCHAR(300)</td><td class="c">×</td><td></td><td>お題テキスト。空文字は禁止</td></tr>
+      <tr><td></td><td class="m">EffectType</td><td class="m">TINYINT</td><td class="c">×</td><td class="m">0</td><td><span class="new">NEW</span> <strong>0=なし / 1=進む / 2=戻る / 3=もう一度振る / 4=指定駅へ移動</strong></td></tr>
+      <tr><td></td><td class="m">EffectValue</td><td class="m">TINYINT</td><td class="c">○</td><td></td><td><span class="new">NEW</span> 進む・戻るのときの駅数（1〜9）。それ以外では NULL でなければならない</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">EffectStationId</td><td class="m">INT</td><td class="c">○</td><td></td><td><span class="new">NEW</span> 指定駅へ移動のときの移動先。それ以外では NULL でなければならない</td></tr>
+      <tr><td></td><td class="m">CreatedAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td class="m">SYSUTCDATETIME()</td><td>作成日時</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.6</span>Turn<span class="jp">手番</span> <span class="new">NEW</span></h3>
+  <p>サイコロを1回振るごとに1行。<strong>振った時点で INSERT し、効果の適用が終わった時点で完了させる。</strong>
+     進行中のターンは <code>EndStationId</code> が NULL であることで判別する。</p>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th class="m">既定</th><th>説明</th><th>いつ入るか</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">TurnId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td class="m">NEWID()</td><td>手番ID</td><td class="nw">F-01</td></tr>
+      <tr><td><span class="k fk uq">FK UQ</span></td><td class="m">MissionSetId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td></td><td>所属ルーム</td><td class="nw">F-01</td></tr>
+      <tr><td><span class="k uq">UQ</span></td><td class="m">TurnNo</td><td class="m">INT</td><td class="c">×</td><td></td><td>ルーム内の連番。1始まり。<strong>現在位置の判定はこの順で行う</strong></td><td class="nw">F-01</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">FromStationId</td><td class="m">INT</td><td class="c">×</td><td></td><td>振った時点の位置</td><td class="nw">F-01</td></tr>
+      <tr><td></td><td class="m">DiceValue</td><td class="m">TINYINT</td><td class="c">×</td><td></td><td><strong>出た目（1〜9）。振った時点で永続化される</strong></td><td class="nw">F-01</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">LandingStationId</td><td class="m">INT</td><td class="c">×</td><td></td><td>出目による着地駅。ゴールでクランプ済み</td><td class="nw">F-01</td></tr>
+      <tr><td></td><td class="m">RolledAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td class="m">SYSUTCDATETIME()</td><td>振った時刻</td><td class="nw">F-01</td></tr>
+      <tr><td></td><td class="m">ArrivedAt</td><td class="m">DATETIME2(0)</td><td class="c">○</td><td></td><td>着地駅に到着した時刻。<strong>NULLなら移動中</strong></td><td class="nw">F-06</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">SelectedMissionId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">○</td><td></td><td>抽選で当たったミッション。候補0件なら NULL のまま</td><td class="nw">F-08</td></tr>
+      <tr><td></td><td class="m">MissionDone</td><td class="m">BIT</td><td class="c">×</td><td class="m">0</td><td>達成フラグ</td><td class="nw">F-08</td></tr>
+      <tr><td></td><td class="m">AppliedEffectType</td><td class="m">TINYINT</td><td class="c">○</td><td></td><td>実際に発動した効果。記録用</td><td class="nw">F-09</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">EndStationId</td><td class="m">INT</td><td class="c">○</td><td></td><td><strong>効果適用後の終了位置。これが現在位置の根拠になる。NULL＝進行中</strong></td><td class="nw">F-10</td></tr>
+      <tr><td></td><td class="m">CompletedAt</td><td class="m">DATETIME2(0)</td><td class="c">○</td><td></td><td>ターン終了時刻</td><td class="nw">F-10</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.7</span>Visit<span class="jp">訪問記録</span></h3>
+  <p>ver.2 では<strong>「いつどの駅に着いたか」だけ</strong>を積む。出目・ミッション・達成は <code>Turn</code> 側に移した。
+     戻る・ジャンプで同じ駅を再訪しうるため、駅の一意制約を持たない。</p>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">VisitId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>訪問ID</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">MissionSetId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>所属ルーム。<strong>メンバー列は持たない（チームで1つのコマ）</strong></td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">TurnId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">○</td><td><span class="new">NEW</span> どの手番での訪問か。<strong>始点の記録だけが NULL</strong></td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">StationId</td><td class="m">INT</td><td class="c">×</td><td>到達した駅。<strong>同じ駅が複数行現れうる</strong></td></tr>
+      <tr><td></td><td class="m">ArrivedAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td>到着日時</td></tr>
+      <tr><td></td><td class="m">VisitKind</td><td class="m">TINYINT</td><td class="c">×</td><td><span class="new">NEW</span> <strong>0=始点 / 1=通り道 / 2=着地 / 3=効果移動の通り道 / 4=効果移動の到達点</strong>。ver.1 の <code>IsLanding</code> を置き換え</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.8</span>Photo<span class="jp">写真メタ</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>キー</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k pk">PK</span></td><td class="m">PhotoId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>写真ID</td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">VisitId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>どの訪問で撮ったか。<strong>再訪すれば別の訪問なので、同じ駅でも写真が分かれて残る</strong></td></tr>
+      <tr><td><span class="k fk">FK</span></td><td class="m">MemberId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>撮影者。個人差が出るのはここだけ</td></tr>
+      <tr><td></td><td class="m">BlobUrl</td><td class="m">NVARCHAR(500)</td><td class="c">×</td><td>Blob Storage 上のURL。画像バイナリはDBに入れない</td></tr>
+      <tr><td></td><td class="m">TakenAt</td><td class="m">DATETIME2(0)</td><td class="c">×</td><td>撮影日時</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.9</span>Schedule / ScheduleAttendee<span class="jp">予定・出欠</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th class="m">テーブル</th><th class="m">列名</th><th class="m">型</th><th class="c">NULL</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td class="m">Schedule</td><td class="m">ScheduleId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>PK</td></tr>
+      <tr><td class="m"></td><td class="m">MissionSetId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>所属ルーム</td></tr>
+      <tr><td class="m"></td><td class="m">Title / StartAt</td><td class="m">NVARCHAR(100) / DATETIME2</td><td class="c">×</td><td>タイトル・開始日時</td></tr>
+      <tr><td class="m"></td><td class="m">MeetPlace / CreatedBy</td><td class="m">NVARCHAR(100) / UNIQUEIDENTIFIER</td><td class="c">○</td><td>集合場所・作成者</td></tr>
+      <tr><td class="m">ScheduleAttendee</td><td class="m">ScheduleId + MemberId</td><td class="m">UNIQUEIDENTIFIER</td><td class="c">×</td><td>複合PK。1人1回答が自然に保証される</td></tr>
+      <tr><td class="m"></td><td class="m">Status</td><td class="m">TINYINT</td><td class="c">×</td><td>0=未定 / 1=参加 / 2=不参加</td></tr>
+    </tbody>
+  </table></div>
+  <p>ゲームの進行には関与しない。</p>
+</section>
+
+<!-- ================= 4 ================= -->
+<section id="s4">
+  <h2><span class="n">4</span>制約一覧</h2>
+
+  <h3><span class="n">4.1</span>一意制約</h3>
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th class="m">制約名</th><th class="m">対象</th><th>目的</th></tr></thead>
+    <tbody>
+      <tr><td class="id">UQ-01</td><td class="m">UQ_Course_Name</td><td class="m">Course(Name)</td><td>同名コースの重複を防ぐ</td></tr>
+      <tr><td class="id">UQ-02</td><td class="m">UQ_Station_Order</td><td class="m">Station(CourseId, OrderNo)</td><td>並び順の重複を防ぐ。位置計算が一意に定まる前提</td></tr>
+      <tr><td class="id">UQ-03</td><td class="m">UQ_MissionSet_Invite</td><td class="m">MissionSet(InviteCode)</td><td>招待コードの衝突を防ぐ</td></tr>
+      <tr><td class="id">UQ-04</td><td class="m">UQ_Member_Name</td><td class="m">Member(MissionSetId, DisplayName)</td><td>同一ルーム内の同名を防ぐ</td></tr>
+      <tr><td class="id">UQ-05</td><td class="m">UQ_Mission_PerStation</td><td class="m">Mission(MissionSetId, MemberId, StationId)</td><td><strong>「駅ごとに1人1個まで」の担保</strong></td></tr>
+      <tr><td class="id">UQ-06</td><td class="m">UQ_Turn_No</td><td class="m">Turn(MissionSetId, TurnNo)</td><td><span class="new">NEW</span> 手番の連番の重複を防ぐ</td></tr>
+      <tr><td class="id">UQ-07</td><td class="m">UX_Turn_Active</td><td class="m">Turn(MissionSetId) WHERE EndStationId IS NULL</td><td><span class="new">NEW</span> <strong>進行中のターンは1ルームにつき1つまで。フィルター付き一意インデックスで、二重にサイコロを振ることを防ぐ</strong></td></tr>
+      <tr><td class="id"><s>UQ-08</s></td><td class="m"><s>UQ_Visit_Station</s></td><td class="m"><s>Visit(MissionSetId, StationId)</s></td><td><strong>ver.2 で削除。</strong>戻る・ジャンプによる再訪を許すため</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">4.2</span>CHECK制約</h3>
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th class="m">制約名</th><th>条件</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td class="id">CK-01</td><td class="m">CK_Station_OrderNo</td><td class="m">OrderNo &gt;= 1</td><td>並び順は1始まり</td></tr>
+      <tr><td class="id">CK-02</td><td class="m">CK_Station_Lat / Lng</td><td class="m">-90〜90 / -180〜180</td><td>座標の入力ミス防止</td></tr>
+      <tr><td class="id">CK-03</td><td class="m">CK_MissionSet_Range</td><td class="m">StartStationId &lt;&gt; GoalStationId</td><td><span class="new">NEW</span> スタートとゴールが同じ駅では区間にならない</td></tr>
+      <tr><td class="id">CK-04</td><td class="m">CK_MissionSet_DiceMax</td><td class="m">DiceMax BETWEEN 1 AND 9</td><td><span class="new">NEW</span> 最大出目の範囲</td></tr>
+      <tr><td class="id">CK-05</td><td class="m">CK_Mission_EffectType</td><td class="m">EffectType IN (0,1,2,3,4)</td><td><span class="new">NEW</span> 効果の値域</td></tr>
+      <tr><td class="id">CK-06</td><td class="m">CK_Mission_EffectValue</td><td class="m">(EffectType IN (1,2) AND EffectValue BETWEEN 1 AND 9) OR (それ以外 AND EffectValue IS NULL)</td><td><span class="new">NEW</span> <strong>進む・戻るのときだけ駅数が入る。効果なしなのに駅数が残る、といった不整合を防ぐ</strong></td></tr>
+      <tr><td class="id">CK-07</td><td class="m">CK_Mission_EffectStn</td><td class="m">(EffectType = 4 AND EffectStationId IS NOT NULL) OR (それ以外 AND NULL)</td><td><span class="new">NEW</span> ジャンプのときだけ移動先が入る</td></tr>
+      <tr><td class="id">CK-08</td><td class="m">CK_Turn_Dice</td><td class="m">DiceValue BETWEEN 1 AND 9</td><td><span class="new">NEW</span> ver.1 の 1〜6 から緩和</td></tr>
+      <tr><td class="id">CK-09</td><td class="m">CK_Turn_Completed</td><td class="m">(EndStationId IS NULL AND CompletedAt IS NULL) OR (両方 NOT NULL)</td><td><span class="new">NEW</span> <strong>「終了位置はあるのに終了時刻がない」という中途半端な行を作らせない</strong></td></tr>
+      <tr><td class="id">CK-10</td><td class="m">CK_Visit_Kind</td><td class="m">VisitKind IN (0,1,2,3,4)</td><td><span class="new">NEW</span> 訪問種別の値域</td></tr>
+      <tr><td class="id">CK-11</td><td class="m">CK_Visit_TurnLink</td><td class="m">(VisitKind = 0 AND TurnId IS NULL) OR (VisitKind &lt;&gt; 0 AND TurnId IS NOT NULL)</td><td><span class="new">NEW</span> <strong>始点だけが手番に属さない。それ以外は必ずどれかの手番に属する</strong></td></tr>
+      <tr><td class="id">CK-12</td><td class="m">CK_Mission_Content</td><td class="m">LEN(LTRIM(RTRIM(Content))) &gt; 0</td><td>空のお題を作らせない</td></tr>
+      <tr><td class="id">CK-13</td><td class="m">CK_Attendee_Status</td><td class="m">Status IN (0,1,2)</td><td>出欠の値域</td></tr>
+      <tr><td class="id"><s>CK-14</s></td><td class="m"><s>CK_Visit_LandingOnly / LandingDice</s></td><td>—</td><td><strong>ver.2 で削除。</strong>出目とミッションが Turn へ移ったため不要</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <b>DBで守れないもの</b>（アプリ側で担保する）
+    <br>① 区間の Start / Goal がコースと同じ路線の駅であること
+    <br>② ジャンプ効果の移動先が区間内であること（R-16）
+    <br>③ <code>Turn.SelectedMissionId</code> が着地駅のミッションであること
+    <br>④ <code>DiceValue</code> がそのルームの <code>DiceMax</code> 以下であること ── いずれも他テーブルの参照が必要でCHECKでは書けない
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section id="s5">
+  <h2><span class="n">5</span>インデックス</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="m">索引</th><th class="m">対象</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td class="m">IX_Mission_Station</td><td class="m">Mission(MissionSetId, StationId) INCLUDE (Content, MemberId, Effect*)</td><td>着地時の抽選候補の取得。<strong>効果の列も INCLUDE して、1回の読み取りで済ませる</strong></td></tr>
+      <tr><td class="m">UX_Turn_Active</td><td class="m">Turn(MissionSetId) WHERE EndStationId IS NULL</td><td>進行中ターンの取得（アプリ復帰時）と、二重ロールの防止</td></tr>
+      <tr><td class="m">IX_Turn_Set_No</td><td class="m">Turn(MissionSetId, TurnNo DESC) INCLUDE (EndStationId, CompletedAt)</td><td><strong>現在位置の導出。毎ターン必ず走る</strong></td></tr>
+      <tr><td class="m">IX_Visit_Set_Station</td><td class="m">Visit(MissionSetId, StationId) INCLUDE (VisitKind, ArrivedAt)</td><td>盤面表示・踏破率の集計・再訪の判定</td></tr>
+      <tr><td class="m">IX_Visit_Turn</td><td class="m">Visit(TurnId)</td><td>進行中ターンの「どこまで歩いたか」の復元</td></tr>
+      <tr><td class="m">UQ_Station_Order</td><td class="m">Station(CourseId, OrderNo)</td><td>区間の抽出・着地駅の算出</td></tr>
+      <tr><td class="m">IX_Photo_Visit</td><td class="m">Photo(VisitId)</td><td>駅詳細での写真取得</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section id="s6">
+  <h2><span class="n">6</span>導出値（テーブルを持たない値）</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>値</th><th>定義</th><th>ver.1 からの変更</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="id">DV-01</td><td>現在位置</td>
+        <td><strong><code>TurnNo</code> が最大の完了済みターンの <code>EndStationId</code></strong>。完了ターンが0件なら <code>MissionSet.StartStationId</code></td>
+        <td><strong>変更。</strong>「OrderNo 最大の着地駅」では戻ったときに成立しない</td>
+      </tr>
+      <tr>
+        <td class="id">DV-02</td><td>進む向き</td>
+        <td><code>Start.OrderNo &lt; Goal.OrderNo ? +1 : -1</code></td>
+        <td><span class="new">NEW</span></td>
+      </tr>
+      <tr>
+        <td class="id">DV-03</td><td>区間内の駅</td>
+        <td><code>OrderNo</code> が Start と Goal の間（両端含む）にある駅。並び順は <code>OrderNo × 向き</code> の昇順</td>
+        <td><span class="new">NEW</span></td>
+      </tr>
+      <tr>
+        <td class="id">DV-04</td><td>着地駅</td>
+        <td><code>現在位置 + 向き × 出目</code>。ゴール側でクランプ</td>
+        <td>向きとクランプを考慮</td>
+      </tr>
+      <tr>
+        <td class="id">DV-05</td><td>効果適用後の終了位置</td>
+        <td>進む/戻るは着地駅から加減してクランプ、ジャンプは指定駅、それ以外は着地駅のまま</td>
+        <td><span class="new">NEW</span></td>
+      </tr>
+      <tr>
+        <td class="id">DV-06</td><td>踏破率</td>
+        <td><strong><code>COUNT(DISTINCT Visit.StationId) / 区間内の駅数</code></strong></td>
+        <td><strong>変更。</strong>再訪を重複して数えないため DISTINCT が必須。分母も全駅から区間内へ</td>
+      </tr>
+      <tr>
+        <td class="id">DV-07</td><td>ミッション達成率</td>
+        <td><code>MissionDone=1 のターン数 / SelectedMissionId が入ったターン数</code></td>
+        <td>集計元が Visit から Turn へ</td>
+      </tr>
+      <tr>
+        <td class="id">DV-08</td><td>クリア判定</td>
+        <td>DV-01 が <code>GoalStationId</code> と一致</td>
+        <td>コース終端からルームのゴールへ</td>
+      </tr>
+      <tr>
+        <td class="id">DV-09</td><td>進行中ターン</td>
+        <td><code>EndStationId IS NULL</code> の <code>Turn</code>（最大1行）</td>
+        <td><span class="new">NEW</span> <strong>ver.1 では端末にしか無かった情報がサーバーに乗った</strong></td>
+      </tr>
+      <tr>
+        <td class="id">DV-10</td><td>既出ミッション</td>
+        <td>そのルームで <code>SelectedMissionId</code> に既に使われたミッション。再訪時の候補から除外する（R-14）</td>
+        <td><span class="new">NEW</span></td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section id="s7">
+  <h2><span class="n">7</span>主要SQL</h2>
+  <p>全文は 06_schema.sql §10。ここでは要点のみ。<code>@Dir</code> は進む向き（+1 / -1）。</p>
+
+  <h3><span class="n">7.1</span>ルーム設定と進む向きの取得</h3>
+  <pre>SELECT @CourseId = ms.CourseId, @DiceMax = ms.DiceMax,
+       @StartOrder = ss.OrderNo, @GoalOrder = gs.OrderNo
+FROM dbo.MissionSet ms
+JOIN dbo.Station ss ON ss.StationId = ms.StartStationId
+JOIN dbo.Station gs ON gs.StationId = ms.GoalStationId
+WHERE ms.MissionSetId = @MissionSetId;
+
+DECLARE @Dir INT = CASE WHEN @GoalOrder &gt; @StartOrder THEN 1 ELSE -1 END;</pre>
+
+  <h3><span class="n">7.2</span>現在位置（DV-01）</h3>
+  <pre>SELECT TOP (1) s.StationId, s.Name, s.OrderNo
+FROM dbo.Turn t
+JOIN dbo.Station s ON s.StationId = t.EndStationId
+WHERE t.MissionSetId = @MissionSetId AND t.EndStationId IS NOT NULL
+ORDER BY t.TurnNo DESC;
+<span class="c">-- 0件なら MissionSet.StartStationId が現在位置</span></pre>
+
+  <h3><span class="n">7.3</span>着地駅と通り道駅（DV-04）</h3>
+  <pre>DECLARE @Raw INT = @CurrentOrder + @Dir * @Dice;
+DECLARE @TargetOrder INT =
+    CASE WHEN @Dir = 1 THEN (CASE WHEN @Raw &gt; @GoalOrder THEN @GoalOrder ELSE @Raw END)
+         ELSE               (CASE WHEN @Raw &lt; @GoalOrder THEN @GoalOrder ELSE @Raw END) END;
+
+SELECT StationId, Name, OrderNo,
+       CAST(CASE WHEN OrderNo = @TargetOrder THEN 1 ELSE 0 END AS BIT) AS IsLanding
+FROM dbo.Station
+WHERE CourseId = @CourseId
+  AND (@Dir = 1  AND OrderNo &gt;  @CurrentOrder AND OrderNo &lt;= @TargetOrder
+    OR @Dir = -1 AND OrderNo &lt;  @CurrentOrder AND OrderNo &gt;= @TargetOrder)
+ORDER BY OrderNo * @Dir;
+<span class="c">-- 歩く順に返る。最終行が着地駅</span></pre>
+
+  <h3><span class="n">7.4</span>抽選候補（効果つき・既出を除外）</h3>
+  <pre>SELECT m.MissionId, m.Content, mem.DisplayName AS CreatedByName,
+       m.EffectType, m.EffectValue, m.EffectStationId, es.Name AS EffectStationName
+FROM dbo.Mission m
+JOIN dbo.Member mem ON mem.MemberId = m.MemberId
+LEFT JOIN dbo.Station es ON es.StationId = m.EffectStationId
+WHERE m.MissionSetId = @MissionSetId
+  AND m.StationId = @LandingStationId
+  AND NOT EXISTS (                          <span class="c">-- R-14 既出の除外</span>
+      SELECT 1 FROM dbo.Turn t
+      WHERE t.MissionSetId = @MissionSetId AND t.SelectedMissionId = m.MissionId);</pre>
+
+  <h3><span class="n">7.5</span>効果適用後の終了位置（DV-05）</h3>
+  <pre>DECLARE @EndOrder INT =
+  CASE @EffectType
+    WHEN 1 THEN  <span class="c">-- 進む（ゴール方向・ゴールでクランプ）</span>
+      CASE WHEN @Dir = 1
+        THEN (CASE WHEN @LandingOrder + @EffectValue &gt; @GoalOrder THEN @GoalOrder ELSE @LandingOrder + @EffectValue END)
+        ELSE (CASE WHEN @LandingOrder - @EffectValue &lt; @GoalOrder THEN @GoalOrder ELSE @LandingOrder - @EffectValue END) END
+    WHEN 2 THEN  <span class="c">-- 戻る（スタート方向・スタートでクランプ）</span>
+      CASE WHEN @Dir = 1
+        THEN (CASE WHEN @LandingOrder - @EffectValue &lt; @StartOrder THEN @StartOrder ELSE @LandingOrder - @EffectValue END)
+        ELSE (CASE WHEN @LandingOrder + @EffectValue &gt; @StartOrder THEN @StartOrder ELSE @LandingOrder + @EffectValue END) END
+    WHEN 4 THEN (SELECT OrderNo FROM dbo.Station WHERE StationId = @EffectStationId)
+    ELSE @LandingOrder
+  END;</pre>
+
+  <h3><span class="n">7.6</span>踏破率（DV-06）</h3>
+  <pre>SELECT
+    (SELECT COUNT(*) FROM dbo.Station
+      WHERE CourseId = @CourseId
+        AND OrderNo BETWEEN (CASE WHEN @Dir=1 THEN @StartOrder ELSE @GoalOrder  END)
+                        AND (CASE WHEN @Dir=1 THEN @GoalOrder  ELSE @StartOrder END)) AS RangeStations,
+    (SELECT COUNT(DISTINCT StationId) FROM dbo.Visit
+      WHERE MissionSetId = @MissionSetId)                                             AS VisitedStations;
+<span class="c">-- DISTINCT を外すと、戻るたびに踏破率が100%を超える</span></pre>
+</section>
+
+<!-- ================= 8 ================= -->
+<section id="s8">
+  <h2><span class="n">8</span>削除・リセット</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th>操作</th><th>順序</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nw">記録リセット（再挑戦）</td>
+        <td>① <code>Visit</code>（→ <code>Photo</code> は CASCADE） → ② <code>Turn</code></td>
+        <td><strong><code>Visit</code> が <code>Turn</code> を参照するので Visit が先。</strong>メンバー・ミッション・設定は残る</td>
+      </tr>
+      <tr>
+        <td class="nw">ルームごと削除</td>
+        <td>① <code>Visit</code> → ② <code>Turn</code> → ③ <code>Schedule</code>（→ 出欠は CASCADE） → ④ <code>Mission</code> → ⑤ <code>MissionSet.CreatedBy</code> を NULL → ⑥ <code>Member</code> → ⑦ <code>MissionSet</code></td>
+        <td><strong><code>Turn</code> は <code>Mission</code> を参照するので Mission より先に消す。</strong>ver.1 から1手順増えた</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p><code>MissionSet</code> に CASCADE を張れない理由は ver.1 と同じ ── <code>Member</code> を経由する参照と多重カスケード経路になり、SQL Server では実行時に失敗するため。</p>
+</section>
+
+<!-- ================= 9 ================= -->
+<section id="s9">
+  <h2><span class="n">9</span>設計判断と根拠</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>判断</th><th>根拠</th><th>採らなかった案</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="id">D-01</td><td>現在位置を <code>Turn</code> から導く</td>
+        <td>時系列で決まるので前後どちらへ動いても成立する。状態を別に持たずに済む</td>
+        <td>現在位置の列を <code>MissionSet</code> に持つ（更新漏れで不整合になる）</td>
+      </tr>
+      <tr>
+        <td class="id">D-02</td><td>手番を独立したテーブルにする</td>
+        <td>1回のサイコロで「移動・ミッション・効果」が起きるため、これらの単位が要る。<strong>進行中ターンの永続化・二重ロールの防止・既出ミッションの判定が、すべてこの1テーブルで済む</strong></td>
+        <td>Visit に出目を持たせ続ける（効果による移動を表現できない）</td>
+      </tr>
+      <tr>
+        <td class="id">D-03</td><td>Visit の駅一意制約を外す</td>
+        <td>戻る・ジャンプは同じ駅を必ず通り直す。再訪は正常な状態</td>
+        <td>再訪時は既存行を UPDATE する（何度訪れたかの履歴が失われる）</td>
+      </tr>
+      <tr>
+        <td class="id">D-04</td><td>訪問の種別を5値で持つ</td>
+        <td>始点・通り道・着地・効果移動の通り道・効果移動の到達点を区別する必要がある。<strong>「ミッションを引く駅かどうか」と「歩いた道か」が別の軸</strong></td>
+        <td>BIT のフラグ2本（組み合わせに意味のないものが生じる）</td>
+      </tr>
+      <tr>
+        <td class="id">D-05</td><td>区間を駅IDで持つ（OrderNo ではなく）</td>
+        <td>路線の駅が増減しても区間の指定が壊れない</td>
+        <td><code>StartOrderNo</code> / <code>GoalOrderNo</code> を数値で持つ</td>
+      </tr>
+      <tr>
+        <td class="id">D-06</td><td>進む向きを列に持たない</td>
+        <td>Start と Goal の前後関係から必ず決まる。持つと矛盾しうる</td>
+        <td><code>Direction</code> 列を追加する</td>
+      </tr>
+      <tr>
+        <td class="id">D-07</td><td>最大出目をルーム単位にする</td>
+        <td>同じコースでも遊び方を変えられる。コース単位だと路線ごとに固定されてしまう</td>
+        <td>Course に持たせる／アプリの定数にする</td>
+      </tr>
+      <tr>
+        <td class="id">D-08</td><td>効果をミッションの列で持つ</td>
+        <td>効果は必ずミッションに付随し、単独では存在しない。別テーブルにすると常に結合が要る</td>
+        <td><code>MissionEffect</code> テーブルに分離する</td>
+      </tr>
+      <tr>
+        <td class="id">D-09</td><td>効果の種類を5値に絞る</td>
+        <td>進む・戻る・もう一度・ジャンプで、すごろくの動きはほぼ網羅できる。<strong>「1回休み」は、チームで1つのコマでは意味を持たないため入れていない</strong></td>
+        <td>汎用の効果スクリプトを持たせる（過剰）</td>
+      </tr>
+      <tr>
+        <td class="id">D-10</td><td>効果移動先ではミッションを引かない</td>
+        <td>引くと連鎖して止まらなくなる。<strong>ジャンプ先にジャンプ効果があると無限ループになる</strong></td>
+        <td>引けるようにして回数制限をかける（複雑）</td>
+      </tr>
+      <tr>
+        <td class="id">D-11</td><td>Visit にメンバー列を置かない</td>
+        <td>チーム全体で1つのコマを進めるため、記録の単位はチーム</td>
+        <td>メンバーごとに Visit を持つ</td>
+      </tr>
+      <tr>
+        <td class="id">D-12</td><td>写真の実体をDBに入れない</td>
+        <td>無料枠のストレージをすぐ消費する</td>
+        <td><code>VARBINARY(MAX)</code> で直接格納</td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer class="foot">
+  <span>02_データ設計.md</span>
+  <span>06_schema.sql</span>
+  <span>05_フロー仕様.html</span>
+  <span>08_画面仕様.html</span>
+</footer>
+
+</div>

@@ -1,0 +1,596 @@
+<meta charset="utf-8">
+<title>RailAngyer 画面仕様</title>
+
+<style>
+  :root {
+    --bg:#FBFBF9; --panel:#FFFFFF; --ink:#1A1D1A; --ink2:#545C55; --ink3:#868E87;
+    --rule:#D9DDD6; --rule2:#EEF0EB; --accent:#0B6E3F; --accent-bg:#E9F2EC;
+    --warn:#9E3A11; --warn-bg:#FAEDE6; --hl:#F2F5F0;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#131614; --panel:#1A1E1B; --ink:#E6EAE5; --ink2:#A6AEA7; --ink3:#7C847D;
+      --rule:#2F352F; --rule2:#232823; --accent:#4FC489; --accent-bg:#18291F;
+      --warn:#DE8A5A; --warn-bg:#2B1F17; --hl:#1E231F; }
+  }
+  :root[data-theme="dark"] { --bg:#131614; --panel:#1A1E1B; --ink:#E6EAE5; --ink2:#A6AEA7; --ink3:#7C847D;
+    --rule:#2F352F; --rule2:#232823; --accent:#4FC489; --accent-bg:#18291F;
+    --warn:#DE8A5A; --warn-bg:#2B1F17; --hl:#1E231F; }
+  :root[data-theme="light"] { --bg:#FBFBF9; --panel:#FFFFFF; --ink:#1A1D1A; --ink2:#545C55; --ink3:#868E87;
+    --rule:#D9DDD6; --rule2:#EEF0EB; --accent:#0B6E3F; --accent-bg:#E9F2EC;
+    --warn:#9E3A11; --warn-bg:#FAEDE6; --hl:#F2F5F0; }
+
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans);
+    font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .doc { max-width:78rem; margin:0 auto; padding:2.5rem 1.5rem 6rem;
+    display:flex; flex-direction:column; gap:2.5rem; }
+
+  .head { display:flex; flex-direction:column; gap:.75rem;
+    border-bottom:2px solid var(--ink); padding-bottom:1rem; }
+  .head h1 { font-size:1.65rem; font-weight:700; }
+  .head .sub { color:var(--ink2); font-size:.9rem; }
+  .head dl { display:grid; grid-template-columns:max-content 1fr; gap:.15rem 1rem;
+    font-size:.8rem; font-family:var(--mono); color:var(--ink2); }
+  .head dt { color:var(--ink3); }
+
+  nav.toc { background:var(--panel); border:1px solid var(--rule); padding:.75rem 1rem;
+    display:flex; flex-wrap:wrap; gap:.35rem 1.25rem; font-size:.85rem; }
+  nav.toc a { color:var(--accent); text-decoration:none; }
+  nav.toc a:hover, nav.toc a:focus-visible { text-decoration:underline; }
+
+  section { display:flex; flex-direction:column; gap:.9rem; scroll-margin-top:1rem; }
+  h2 { font-size:1.15rem; font-weight:700; padding-bottom:.35rem;
+    border-bottom:1px solid var(--ink); display:flex; align-items:baseline; gap:.6rem; }
+  h2 .n { font-family:var(--mono); color:var(--accent); font-size:.9rem; }
+  h3 { font-size:1rem; font-weight:700; margin-top:.8rem;
+    display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap;
+    border-left:3px solid var(--accent); padding-left:.6rem; }
+  h3 .n { font-family:var(--mono); color:var(--accent); font-size:.85rem; }
+  h3 .tag { font-weight:400; font-size:.75rem; color:var(--ink3); font-family:var(--mono); }
+  h4 { font-size:.85rem; font-weight:700; color:var(--ink2); margin-top:.4rem; }
+  p { font-size:.9rem; color:var(--ink2); max-width:62em; }
+  p strong, td strong, li strong { color:var(--ink); font-weight:600; }
+
+  .tw { overflow-x:auto; border:1px solid var(--rule); background:var(--panel); }
+  table { width:100%; border-collapse:collapse; font-size:.83rem; line-height:1.6; }
+  th, td { border:1px solid var(--rule); padding:.4rem .55rem; text-align:left; vertical-align:top; }
+  th { background:var(--rule2); font-weight:600; white-space:nowrap; }
+  tbody tr:hover { background:var(--hl); }
+  td.id, th.id { font-family:var(--mono); white-space:nowrap; color:var(--accent); font-weight:600; }
+  td.m, th.m { font-family:var(--mono); white-space:nowrap; }
+  td.c { text-align:center; }
+  code { font-family:var(--mono); font-size:.92em; background:var(--accent-bg);
+    padding:.05em .35em; border-radius:2px; }
+  .nw { white-space:nowrap; }
+
+  .flag { font-family:var(--mono); font-size:.72rem; padding:.05em .4em;
+    border:1px solid currentColor; border-radius:2px; white-space:nowrap; }
+  .flag.todo { color:var(--warn); background:var(--warn-bg); }
+  .flag.p1 { color:var(--accent); background:var(--accent-bg); }
+
+  .note { border-left:3px solid var(--warn); background:var(--warn-bg);
+    padding:.65rem .9rem; font-size:.85rem; color:var(--ink2); }
+  .note b { color:var(--warn); }
+
+  pre { background:var(--panel); border:1px solid var(--rule); padding:.7rem .9rem;
+    overflow-x:auto; font-family:var(--mono); font-size:.8rem; line-height:1.65; color:var(--ink2); }
+
+  .foot { border-top:1px solid var(--rule); padding-top:.9rem;
+    font-family:var(--mono); font-size:.78rem; color:var(--ink3);
+    display:flex; flex-wrap:wrap; gap:.3rem 1.5rem; }
+</style>
+
+<div class="doc">
+
+<header class="head">
+  <h1>画面仕様 <span style="font-size:.7em; color:var(--accent); font-family:var(--mono);">ver.2</span></h1>
+  <div class="sub">RailAngyer ／ iOS・SwiftUI</div>
+  <dl>
+    <dt>構成</dt><dd>タブ4本 ＋ プレイ中の全画面フロー ＋ 参加前の入口</dd>
+    <dt>画面数</dt><dd>21</dd>
+    <dt>ver.2</dt><dd>区間・最大出目の設定（SC-02）／ ミッション効果の入力（SC-12）／ 効果による移動（SC-21）を追加</dd>
+    <dt>関連</dt><dd>05_フロー仕様.html（F-xx / R-xx / Q-xx を参照） / 07_データモデル仕様.html</dd>
+  </dl>
+</header>
+
+<nav class="toc">
+  <a href="#s1">1 画面一覧</a>
+  <a href="#s2">2 画面遷移</a>
+  <a href="#s3">3 共通仕様</a>
+  <a href="#s4">4 プレイ画面</a>
+  <a href="#s5">5 準備画面</a>
+  <a href="#s6">6 記録・設定画面</a>
+  <a href="#s7">7 実装範囲</a>
+  <a href="#s8">8 未確定事項</a>
+</nav>
+
+<!-- ================= 1 ================= -->
+<section id="s1">
+  <h2><span class="n">1</span>画面一覧</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>画面</th><th>種別</th><th>役割</th><th>主なデータ</th><th>フェーズ</th></tr></thead>
+    <tbody>
+      <tr><td class="id">SC-01</td><td>スタート</td><td>全画面</td><td>未参加時の入口</td><td>—</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-02</td><td>ルーム作成・設定</td><td>全画面</td><td><strong>ルーム名・コース・区間（スタート／ゴール）・最大出目・招待コード</strong></td><td class="m">MissionSet</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-03</td><td>ルーム参加</td><td>全画面</td><td>招待コード入力・表示名の登録</td><td class="m">Member</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-04</td><td><strong>盤面</strong></td><td>タブ1</td><td><strong>主画面。路線図・現在位置・達成率・サイコロ起動</strong></td><td class="m">Station / Visit</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-05</td><td>サイコロ</td><td>全画面</td><td>振る・出目の表示</td><td>—</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-06</td><td>着地駅の告知</td><td>全画面</td><td>着地駅と通り道駅の提示</td><td class="m">Station</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-07</td><td>ナビ</td><td>全画面</td><td>次の駅までの徒歩ルート・到着監視</td><td class="m">Station</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-08</td><td>到着・写真</td><td>全画面</td><td>到着の確定・撮影</td><td class="m">Visit / Photo</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-09</td><td>ミッション</td><td>全画面</td><td>抽選結果・<strong>効果</strong>の表示・達成の記録</td><td class="m">Mission / Turn</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-21</td><td><strong>効果の適用</strong></td><td>全画面</td><td><strong>進む・戻る・ジャンプの告知と、移動先までの案内</strong></td><td class="m">Turn / Visit</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-10</td><td>クリア</td><td>全画面</td><td>踏破の総括・共有画像の書き出し</td><td class="m">Turn / Visit / Photo</td><td class="c">3</td></tr>
+      <tr><td class="id">SC-11</td><td>ミッション一覧</td><td>タブ2</td><td>駅ごとの自分の記入状況</td><td class="m">Station / Mission</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-12</td><td>ミッション編集</td><td>シート</td><td>1駅ぶんのお題の作成・差し替え・削除</td><td class="m">Mission</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-13</td><td>チーム準備状況</td><td>全画面</td><td>駅ごとのミッション数。<strong>0個の駅と、効果の偏りが分かる</strong></td><td class="m">Mission</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-14</td><td>予定一覧</td><td>タブ3</td><td>予定の一覧</td><td class="m">Schedule</td><td class="c">3</td></tr>
+      <tr><td class="id">SC-15</td><td>予定作成</td><td>シート</td><td>日時・集合場所の入力</td><td class="m">Schedule</td><td class="c">3</td></tr>
+      <tr><td class="id">SC-16</td><td>予定詳細・出欠</td><td>全画面</td><td>参加可否の表明と一覧</td><td class="m">ScheduleAttendee</td><td class="c">3</td></tr>
+      <tr><td class="id">SC-17</td><td>記録一覧</td><td>タブ4</td><td>訪れた駅の履歴</td><td class="m">Visit</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-18</td><td>駅詳細</td><td>全画面</td><td>1駅ぶんの記録・写真・ミッション結果</td><td class="m">Visit / Photo / Mission</td><td class="c">1</td></tr>
+      <tr><td class="id">SC-19</td><td>写真グリッド</td><td>全画面</td><td>全写真の一覧</td><td class="m">Photo</td><td class="c">2</td></tr>
+      <tr><td class="id">SC-20</td><td>設定</td><td>全画面</td><td>メンバー一覧・到着判定半径・記録リセット</td><td class="m">Member / Visit</td><td class="c">1</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section id="s2">
+  <h2><span class="n">2</span>画面遷移</h2>
+
+  <pre>起動
+ ├─ 未参加 ─▶ SC-01 スタート ─┬─▶ SC-02 ルーム作成 ─┐
+ │                            └─▶ SC-03 ルーム参加 ─┴─▶ タブ画面へ
+ └─ 参加済 ─▶ タブ画面
+
+タブ画面（常時）
+ ├─ SC-04 盤面 ── [サイコロを振る] ─▶ プレイの全画面フローへ
+ ├─ SC-11 ミッション一覧 ─▶ SC-12 編集シート
+ │                        └─▶ SC-13 チーム準備状況
+ ├─ SC-14 予定一覧 ─▶ SC-15 作成シート / SC-16 詳細・出欠
+ └─ SC-17 記録一覧 ─▶ SC-18 駅詳細 / SC-19 写真グリッド / SC-20 設定
+
+プレイの全画面フロー（タブを隠す）
+ SC-05 サイコロ ─▶ SC-06 着地駅の告知 ─▶ SC-07 ナビ ─▶ SC-08 到着・写真
+      ▲                                    ▲                │
+      │                                    └─ 通り道駅なら戻る ┤
+      │                                                      │ 着地駅なら
+      │                                                      ▼
+      │                                                 SC-09 ミッション
+      │                                                      │
+      │                                        ┌─────────────┴──────────────┐
+      │                                        │ 効果なし                    │ 進む/戻る/ジャンプ
+      │                          もう一度振る    │                            ▼
+      └────────────────────────────────────────┤                    SC-21 効果の適用
+                                               │                            │ 移動先まで歩く
+                                               ▼                            ▼
+                                          SC-04 盤面 ◀───────────────────────┘
+                                               │ 終了位置がゴールなら
+                                               ▼
+                                          SC-10 クリア</pre>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>遷移元</th><th>操作・契機</th><th>遷移先</th><th>条件</th></tr></thead>
+    <tbody>
+      <tr><td class="id">TR-01</td><td>SC-04</td><td>[サイコロを振る]</td><td>SC-05</td><td>状態が ST-2（待機）</td></tr>
+      <tr><td class="id">TR-02</td><td>SC-05</td><td>出目の確定</td><td>SC-06</td><td>—</td></tr>
+      <tr><td class="id">TR-03</td><td>SC-06</td><td>[向かう]</td><td>SC-07</td><td>—</td></tr>
+      <tr><td class="id">TR-04</td><td>SC-07</td><td>到着判定の成立（R-01）または手動到着（E-01）</td><td>SC-08</td><td>距離 ≦ 150m</td></tr>
+      <tr><td class="id">TR-05</td><td>SC-08</td><td>[次の駅へ]</td><td>SC-07</td><td>到着した駅が<strong>通り道駅</strong></td></tr>
+      <tr><td class="id">TR-06</td><td>SC-08</td><td>[ミッションへ]</td><td>SC-09</td><td>到着した駅が<strong>着地駅</strong> かつ 候補1件以上</td></tr>
+      <tr><td class="id">TR-07</td><td>SC-08</td><td>自動</td><td>SC-04</td><td>着地駅 かつ <strong>候補0件</strong>（R-06）。SC-09 を出さない</td></tr>
+      <tr><td class="id">TR-08</td><td>SC-09</td><td>[達成した] / [できなかった]</td><td>SC-04</td><td>効果なし（<code>EffectType=0</code>）かつ終了位置がゴールでない</td></tr>
+      <tr><td class="id">TR-09</td><td>SC-09</td><td>同上</td><td>SC-21</td><td><strong>効果が 進む／戻る／指定駅へ移動</strong></td></tr>
+      <tr><td class="id">TR-10</td><td>SC-09</td><td>同上</td><td>SC-05</td><td><strong>効果が「もう一度振る」。盤面に戻らず、そのままサイコロへ</strong>（連続上限 R-13 に達したら SC-04 へ）</td></tr>
+      <tr><td class="id">TR-11</td><td>SC-21</td><td>移動先に到着</td><td>SC-04</td><td>効果による移動が完了。<strong>移動先ではミッションを引かない</strong>（R-10）</td></tr>
+      <tr><td class="id">TR-12</td><td>SC-09 / SC-21</td><td>—</td><td>SC-10</td><td>ターンの終了位置がゴール駅（R-18）。<strong>効果で到達した場合も同じ</strong></td></tr>
+      <tr><td class="id">TR-13</td><td>SC-08 / SC-09 / SC-21</td><td>中断</td><td>SC-04</td><td>いつでも抜けられる。進行中ターンは <code>Turn</code> に残るので復帰できる</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section id="s3">
+  <h2><span class="n">3</span>共通仕様</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>項目</th><th>仕様</th></tr></thead>
+    <tbody>
+      <tr><td class="id">CM-01</td><td>ナビゲーション</td><td>通常はタブ4本。<strong>プレイの全画面フロー（SC-05〜SC-10）ではタブを隠す</strong>。歩きながら片手で次に進めるようにするため。</td></tr>
+      <tr><td class="id">CM-02</td><td>主操作は1つ</td><td>各画面の下端に、次にやることを表す主ボタンを<strong>1つだけ</strong>置く。副操作はテキストボタンにする。</td></tr>
+      <tr><td class="id">CM-03</td><td>位置情報の権限</td><td>初回起動時に用途を説明して要求。拒否された場合は、手動到着（E-01）に切り替えて進行を止めない。</td></tr>
+      <tr><td class="id">CM-04</td><td>オフライン</td><td>プレイ中の書き込みは端末ローカルを正とし、DBへは非同期に送信（E-03）。送信待ちの件数を設定画面に出す。</td></tr>
+      <tr><td class="id">CM-05</td><td>エラー表示</td><td>進行を止めるもの（位置情報が使えない）はダイアログ、止めないもの（写真の送信失敗）はトースト。</td></tr>
+      <tr><td class="id">CM-06</td><td>復帰</td><td>起動時に <code>Visit</code> と端末ローカルの進行中ターンから状態を復元し、該当画面へ直接戻る（E-05）。</td></tr>
+      <tr><td class="id">CM-07</td><td>表記</td><td>駅名は正式名称。並び順は <code>OrderNo</code> の昇順（麻生を上）。数値は等幅で桁を揃える。</td></tr>
+      <tr><td class="id">CM-08</td><td>タップ領域</td><td>歩行中の操作を想定し、主ボタンは高さ 48pt 以上。</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section id="s4">
+  <h2><span class="n">4</span>プレイ画面</h2>
+
+  <!-- SC-04 -->
+  <h3><span class="n">SC-04</span>盤面<span class="tag">タブ1 ／ 主画面 ／ フェーズ1</span></h3>
+  <h4>表示項目</h4>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>内容</th><th>データ</th><th>表示条件</th></tr></thead>
+    <tbody>
+      <tr><td>ルーム名</td><td>ナビゲーションバーのタイトル</td><td class="m">MissionSet.Name</td><td>常時</td></tr>
+      <tr><td>踏破率</td><td>「6 / 16」と割合。<strong>分母は区間内の駅数</strong></td><td>DV-06</td><td>常時</td></tr>
+      <tr><td>路線図</td><td>駅を縦一列に。訪問済みは塗る、未訪問は薄く。<strong>並び順は進む向きに従う（逆走コースなら上下が反転する）</strong></td><td class="m">Station + Visit</td><td>常時</td></tr>
+      <tr><td>区間の範囲</td><td><strong>スタート駅とゴール駅に旗を立てる。区間外の駅はさらに薄く表示し、遊ぶ範囲を明示する</strong></td><td class="m">MissionSet.Start/GoalStationId</td><td>常時（Q-14）</td></tr>
+      <tr><td>現在位置</td><td>コマのいる駅を大きなマーカーで示す</td><td>DV-01</td><td>常時</td></tr>
+      <tr><td>着地駅の印</td><td>ミッションを行った駅を区別（通り道と見分ける）</td><td class="m">Visit.VisitKind=2</td><td>着地済みの駅</td></tr>
+      <tr><td>再訪の印</td><td><strong>2回以上訪れた駅に回数を添える（戻る効果があると発生する）</strong></td><td class="m">COUNT(Visit)</td><td>訪問2回以上の駅</td></tr>
+      <tr><td>ミッション達成の印</td><td>達成済みかどうか</td><td class="m">Turn.MissionDone</td><td>着地済みの駅</td></tr>
+      <tr><td>主ボタン</td><td>[サイコロを振る]</td><td>—</td><td>状態が ST-2 のとき。ST-3 のときは [プレイに戻る]</td></tr>
+    </tbody>
+  </table></div>
+  <h4>操作</h4>
+  <div class="tw"><table>
+    <thead><tr><th>操作</th><th>条件</th><th>結果</th><th>書き込み</th></tr></thead>
+    <tbody>
+      <tr><td>[サイコロを振る]</td><td>ST-2</td><td>SC-05 へ（TR-01）</td><td>なし</td></tr>
+      <tr><td>駅をタップ</td><td>訪問済みの駅</td><td>SC-18 駅詳細へ</td><td>なし</td></tr>
+      <tr><td>[プレイに戻る]</td><td>ST-3（移動中）</td><td>SC-07 ナビへ復帰</td><td>なし</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- SC-05 -->
+  <h3><span class="n">SC-05</span>サイコロ<span class="tag">全画面 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th></tr></thead>
+    <tbody>
+      <tr><td>出発駅</td><td>現在位置の駅名を上部に表示（「さっぽろ から」）</td></tr>
+      <tr><td>サイコロ</td><td><strong><code>1〜DiceMax</code> の乱数。ルーム設定の最大出目に従う（1〜9）。</strong>面の数が6でない場合は、サイコロの見た目もそれに合わせる（9面なら数字表示など）</td></tr>
+      <tr><td>最大出目の表示</td><td><strong>「1〜3 のサイコロ」と明示する。</strong>既定の6以外を設定しているとき、参加者が誤解しないようにするため</td></tr>
+      <tr><td>主ボタン</td><td>[振る] → 出目確定後は自動で SC-06 へ</td></tr>
+      <tr><td>注意</td><td><strong>振り直しは不可</strong>。誤操作を防ぐため、振る操作は明示的なタップにする</td></tr>
+      <tr><td>書き込み</td><td><strong><code>Turn</code> を INSERT（F-01）。この時点で出目がサーバーに残るため、以降アプリが落ちても復元できる</strong></td></tr>
+      <tr><td>排他</td><td>進行中ターンがあるときは振れない。DB側でも1つに制限されており、複数端末から同時に振ると2人目はエラーになる（E-10）</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- SC-06 -->
+  <h3><span class="n">SC-06</span>着地駅の告知<span class="tag">全画面 ／ フェーズ1 ／ 重要</span></h3>
+  <p><strong>このアプリで最も誤解されやすい点（途中の駅も歩いて訪れる）を伝える画面。</strong>ここが曖昧だと、着地駅まで地下鉄で移動されてしまう。</p>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>内容</th><th>データ</th></tr></thead>
+    <tbody>
+      <tr><td>出目</td><td>「3駅 進む」</td><td>SC-05 の結果</td></tr>
+      <tr><td>着地駅</td><td>駅名を大きく。「中島公園 まで」</td><td>DV-02</td></tr>
+      <tr><td>通り道駅</td><td><strong>「途中の 大通・すすきの も1駅ずつ歩いて訪れます」と全駅名を列挙</strong></td><td>DV-03</td></tr>
+      <tr><td>超過の告知</td><td>出目が残り駅数を超えた場合「終端までなので、ここでゴールです」を追記</td><td>R-04</td></tr>
+      <tr><td>主ボタン</td><td>[○○ へ向かう]（次の駅名を入れる）</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- SC-07 -->
+  <h3><span class="n">SC-07</span>ナビ<span class="tag">全画面 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td>進捗表示</td><td>「次の駅へ　1 / 3」── 今回の出目のうち何駅目か</td><td>残りが一目で分かるようにする</td></tr>
+      <tr><td>地図</td><td>次の駅までの徒歩ルートと現在地</td><td>MapKit</td></tr>
+      <tr><td>残り距離</td><td>「大通 まで 約 620 m」</td><td>現在地と駅座標の距離</td></tr>
+      <tr><td>到着条件の明示</td><td>「半径150mに入ると到着になります」</td><td>R-01。判定基準を隠さない</td></tr>
+      <tr><td>到着判定</td><td>距離 ≦ 150m で自動的に SC-08 へ（TR-04）</td><td>監視対象は<strong>次の1駅のみ</strong>（R-02）</td></tr>
+      <tr><td>[到着した]</td><td>手動での到着操作。GPSが使えないときの逃げ道</td><td>E-01。地下駅で必要になる可能性が高い</td></tr>
+      <tr><td>[写真を撮る]</td><td>移動中でも撮れる。副操作として控えめに置く</td><td>R-11</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- SC-08 -->
+  <h3><span class="n">SC-08</span>到着・写真<span class="tag">全画面 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th><th>書き込み</th></tr></thead>
+    <tbody>
+      <tr><td>駅名</td><td>「大通 に到着」。着地駅の場合はその旨を明示</td><td>—</td></tr>
+      <tr><td>到着の記録</td><td>画面表示と同時に記録する（ユーザー操作を待たない）</td><td><code>Visit</code> 1行。通り道は <code>IsLanding=0</code>、着地駅は <code>IsLanding=1</code> ＋ <code>DiceValue</code></td></tr>
+      <tr><td>[写真を撮る]</td><td>任意。複数枚可。撮った写真はその場でサムネイル表示</td><td><code>Photo</code> 0〜N行</td></tr>
+      <tr><td>主ボタン（通り道）</td><td>[次の駅へ] → SC-07（TR-05）</td><td>—</td></tr>
+      <tr><td>主ボタン（着地・候補あり）</td><td>[ミッションへ] → SC-09（TR-06）</td><td>—</td></tr>
+      <tr><td>主ボタン（着地・候補0件）</td><td><strong>SC-09 を出さず盤面へ戻す（TR-07）</strong>。「この駅にミッションはありません」と表示してから戻す</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">
+    <b>Q-01 に依存</b> ── 候補0件のとき、何も起きずに盤面へ戻ると手応えがない。
+    表示だけで済ませるか、別の扱い（予備ミッション等）にするかは未確定。
+  </div>
+
+  <!-- SC-09 -->
+  <h3><span class="n">SC-09</span>ミッション<span class="tag">全画面 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th><th>データ・書き込み</th></tr></thead>
+    <tbody>
+      <tr><td>候補数</td><td>「この駅のミッション 3個 から」── 抽選であることを示す</td><td>7.3 のSELECT結果</td></tr>
+      <tr><td>抽選</td><td>クライアント側の乱数で1件選ぶ。選び直しは不可</td><td>R-05</td></tr>
+      <tr><td>お題</td><td>本文を大きく表示</td><td class="m">Mission.Content</td></tr>
+      <tr><td>作成者</td><td>「ケンタ が書いた」── <strong>誰のお題かを出す。身内で遊ぶ上での要</strong></td><td class="m">Member.DisplayName</td></tr>
+      <tr><td><strong>効果</strong></td><td><strong>お題に効果が付いている場合、「達成すると 2駅 進む」「終わったら 1駅 戻る」のように、実行前に明示する。</strong>効果なしのときは何も出さない</td><td class="m">Mission.EffectType / EffectValue / EffectStationId</td></tr>
+      <tr><td>[写真を撮る]</td><td>ミッションの証跡としての撮影</td><td><code>Photo</code></td></tr>
+      <tr><td>主ボタン</td><td>[達成した]</td><td><code>Turn</code> 更新：<code>SelectedMissionId</code> / <code>MissionDone=1</code></td></tr>
+      <tr><td>副ボタン</td><td>[できなかった]。<code>MissionDone=0</code> のまま次へ。<strong>暫定では、達成の可否にかかわらず効果は発動する（Q-10）</strong></td><td>—</td></tr>
+      <tr><td>遷移</td><td>効果なし → SC-04／効果で移動 → SC-21／もう一度振る → SC-05／終了位置がゴール → SC-10</td><td>TR-08〜TR-12</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- SC-21 -->
+  <h3><span class="n">SC-21</span>効果の適用<span class="tag">全画面 ／ フェーズ2 ／ ver.2 で追加</span></h3>
+  <p>ミッションの効果でコマが動くときに出す画面。<strong>効果による移動も歩く</strong>ため、実質的に SC-07 ナビの再利用になるが、
+     「なぜ動くのか」を先に伝える告知部分が要る。</p>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th><th>データ・書き込み</th></tr></thead>
+    <tbody>
+      <tr><td>効果の告知</td><td>「ラーメンを食べた → 2駅 進む」のように、<strong>お題と効果を並べて出す</strong>。何が起きたか分かるようにする</td><td class="m">Turn.AppliedEffectType</td></tr>
+      <tr><td>移動先</td><td>移動先の駅名と、<strong>そこまでの距離の目安</strong>。長距離のジャンプでは特に重要（E-09）</td><td>DV-05</td></tr>
+      <tr><td>クランプの告知</td><td><strong>ゴール／スタートで止まった場合は「区間の端まで」と明示する。</strong>指定より少なく動く理由が分からないと混乱する</td><td>R-11 / R-12</td></tr>
+      <tr><td>移動</td><td>SC-07 と同じナビ。<strong>1駅ずつ歩いて訪れる</strong>。戻る場合は既訪の駅を逆順にたどる</td><td><code>Visit</code>（<code>VisitKind=3</code> 通り道 / <code>4</code> 到達点）</td></tr>
+      <tr><td>写真</td><td>移動中も撮れる。再訪した駅では、前回とは別の訪問として写真が分かれて残る</td><td><code>Photo</code></td></tr>
+      <tr><td>ミッション</td><td><strong>移動先ではミッションを引かない。</strong>その旨を画面に明示しておかないと「なぜ何も起きないのか」となる（R-10）</td><td>—</td></tr>
+      <tr><td>主ボタン</td><td>到着後 [ターンを終える] → SC-04（TR-11）。終了位置がゴールなら SC-10</td><td><code>Turn</code> 更新（<code>EndStationId</code> / <code>CompletedAt</code>）</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">
+    <b>「もう一度振る」はこの画面を通らない</b> ── 位置が動かないため、SC-09 から直接 SC-05 サイコロへ戻る（TR-10）。
+    ただし連続回数の上限（R-13、暫定3回）に達したら通常のターン終了として SC-04 へ。
+  </div>
+
+  <!-- SC-10 -->
+  <h3><span class="n">SC-10</span>クリア<span class="tag">全画面 ／ フェーズ3</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>仕様</th></tr></thead>
+    <tbody>
+      <tr><td>総括</td><td>踏破駅数・所要時間・振った回数・ミッション達成数・写真枚数</td></tr>
+      <tr><td>足あと</td><td>路線図を全踏破の状態で表示</td></tr>
+      <tr><td>写真</td><td>撮った写真をまとめて表示</td></tr>
+      <tr><td>[共有画像を書き出す]</td><td>路線図＋写真を1枚の画像にして共有</td></tr>
+      <tr><td>[もう一度遊ぶ]</td><td>記録リセット（<code>Visit</code> の削除）。確認ダイアログを挟む</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section id="s5">
+  <h2><span class="n">5</span>準備画面</h2>
+
+  <h3><span class="n">SC-01〜03</span>入口<span class="tag">全画面 ／ フェーズ2</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>画面</th><th>入力・操作</th><th>書き込み</th><th>注意</th></tr></thead>
+    <tbody>
+      <tr><td class="id">SC-01</td><td>スタート</td><td>[ルームを作る] / [招待コードで参加]</td><td>—</td><td>参加済みなら表示せずタブ画面へ</td></tr>
+      <tr><td class="id">SC-02</td><td>ルーム作成・設定</td><td>ルーム名、コース、<strong>スタート駅・ゴール駅・最大出目</strong>、自分の表示名</td><td><code>MissionSet</code> ＋ 作成者の <code>Member</code> ＋ <code>CreatedBy</code> の更新</td><td>招待コードは自動発行。<strong>設定の詳細は下表</strong></td></tr>
+      <tr><td class="id">SC-03</td><td>ルーム参加</td><td>招待コード、表示名</td><td><code>Member</code> 1行</td><td>同一ルーム内で表示名が重複するとエラー（UQ-04）。その旨を具体的に伝える</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>SC-02 の設定項目（ver.2 で追加）</h4>
+  <div class="tw"><table>
+    <thead><tr><th>入力</th><th>UI</th><th>既定</th><th>検証・表示</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>スタート駅</td><td>コースの駅から選ぶピッカー</td><td>コースの端（麻生）</td>
+        <td>ゴールと同じ駅は選べない</td>
+      </tr>
+      <tr>
+        <td>ゴール駅</td><td>同上</td><td>コースのもう一方の端（真駒内）</td>
+        <td><strong>スタートより手前を選ぶと逆走コースになる。その旨を「真駒内 → 麻生 の向きで進みます」と即座に表示する</strong></td>
+      </tr>
+      <tr>
+        <td>最大出目</td><td>1〜9 のステッパーまたはピッカー</td><td>6</td>
+        <td><strong>1にすると「毎ターン1駅ずつ進み、区間の全駅でミッションを行います」と説明を出す</strong></td>
+      </tr>
+      <tr>
+        <td colspan="2"><strong>設定の結果として表示するもの</strong></td>
+        <td colspan="2">区間の駅数 ／ 区間の総距離の目安 ／ <strong>1ターンで歩く最大距離（最大出目 × 平均駅間）</strong> ／ 着地回数の見込み<br>
+          出目9では一度に10km近く歩くことになるため、決める前に気づけるようにする（フロー仕様 §2 の注意）</td>
+      </tr>
+      <tr>
+        <td>変更の可否</td><td colspan="3"><strong>プレイ開始後（Turn が1件でもある間）は変更できない。</strong>途中で区間を変えると、区間外を指すジャンプ効果や、区間外の訪問記録が残って整合しなくなる（T-06）</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">SC-11</span>ミッション一覧<span class="tag">タブ2 ／ フェーズ2</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th><th>データ</th></tr></thead>
+    <tbody>
+      <tr><td>自分の記入数</td><td>「自分が書いた 5 / 16駅」</td><td class="m">Mission（自分のぶん）</td></tr>
+      <tr><td>駅リスト</td><td>全駅を <code>OrderNo</code> 順に並べ、各行に自分のお題を表示。未記入は [＋ 書く]</td><td class="m">Station + Mission</td></tr>
+      <tr><td>行タップ</td><td>SC-12 編集シートを開く</td><td>—</td></tr>
+      <tr><td>[チームの準備状況]</td><td>SC-13 へ</td><td>—</td></tr>
+      <tr><td>制約の明示</td><td><strong>1駅につき自分は1個まで</strong>。書いた駅は差し替えのみで、追加はできない（UQ-05）</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">SC-12</span>ミッション編集<span class="tag">シート ／ フェーズ2</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目・操作</th><th>仕様</th><th>書き込み</th></tr></thead>
+    <tbody>
+      <tr><td>駅名</td><td>対象駅を明示（「04 北18条 のミッション」）</td><td>—</td></tr>
+      <tr><td>本文</td><td>最大300文字。空文字は保存不可</td><td>—</td></tr>
+      <tr><td><strong>効果の種類</strong></td><td><strong>なし（既定）／ 進む ／ 戻る ／ もう一度振る ／ 指定駅へ移動 から選ぶ</strong></td><td class="m">Mission.EffectType</td></tr>
+      <tr><td>効果の駅数</td><td>進む・戻るを選んだときだけ表示。1〜9</td><td class="m">Mission.EffectValue</td></tr>
+      <tr><td>移動先の駅</td><td>指定駅へ移動を選んだときだけ表示。<strong>区間内の駅しか選べない</strong>（R-16）</td><td class="m">Mission.EffectStationId</td></tr>
+      <tr><td>効果のプレビュー</td><td><strong>「この駅に着いた人は、ここから2駅戻ります（→ さっぽろ）」と、実際の移動先と距離を出す。</strong>数字だけでは影響が想像しにくい</td><td>—</td></tr>
+      <tr><td>[保存]</td><td>新規なら INSERT、既存なら UPDATE</td><td><code>Mission</code> 1行</td></tr>
+      <tr><td>[削除]</td><td>その駅の自分のお題を消す（＝その駅の候補が1つ減る）</td><td><code>Mission</code> 削除</td></tr>
+      <tr><td>他人のお題</td><td><strong>プレイ前は見せない</strong>。抽選で当たるまで伏せることで、当日の面白さを保つ</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">SC-13</span>チーム準備状況<span class="tag">全画面 ／ フェーズ2</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>仕様</th><th>データ</th></tr></thead>
+    <tbody>
+      <tr><td>駅ごとの件数</td><td>区間内の駅を並べ、集まったミッション数を表示（内容は伏せる）</td><td class="m">COUNT(Mission)</td></tr>
+      <tr><td>0個の駅</td><td><strong>強調表示する。着地しても何も起きない駅であることを準備段階で気づけるようにする</strong></td><td>—</td></tr>
+      <tr><td>効果の内訳</td><td><strong>効果つきミッションの数を種類別に集計（進む／戻る／もう一度／ジャンプ）。内容は伏せたまま件数だけ出す</strong></td><td class="m">Mission.EffectType</td></tr>
+      <tr><td>停滞の警告</td><td><strong>「戻る」の総数が区間の駅数に対して多いと、いつまでもゴールに近づかない（E-08）。目安を超えたら警告を出す</strong></td><td>—</td></tr>
+      <tr><td>区間外を指す効果</td><td><strong>ジャンプ先が区間外になっているミッションを検出して警告する（T-06）</strong></td><td class="m">Mission.EffectStationId</td></tr>
+      <tr><td>メンバー別の記入数</td><td>誰が何駅ぶん書いたか、うち効果つきが何個か</td><td class="m">Mission / Member</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">SC-14〜16</span>予定<span class="tag">タブ3 ／ フェーズ3</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>画面</th><th>内容</th><th>書き込み</th></tr></thead>
+    <tbody>
+      <tr><td class="id">SC-14</td><td>予定一覧</td><td>日時順。自分の回答状況を各行に表示</td><td>—</td></tr>
+      <tr><td class="id">SC-15</td><td>予定作成</td><td>タイトル・開始日時・集合場所</td><td><code>Schedule</code> 1行</td></tr>
+      <tr><td class="id">SC-16</td><td>予定詳細・出欠</td><td>メンバー全員の回答一覧と、自分の回答（未定／参加／不参加）</td><td><code>ScheduleAttendee</code> の追加・更新</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section id="s6">
+  <h2><span class="n">6</span>記録・設定画面</h2>
+
+  <h3><span class="n">SC-17</span>記録一覧<span class="tag">タブ4 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>仕様</th><th>データ</th></tr></thead>
+    <tbody>
+      <tr><td>手番ごとの履歴</td><td><strong>ターン単位でまとめる。「3ターン目：北18条から出目3 → 大通に着地 → ミッション → 1駅戻ってさっぽろ」</strong></td><td class="m">Turn + Visit</td></tr>
+      <tr><td>訪問の種別</td><td>着地・通り道・効果移動を見分けられるようにする</td><td class="m">Visit.VisitKind</td></tr>
+      <tr><td>再訪</td><td><strong>同じ駅が複数回出てくる。時系列で並べれば自然に読める</strong></td><td class="m">Visit</td></tr>
+      <tr><td>写真の枚数</td><td>各行にサムネイルまたは枚数</td><td class="m">Photo</td></tr>
+      <tr><td>集計</td><td>踏破率（重複を除く）・ミッション達成率・振った回数</td><td>DV-06 / DV-07</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">SC-18</span>駅詳細<span class="tag">全画面 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>仕様</th><th>表示条件</th></tr></thead>
+    <tbody>
+      <tr><td>訪問の一覧</td><td><strong>その駅への訪問を時系列で並べる。再訪していれば複数件になる</strong></td><td>常時</td></tr>
+      <tr><td>到着日時</td><td>「2026/07/30 14:22 着」</td><td>訪問ごと</td></tr>
+      <tr><td>到着の経緯</td><td>「サイコロ 3 で着地」／「通り道」／<strong>「ミッションの効果で戻ってきた」</strong></td><td class="m">VisitKind で出し分け</td></tr>
+      <tr><td>写真</td><td>グリッド表示。撮影者名を添える。<strong>訪問ごとに分かれる</strong></td><td>写真がある場合</td></tr>
+      <tr><td>ミッション</td><td>お題・作成者・効果・達成状況</td><td><strong>着地（VisitKind=2）のときのみ</strong></td></tr>
+      <tr><td>[写真を追加]</td><td>後からでも写真を足せる</td><td>常時</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">SC-19</span>写真グリッド<span class="tag">全画面 ／ フェーズ2</span></h3>
+  <p>全写真を撮影日時順に一覧。駅ごと／撮影者ごとの絞り込み。タップで拡大、SC-18 への導線。</p>
+
+  <h3><span class="n">SC-20</span>設定<span class="tag">全画面 ／ フェーズ1</span></h3>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>仕様</th><th>注意</th></tr></thead>
+    <tbody>
+      <tr><td>メンバー一覧</td><td>表示名と参加日時</td><td>—</td></tr>
+      <tr><td>招待コード</td><td>表示・コピー・共有</td><td>漏れると誰でも入れる（身内用のため許容）</td></tr>
+      <tr><td>到着判定の半径</td><td>既定150m。調整可能にする</td><td>座標が概値のうちは調整が要る（E-02）</td></tr>
+      <tr><td>未送信データ</td><td>オフライン中に溜まった件数と再送</td><td>CM-04</td></tr>
+      <tr><td>[記録をリセット]</td><td><code>Visit</code> を削除して最初から。<strong>写真も一緒に消える</strong>ことを警告する</td><td>CASCADE により <code>Photo</code> も削除される。取り消せない</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section id="s7">
+  <h2><span class="n">7</span>実装範囲（フェーズ別）</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th>フェーズ</th><th>目的</th><th>作る画面</th><th>作らない・仮で済ませるもの</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nw"><strong>1</strong> ローカルMVP</td>
+        <td>1台で「歩いて・振って・塗る」を成立させる。DB不要</td>
+        <td>SC-04 / 05 / 06 / 07 / 08 / 09 / 17 / 18 / 20</td>
+        <td>ミッションは端末内の固定データ。ルーム・メンバーの概念なし。タブは盤面と記録の2本でよい。<strong>区間と最大出目は端末内の設定として持てば、SC-02 を作らずに可変ルールを試せる</strong></td>
+      </tr>
+      <tr>
+        <td class="nw"><strong>2</strong> 共有</td>
+        <td>Azure SQL + Blob を接続し、身内で共有する</td>
+        <td>SC-01 / 02 / 03 / 11 / 12 / 13 / 19 / <strong>21</strong></td>
+        <td>予定機能は後回し。<strong>ミッション効果はフェーズ2から（自作ミッションが前提のため）</strong></td>
+      </tr>
+      <tr>
+        <td class="nw"><strong>3</strong> 体験の充実</td>
+        <td>計画と振り返り</td>
+        <td>SC-10 / 14 / 15 / 16</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <p>フェーズ1では <strong>SC-06（着地駅の告知）を省かない</strong>こと。ここを飛ばすと、途中の駅を歩くという遊びの根幹が伝わらないまま実機テストをすることになる。</p>
+</section>
+
+<!-- ================= 8 ================= -->
+<section id="s8">
+  <h2><span class="n">8</span>未確定事項</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>論点</th><th>画面への影響</th><th>暫定</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="id">Q-01</td><td>着地駅のミッションが0個のとき</td>
+        <td>SC-08 の分岐（TR-07）。何も起きずに戻ると手応えがない</td>
+        <td>メッセージを出して盤面へ戻す</td>
+      </tr>
+      <tr>
+        <td class="id">Q-02</td><td>誰がサイコロを振るか</td>
+        <td><strong>最も影響が大きい。</strong>1人が振って全員に同期するなら、SC-05〜SC-09 のすべてに「他の端末での進行を受け取る」表示が要る。到着判定も誰の端末で行うかを決める必要がある</td>
+        <td>未定。フェーズ1は単独端末で作り、判断を先送りできる</td>
+      </tr>
+      <tr>
+        <td class="id">Q-03</td><td>写真を必須にするか</td>
+        <td>SC-08 の主ボタンの活性条件</td>
+        <td>任意（撮らなくても進める）</td>
+      </tr>
+      <tr>
+        <td class="id">Q-08</td><td>他人のミッションを準備中に見せるか</td>
+        <td>SC-12 / SC-13。伏せると当日の驚きが残るが、内容の重複に気づけない</td>
+        <td>伏せる。件数だけ SC-13 で見せる</td>
+      </tr>
+      <tr>
+        <td class="id">Q-09</td><td>ミッションの未達成を許すか</td>
+        <td>SC-09 に [できなかった] を置くかどうか</td>
+        <td>置く。<code>MissionDone=0</code> のまま進める</td>
+      </tr>
+      <tr>
+        <td class="id">Q-10</td><td>効果の発動条件</td>
+        <td>SC-09 の表示。「達成すると2駅進む」なのか「終わったら2駅進む」なのかで文言が変わる。<strong>③（達成なら進む／未達成なら戻る）にすると、SC-12 で2つの効果を入力させる必要がある</strong></td>
+        <td>達成の可否にかかわらず発動</td>
+      </tr>
+      <tr>
+        <td class="id">Q-11</td><td>「もう一度振る」の連鎖上限</td>
+        <td>SC-09 → SC-05 のループ。上限に達したときの表示が要る</td>
+        <td>3回</td>
+      </tr>
+      <tr>
+        <td class="id">Q-12</td><td>再訪時のミッション</td>
+        <td>SC-09 の候補件数の表示。既出を除外すると「3個から」が「1個から」に減る</td>
+        <td>既出を除外</td>
+      </tr>
+      <tr>
+        <td class="id">Q-13</td><td>効果を書ける人・数の制限</td>
+        <td>SC-12 の入力制限、SC-13 の警告の強さ。<strong>全員が「戻る」を書くと進まなくなる</strong></td>
+        <td>制限せず、SC-13 で可視化して気づかせる</td>
+      </tr>
+      <tr>
+        <td class="id">Q-14</td><td>区間外の駅の表示</td>
+        <td>SC-04 の路線図。出さないか、薄く出すか</td>
+        <td>薄く出す（路線全体での位置が分かる）</td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer class="foot">
+  <span>01_企画仕様書.md</span>
+  <span>04_ロードマップ.md</span>
+  <span>05_フロー仕様.html</span>
+  <span>07_データモデル仕様.html</span>
+</footer>
+
+</div>

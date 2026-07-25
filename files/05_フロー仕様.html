@@ -1,0 +1,500 @@
+<meta charset="utf-8">
+<title>RailAngyer プレイフロー仕様</title>
+
+<style>
+  :root {
+    --bg:#FBFBF9; --panel:#FFFFFF; --ink:#1A1D1A; --ink2:#545C55; --ink3:#868E87;
+    --rule:#D9DDD6; --rule2:#EEF0EB; --accent:#0B6E3F; --accent-bg:#E9F2EC;
+    --warn:#9E3A11; --warn-bg:#FAEDE6; --hl:#F2F5F0;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#131614; --panel:#1A1E1B; --ink:#E6EAE5; --ink2:#A6AEA7; --ink3:#7C847D;
+      --rule:#2F352F; --rule2:#232823; --accent:#4FC489; --accent-bg:#18291F;
+      --warn:#DE8A5A; --warn-bg:#2B1F17; --hl:#1E231F; }
+  }
+  :root[data-theme="dark"] { --bg:#131614; --panel:#1A1E1B; --ink:#E6EAE5; --ink2:#A6AEA7; --ink3:#7C847D;
+    --rule:#2F352F; --rule2:#232823; --accent:#4FC489; --accent-bg:#18291F;
+    --warn:#DE8A5A; --warn-bg:#2B1F17; --hl:#1E231F; }
+  :root[data-theme="light"] { --bg:#FBFBF9; --panel:#FFFFFF; --ink:#1A1D1A; --ink2:#545C55; --ink3:#868E87;
+    --rule:#D9DDD6; --rule2:#EEF0EB; --accent:#0B6E3F; --accent-bg:#E9F2EC;
+    --warn:#9E3A11; --warn-bg:#FAEDE6; --hl:#F2F5F0; }
+
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans);
+    font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .doc { max-width:78rem; margin:0 auto; padding:2.5rem 1.5rem 6rem;
+    display:flex; flex-direction:column; gap:2.5rem; }
+
+  .head { display:flex; flex-direction:column; gap:.75rem;
+    border-bottom:2px solid var(--ink); padding-bottom:1rem; }
+  .head h1 { font-size:1.65rem; font-weight:700; }
+  .head .sub { color:var(--ink2); font-size:.9rem; }
+  .head dl { display:grid; grid-template-columns:max-content 1fr; gap:.15rem 1rem;
+    font-size:.8rem; font-family:var(--mono); color:var(--ink2); }
+  .head dt { color:var(--ink3); }
+
+  nav.toc { background:var(--panel); border:1px solid var(--rule); padding:.75rem 1rem;
+    display:flex; flex-wrap:wrap; gap:.35rem 1.25rem; font-size:.85rem; }
+  nav.toc a { color:var(--accent); text-decoration:none; }
+  nav.toc a:hover, nav.toc a:focus-visible { text-decoration:underline; }
+
+  section { display:flex; flex-direction:column; gap:.9rem; scroll-margin-top:1rem; }
+  h2 { font-size:1.15rem; font-weight:700; padding-bottom:.35rem;
+    border-bottom:1px solid var(--ink); display:flex; align-items:baseline; gap:.6rem; }
+  h2 .n { font-family:var(--mono); color:var(--accent); font-size:.9rem; }
+  h3 { font-size:1rem; font-weight:700; margin-top:.6rem; }
+  h3 .n { font-family:var(--mono); color:var(--accent); font-size:.85rem; margin-right:.5rem; }
+  p { font-size:.9rem; color:var(--ink2); max-width:62em; }
+  p strong, td strong, li strong { color:var(--ink); font-weight:600; }
+
+  .tw { overflow-x:auto; border:1px solid var(--rule); background:var(--panel); }
+  table { width:100%; border-collapse:collapse; font-size:.83rem; line-height:1.6; }
+  th, td { border:1px solid var(--rule); padding:.4rem .55rem; text-align:left; vertical-align:top; }
+  th { background:var(--rule2); font-weight:600; white-space:nowrap; }
+  tbody tr:hover { background:var(--hl); }
+  td.id, th.id { font-family:var(--mono); white-space:nowrap; color:var(--accent); font-weight:600; }
+  td.c { text-align:center; }
+  code { font-family:var(--mono); font-size:.92em; background:var(--accent-bg);
+    padding:.05em .35em; border-radius:2px; }
+  .nw { white-space:nowrap; }
+
+  .flag { font-family:var(--mono); font-size:.72rem; padding:.05em .4em;
+    border:1px solid currentColor; border-radius:2px; white-space:nowrap; }
+  .flag.todo { color:var(--warn); background:var(--warn-bg); }
+  .flag.fix  { color:var(--accent); background:var(--accent-bg); }
+  .flag.new  { color:var(--accent); background:var(--accent-bg); }
+
+  .note { border-left:3px solid var(--warn); background:var(--warn-bg);
+    padding:.65rem .9rem; font-size:.85rem; color:var(--ink2); }
+  .note b { color:var(--warn); }
+
+  pre { background:var(--panel); border:1px solid var(--rule); padding:.7rem .9rem;
+    overflow-x:auto; font-family:var(--mono); font-size:.8rem; line-height:1.6; color:var(--ink2); }
+
+  .foot { border-top:1px solid var(--rule); padding-top:.9rem;
+    font-family:var(--mono); font-size:.78rem; color:var(--ink3);
+    display:flex; flex-wrap:wrap; gap:.3rem 1.5rem; }
+</style>
+
+<div class="doc">
+
+<header class="head">
+  <h1>プレイフロー仕様 <span style="font-size:.7em; color:var(--accent); font-family:var(--mono);">ver.2</span></h1>
+  <div class="sub">RailAngyer ／ 歩いて駅を巡る徒歩すごろく</div>
+  <dl>
+    <dt>ver.2</dt><dd>区間の自由設定 ／ 最大出目 1〜9 ／ ミッション効果（進む・戻る・ジャンプ・もう一度）に対応</dd>
+    <dt>コース</dt><dd>札幌市営地下鉄 南北線 16駅（区間はルームごとに設定）</dd>
+    <dt>関連</dt><dd>06_schema.sql / 07_データモデル仕様.html / 08_画面仕様.html</dd>
+  </dl>
+</header>
+
+<nav class="toc">
+  <a href="#s1">1 前提</a>
+  <a href="#s2">2 ルーム設定</a>
+  <a href="#s3">3 用語</a>
+  <a href="#s4">4 ミッション効果</a>
+  <a href="#s5">5 状態遷移</a>
+  <a href="#s6">6 ターンの手順</a>
+  <a href="#s7">7 判定ルール</a>
+  <a href="#s8">8 例外・エラー</a>
+  <a href="#s9">9 データ書き込み</a>
+  <a href="#s10">10 未確定事項</a>
+</nav>
+
+<!-- ================= 1 ================= -->
+<section id="s1">
+  <h2><span class="n">1</span>前提</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>項目</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P-01</td><td>コマ</td><td>チーム全体で<strong>1つ</strong>。個人ごとの駒は持たない。</td></tr>
+      <tr><td class="id">P-02</td><td>サイコロ</td><td>出目は <code>1〜DiceMax</code>。<strong>DiceMax はルームごとに 1〜9 で設定できる</strong>（既定6）。出た目の数だけ駅を進む。</td></tr>
+      <tr><td class="id">P-03</td><td>移動</td><td>徒歩のみ。<strong>通過する駅も1駅ずつ実際に到達する</strong>。これは効果による移動（戻る・ジャンプ）でも同じ。</td></tr>
+      <tr><td class="id">P-04</td><td>ミッション</td><td>出目による<strong>着地駅でのみ</strong>実行。通り道の駅と、効果による移動先では実行しない。</td></tr>
+      <tr><td class="id">P-05</td><td>ミッションの用意</td><td>準備フェーズで、各メンバーが駅ごとに1個まで（0個可）作成する。</td></tr>
+      <tr><td class="id">P-06</td><td>ミッション効果</td><td>ミッションは「進む」「戻る」「もう一度振る」「指定駅へ移動」の効果を持てる。効果なしが通常のお題。</td></tr>
+      <tr><td class="id">P-07</td><td>進行方向</td><td>サイコロによる移動は常にゴール方向。<strong>戻るのは効果によるときだけ</strong>。振り直しはない。</td></tr>
+      <tr><td class="id">P-08</td><td>区間</td><td>スタート駅とゴール駅は<strong>ルームごとに自由に設定</strong>。コースの一部区間でも、逆方向でもよい。</td></tr>
+      <tr><td class="id">P-09</td><td>クリア</td><td>コマがゴール駅に到達した時点。出目が残り駅数を超えてもそのままゴール。</td></tr>
+      <tr><td class="id">P-10</td><td>抽選の実行場所</td><td>クライアント（アプリ）側の乱数。サーバーに抽選ロジックは置かない。</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section id="s2">
+  <h2><span class="n">2</span>ルーム設定（可変ルール）</h2>
+  <p>同じコース（南北線）でも、ルームごとに違う遊び方ができる。設定はルーム作成時に決め、プレイ開始後は変更しない。</p>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>設定</th><th>値</th><th>既定</th><th>効果</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="id">CF-01</td><td>スタート駅</td><td>コース内の任意の駅</td><td>コースの端</td>
+        <td>ここからコマが動き始める。戻る効果でも<strong>ここより手前には戻らない</strong>（R-12）</td>
+      </tr>
+      <tr>
+        <td class="id">CF-02</td><td>ゴール駅</td><td>コース内の任意の駅（スタートと異なる）</td><td>コースのもう一方の端</td>
+        <td>ここに到達でクリア。進む効果でも<strong>ここを超えない</strong>（R-11）</td>
+      </tr>
+      <tr>
+        <td class="id">CF-03</td><td>進む向き</td><td>自動（設定不要）</td><td>—</td>
+        <td>スタートとゴールの前後関係から決まる。<strong>ゴールがスタートより手前なら、逆方向に進むコースになる</strong></td>
+      </tr>
+      <tr>
+        <td class="id">CF-04</td><td>最大出目</td><td>1〜9 の整数</td><td>6</td>
+        <td>サイコロは 1〜この値の一様乱数。小さくすると着地回数が増え、ミッションを多く消化する</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">2.1</span>設定の組み合わせ例</h3>
+  <div class="tw"><table>
+    <thead><tr><th>遊び方</th><th>スタート</th><th>ゴール</th><th>最大出目</th><th>区間駅数</th><th>着地回数の目安</th><th>狙い</th></tr></thead>
+    <tbody>
+      <tr><td>全線通し（既定）</td><td>麻生</td><td>真駒内</td><td class="c">6</td><td class="c">16</td><td class="c">4〜6</td><td>半日かけて南北線を踏破する</td></tr>
+      <tr><td>半日・短距離</td><td>さっぽろ</td><td>中の島</td><td class="c">3</td><td class="c">6</td><td class="c">2〜4</td><td>都心部だけを軽く。移動距離を抑える</td></tr>
+      <tr><td>全駅ミッション</td><td>麻生</td><td>真駒内</td><td class="c">1</td><td class="c">16</td><td class="c">15</td><td><strong>毎ターン必ず1駅ずつ進むので、全駅が着地駅になる</strong></td></tr>
+      <tr><td>逆走コース</td><td>真駒内</td><td>麻生</td><td class="c">6</td><td class="c">16</td><td class="c">4〜6</td><td>2回目以降の再挑戦で景色を変える</td></tr>
+      <tr><td>大味・長距離</td><td>麻生</td><td>真駒内</td><td class="c">9</td><td class="c">16</td><td class="c">2〜4</td><td>歩く距離を長くし、ミッションを絞る</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <b>注意</b> ── 最大出目を大きくすると、<strong>1ターンあたりの徒歩距離が伸びる</strong>。
+    南北線の駅間は概ね800m〜1.5kmなので、出目9では一度に10km近く歩くことになる。
+    設定画面には、区間の総距離と1ターンの最大距離の目安を出しておくとよい（画面仕様 SC-02）。
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section id="s3">
+  <h2><span class="n">3</span>用語</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th>用語</th><th>定義</th><th>データ上の対応</th></tr></thead>
+    <tbody>
+      <tr><td class="nw">ターン</td><td><strong>サイコロを1回振ってから、効果の適用まで</strong>を1ターンとする。ゲームの進行単位。</td><td><code>Turn</code> 1行</td></tr>
+      <tr><td class="nw">現在位置</td><td>コマのいる駅。<strong>最後に完了したターンの終了位置</strong>。1ターンも完了していなければスタート駅。</td><td><code>Turn.EndStationId</code>（TurnNo 最大の完了行）</td></tr>
+      <tr><td class="nw">進む向き</td><td>スタートからゴールへ向かう向き。<code>+1</code>（駅番号が増える）または <code>-1</code>（減る）。</td><td>導出値。<code>Start.OrderNo</code> と <code>Goal.OrderNo</code> の大小</td></tr>
+      <tr><td class="nw">出目</td><td>サイコロの結果。<code>1〜DiceMax</code>。そのまま進む駅数。</td><td><code>Turn.DiceValue</code></td></tr>
+      <tr><td class="nw">着地駅</td><td>出目による移動先。<strong>ミッションを引く唯一の駅</strong>。</td><td><code>Turn.LandingStationId</code></td></tr>
+      <tr><td class="nw">通り道駅</td><td>現在位置から着地駅までの間の駅。歩いて訪れるがミッションは引かない。</td><td><code>Visit.VisitKind = 1</code></td></tr>
+      <tr><td class="nw">終了位置</td><td>ミッション効果を適用した後の、そのターンの最終位置。効果がなければ着地駅と同じ。</td><td><code>Turn.EndStationId</code></td></tr>
+      <tr><td class="nw">効果</td><td>ミッションに付けられる移動の指示。進む・戻る・もう一度振る・指定駅へ移動。</td><td><code>Mission.EffectType</code></td></tr>
+      <tr><td class="nw">区間</td><td>スタート駅からゴール駅までの範囲。この外の駅は盤面に出さない。</td><td><code>MissionSet.StartStationId</code> / <code>GoalStationId</code></td></tr>
+      <tr><td class="nw">踏破率</td><td>区間内の駅のうち、一度でも訪れた駅の割合。<strong>再訪は重複して数えない</strong>。</td><td><code>COUNT(DISTINCT Visit.StationId) / 区間駅数</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section id="s4">
+  <h2><span class="n">4</span>ミッション効果</h2>
+  <p>ミッションは「お題」に加えて、コマを動かす効果を持てる。効果なし（通常のお題）が既定。</p>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">値</th><th>効果</th><th>付随する指定</th><th>コマの動き</th><th>歩くか</th><th>クランプ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="id">0</td><td>なし</td><td>—</td>
+        <td>動かない。終了位置＝着地駅</td><td class="c">—</td><td>—</td>
+      </tr>
+      <tr>
+        <td class="id">1</td><td>進む</td><td>駅数（1〜9）</td>
+        <td>ゴール方向へその駅数だけ進む</td><td class="c"><strong>歩く</strong></td><td>ゴールを超えない</td>
+      </tr>
+      <tr>
+        <td class="id">2</td><td>戻る</td><td>駅数（1〜9）</td>
+        <td>スタート方向へその駅数だけ戻る</td><td class="c"><strong>歩く</strong></td><td>スタートより手前へは戻らない</td>
+      </tr>
+      <tr>
+        <td class="id">3</td><td>もう一度振る</td><td>—</td>
+        <td>位置は動かない。そのまま次のターンを始める</td><td class="c">—</td><td>連続回数に上限あり（R-13）</td>
+      </tr>
+      <tr>
+        <td class="id">4</td><td>指定駅へ移動</td><td>移動先の駅</td>
+        <td>その駅へ飛ぶ。前でも後ろでもよい</td><td class="c"><strong>歩く</strong></td><td>区間外の駅は指定できない</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">4.1</span>効果の書き方（例）</h3>
+  <div class="tw"><table>
+    <thead><tr><th>駅</th><th>お題</th><th>効果</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td class="nw">北24条</td><td>商店街で一番安い自販機を見つける</td><td class="nw">なし</td><td>その場で終わり。次のサイコロへ</td></tr>
+      <tr><td class="nw">大通</td><td>時計台の方角を指差しで当てる。外したら…</td><td class="nw">戻る 1駅</td><td>すすきの（1駅手前）まで歩いて戻る</td></tr>
+      <tr><td class="nw">すすきの</td><td>ラーメンを食べる。食べたら元気に</td><td class="nw">進む 2駅</td><td>幌平橋まで歩いて進む。ミッションは引かない</td></tr>
+      <tr><td class="nw">中島公園</td><td>ベンチで5分休憩</td><td class="nw">もう一度振る</td><td>位置はそのまま、すぐ次のサイコロ</td></tr>
+      <tr><td class="nw">平岸</td><td>この区間で一番思い出深い駅を全員で決める</td><td class="nw">指定駅へ移動（さっぽろ）</td><td>さっぽろまで歩いて戻る。長距離になるので注意</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <b>効果の発動タイミング</b> ── <strong>暫定では「達成・未達成にかかわらず、ミッションを終えた時点で発動」</strong>とする。
+    すごろくの「このマスに止まったら戻る」と同じ扱い。
+    「達成したときだけ発動する」に変える案もある（未確定 Q-10）。
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section id="s5">
+  <h2><span class="n">5</span>状態遷移</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">状態</th><th>名称</th><th>Turn の状態</th><th>次にできること</th><th>遷移条件</th><th>遷移先</th></tr></thead>
+    <tbody>
+      <tr><td class="id">ST-1</td><td>準備中</td><td>0件</td><td>ミッション記入・予定調整</td><td>プレイ開始</td><td>ST-2</td></tr>
+      <tr><td class="id">ST-2</td><td>待機</td><td>すべて完了済み</td><td>サイコロを振る</td><td>振った（Turn を INSERT）</td><td>ST-3</td></tr>
+      <tr><td class="id">ST-3</td><td>移動中</td><td>進行中（<code>EndStationId</code> が NULL、<code>ArrivedAt</code> が NULL）</td><td>次の駅へ歩く／写真</td><td>通り道駅に到着（残りあり）</td><td>ST-3</td></tr>
+      <tr><td class="id"></td><td></td><td></td><td></td><td>着地駅に到着</td><td>ST-4</td></tr>
+      <tr><td class="id">ST-4</td><td>着地</td><td>進行中（<code>ArrivedAt</code> あり）</td><td>写真・ミッション抽選</td><td>候補1件以上</td><td>ST-5</td></tr>
+      <tr><td class="id"></td><td></td><td></td><td></td><td>候補0件（R-08）</td><td>ST-6</td></tr>
+      <tr><td class="id">ST-5</td><td>ミッション実行中</td><td>進行中</td><td>達成／未達成を記録</td><td>記録した</td><td>ST-6</td></tr>
+      <tr><td class="id">ST-6</td><td>効果の適用</td><td>進行中</td><td>効果による移動</td><td>効果なし／もう一度振る</td><td>ST-7</td></tr>
+      <tr><td class="id"></td><td></td><td></td><td></td><td>進む／戻る／ジャンプ</td><td>ST-3'（効果移動）→ ST-7</td></tr>
+      <tr><td class="id">ST-7</td><td>ターン終了</td><td>完了（<code>EndStationId</code> 確定）</td><td>—</td><td>終了位置がゴール</td><td>ST-8</td></tr>
+      <tr><td class="id"></td><td></td><td></td><td></td><td>それ以外</td><td>ST-2</td></tr>
+      <tr><td class="id">ST-8</td><td>クリア</td><td>—</td><td>振り返り・共有・リセット</td><td>記録リセット</td><td>ST-1</td></tr>
+    </tbody>
+  </table></div>
+
+  <pre>ST-1 準備中 ─▶ ST-2 待機 ◀──────────────────────────────┐
+                  │ サイコロを振る（Turn を作る）            │
+                  ▼                                        │
+               ST-3 移動中 ─┐ 通り道駅に到着                 │
+                  │        └─▶ ST-3（出目の数だけ繰り返す）   │
+                  │ 着地駅に到着                             │
+                  ▼                                        │
+               ST-4 着地 ─── 候補0件 ──────────┐            │
+                  │ 候補1件以上                │            │
+                  ▼                           │            │
+               ST-5 ミッション実行中 ──────────┤            │
+                                              ▼            │
+                                       ST-6 効果の適用      │
+                                          │      │         │
+                          効果なし / もう一度│      │ 進む/戻る/ジャンプ
+                                          │      ▼         │
+                                          │  ST-3' 効果移動（歩く）
+                                          │      │         │
+                                          ▼      ▼         │
+                                       ST-7 ターン終了 ─────┤
+                                              │ 終了位置＝ゴール
+                                              ▼
+                                          ST-8 クリア</pre>
+</section>
+
+<!-- ================= 6 ================= -->
+<section id="s6">
+  <h2><span class="n">6</span>ターンの手順</h2>
+
+  <div class="tw"><table>
+    <thead><tr>
+      <th class="id">手順</th><th>操作・契機</th><th>実行条件</th><th>システムの処理</th><th>DB書き込み</th><th>次</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="id">F-01</td><td>サイコロを振る</td><td>ST-2</td>
+        <td><code>1〜DiceMax</code> の乱数。<code>着地 = 現在位置 + 向き × 出目</code>、ゴールでクランプ（R-04 / R-11）。</td>
+        <td><strong><code>Turn</code> を INSERT</strong>（<code>TurnNo</code> / <code>FromStationId</code> / <code>DiceValue</code> / <code>LandingStationId</code>）。<code>EndStationId</code> は NULL＝進行中</td>
+        <td>F-02</td>
+      </tr>
+      <tr>
+        <td class="id">F-02</td><td>着地駅の告知</td><td>F-01 完了</td>
+        <td>出目・着地駅・通り道駅を表示。「途中の駅も歩いて訪れる」ことを明示。</td>
+        <td class="nw">なし</td><td>F-03</td>
+      </tr>
+      <tr>
+        <td class="id">F-03</td><td>次の駅へ歩く</td><td>未到着の駅が残る</td>
+        <td>進む向きに沿って次の1駅のみを監視対象にする（R-02）。</td>
+        <td class="nw">なし</td><td>F-04</td>
+      </tr>
+      <tr>
+        <td class="id">F-04</td><td>駅に到着</td><td>距離 ≦ 150m（R-01）</td>
+        <td>到着とみなす。着地駅かどうかを判定。</td>
+        <td><code>Visit</code> 1行 <code>VisitKind=1</code>（通り道）</td>
+        <td>着地駅なら F-06、それ以外は F-05</td>
+      </tr>
+      <tr>
+        <td class="id">F-05</td><td>写真を撮る</td><td>任意</td>
+        <td>撮影 → Blob へアップロード。複数メンバー・複数枚可。</td>
+        <td><code>Photo</code> 0〜N行</td><td>F-03 に戻る</td>
+      </tr>
+      <tr>
+        <td class="id">F-06</td><td>着地駅に到着</td><td>到着した駅 = 着地駅</td>
+        <td>着地として記録。</td>
+        <td><code>Visit</code> 1行 <code>VisitKind=2</code>／<code>Turn.ArrivedAt</code> を更新</td>
+        <td>F-07</td>
+      </tr>
+      <tr>
+        <td class="id">F-07</td><td>ミッション抽選</td><td>F-06 完了</td>
+        <td>着地駅のミッションを取得。既に引いたものは除外（R-14）。<strong>0件なら F-10 へ</strong>（R-08）。</td>
+        <td class="nw">読み取りのみ</td>
+        <td>1件以上: F-08 ／ 0件: F-10</td>
+      </tr>
+      <tr>
+        <td class="id">F-08</td><td>ミッション実行</td><td>抽選済み</td>
+        <td>お題・作成者・<strong>効果</strong>を表示。達成／未達成を記録。</td>
+        <td><code>Turn</code> 更新（<code>SelectedMissionId</code> / <code>MissionDone</code>）</td>
+        <td>F-09</td>
+      </tr>
+      <tr>
+        <td class="id">F-09</td><td>効果の適用</td><td>F-08 完了</td>
+        <td>効果の種類で分岐。移動を伴う場合は移動先を算出し、区間の端でクランプ（R-11 / R-12）。</td>
+        <td><code>Turn.AppliedEffectType</code> を記録</td>
+        <td>移動あり: F-11 ／ 移動なし: F-10</td>
+      </tr>
+      <tr>
+        <td class="id">F-10</td><td>ターン終了</td><td>移動が完了</td>
+        <td>終了位置を確定。ゴールならクリアへ。「もう一度振る」なら休まず F-01 へ。</td>
+        <td><code>Turn</code> 更新（<code>EndStationId</code> / <code>CompletedAt</code>）＝<strong>進行中でなくなる</strong></td>
+        <td>F-01 ／ クリア</td>
+      </tr>
+      <tr>
+        <td class="id">F-11</td><td>効果による移動</td><td>効果が 進む／戻る／ジャンプ</td>
+        <td>移動先まで1駅ずつ歩く。<strong>途中も終点もミッションは引かない</strong>（R-10）。写真は撮れる。</td>
+        <td><code>Visit</code> 複数行 <code>VisitKind=3</code>（通り道）／<code>4</code>（到達点）</td>
+        <td>F-10</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">6.1</span>進行例 ── さっぽろ→中の島 の区間、最大出目3、効果あり</h3>
+  <div class="tw"><table>
+    <thead><tr><th>ターン</th><th>開始</th><th>出目</th><th>着地</th><th>ミッション</th><th>効果</th><th>終了位置</th><th>訪問記録</th></tr></thead>
+    <tbody>
+      <tr><td class="c">開始</td><td>—</td><td class="c">—</td><td>—</td><td>—</td><td>—</td><td>06 さっぽろ</td><td>始点1行（Kind 0）</td></tr>
+      <tr><td class="c">1</td><td>06 さっぽろ</td><td class="c">2</td><td>08 すすきの</td><td>ラーメンを食べる</td><td class="nw">進む 2</td><td><strong>10 幌平橋</strong></td><td>通り道1（07）＋着地1（08）＋効果移動2（09・10）</td></tr>
+      <tr><td class="c">2</td><td>10 幌平橋</td><td class="c">3</td><td>11 中の島（ゴール手前でクランプ）</td><td>—（0個）</td><td>—</td><td><strong>11 中の島</strong></td><td>着地1（11）</td></tr>
+      <tr><td class="c">計</td><td colspan="6">2ターンでクリア。訪問6駅（06〜11）、着地2回、ミッション実行1回</td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p>ターン2では、現在位置10 ＋ 出目3 = 13 だがゴールが11のため<strong>11でクランプ</strong>（R-11）。区間外の12以降へは進まない。</p>
+
+  <h3><span class="n">6.2</span>戻る効果を含む例</h3>
+  <div class="tw"><table>
+    <thead><tr><th>ターン</th><th>開始</th><th>出目</th><th>着地</th><th>効果</th><th>終了位置</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td class="c">3</td><td>04 北18条</td><td class="c">3</td><td>07 大通</td><td class="nw">戻る 1</td><td>06 さっぽろ</td><td>大通から さっぽろ まで歩いて戻る。<strong>さっぽろは再訪</strong></td></tr>
+      <tr><td class="c">4</td><td>06 さっぽろ</td><td class="c">2</td><td>08 すすきの</td><td class="nw">なし</td><td>08 すすきの</td><td>07 大通 も再訪。<strong>踏破率は増えない</strong>（既訪のため）</td></tr>
+    </tbody>
+  </table></div>
+  <p>戻ると同じ駅を複数回訪れる。訪問記録は<strong>そのつど1行ずつ積む</strong>ので、同じ駅で別の日時・別の写真を残せる。踏破率だけは重複を除いて数える（R-15）。</p>
+</section>
+
+<!-- ================= 7 ================= -->
+<section id="s7">
+  <h2><span class="n">7</span>判定ルール</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>ルール</th><th>内容</th><th>状態</th></tr></thead>
+    <tbody>
+      <tr><td class="id">R-01</td><td>到着判定</td><td>端末の現在地と駅座標の距離が <strong>150m 以下</strong>で到着。半径は設定で変更可能。</td><td><span class="flag fix">確定</span></td></tr>
+      <tr><td class="id">R-02</td><td>到着の順序</td><td>進む向きに沿って1駅ずつ判定する。監視対象は常に「次の1駅」だけ。先の駅の圏内に入っても到着扱いにしない。</td><td><span class="flag fix">確定</span></td></tr>
+      <tr><td class="id">R-03</td><td>進む向き</td><td><code>向き = スタートのOrderNo &lt; ゴールのOrderNo ? +1 : -1</code>。逆方向の区間も同じ計算で扱える。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-04</td><td>着地駅の算出</td><td><code>着地 = 現在位置 + 向き × 出目</code>。区間の端でクランプ（R-11）。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-05</td><td>出目の範囲</td><td><code>1〜DiceMax</code> の一様乱数。<code>DiceMax</code> はルーム設定で 1〜9。<strong>1に設定すると必ず1駅ずつ進む</strong>。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-06</td><td>出目の超過</td><td>残り駅数より大きい目が出ても、ゴールまで進んでクリア。振り直しも戻りもしない。</td><td><span class="flag fix">確定</span></td></tr>
+      <tr><td class="id">R-07</td><td>抽選対象</td><td>着地駅に紐づくミッション全件。候補数の上限はメンバー数（1人1駅1個まで）。</td><td><span class="flag fix">確定</span></td></tr>
+      <tr><td class="id">R-08</td><td>候補0件のとき</td><td>ミッションを実行せず、効果もなくターンを終える。<strong>暫定</strong>。</td><td><span class="flag todo">未確定 Q-01</span></td></tr>
+      <tr><td class="id">R-09</td><td>効果の発動</td><td>ミッションを終えた時点で発動する。<strong>達成・未達成にかかわらず発動する（暫定）</strong>。</td><td><span class="flag todo">未確定 Q-10</span></td></tr>
+      <tr><td class="id">R-10</td><td>効果移動先での抽選</td><td><strong>効果で移動した先ではミッションを引かない</strong>。通り道も同じ。連鎖して止まらなくなるのを防ぐため。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-11</td><td>ゴール側のクランプ</td><td>出目でも進む効果でも、<strong>ゴールを超えない</strong>。超える分は切り捨ててゴールに止まる。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-12</td><td>スタート側のクランプ</td><td>戻る効果でも、<strong>スタート駅より手前には戻らない</strong>。区間外へは出ない。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-13</td><td>「もう一度振る」の連鎖</td><td>連続で発動しうるため<strong>上限を設ける（暫定3回）</strong>。上限に達したら効果を無視して通常のターン終了にする。</td><td><span class="flag todo">未確定 Q-11</span></td></tr>
+      <tr><td class="id">R-14</td><td>ミッションの再抽選</td><td>戻る効果で同じ駅に再度着地した場合、<strong>すでに引いたミッションは候補から除外する</strong>（暫定）。全部引き終えていれば0件扱い。</td><td><span class="flag todo">未確定 Q-12</span></td></tr>
+      <tr><td class="id">R-15</td><td>再訪の記録</td><td>同じ駅を何度訪れても、そのつど訪問記録を1行積む。<strong>踏破率は重複を除いて数える</strong>。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-16</td><td>ジャンプ先の制限</td><td>指定駅へ移動の移動先は、<strong>区間内の駅に限る</strong>。区間外は選択させない。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-17</td><td>始点の記録</td><td>プレイ開始時、スタート駅を <code>VisitKind=0</code> で記録する。踏破率の分子に含める。</td><td><span class="flag fix">確定</span></td></tr>
+      <tr><td class="id">R-18</td><td>クリア判定</td><td>ターンの終了位置がゴール駅に一致した時点。<strong>効果で到達した場合も同じ</strong>。</td><td><span class="flag new">ver.2</span></td></tr>
+      <tr><td class="id">R-19</td><td>写真の要否</td><td>任意。着地・通り道・効果移動のいずれでも撮れる。</td><td><span class="flag todo">未確定 Q-03</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section id="s8">
+  <h2><span class="n">8</span>例外・エラー処理</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>事象</th><th>発生条件</th><th>影響</th><th>対処</th></tr></thead>
+    <tbody>
+      <tr><td class="id">E-01</td><td>GPSの精度不足・取得不可</td><td>地下・ビル影・権限の拒否</td><td>到着判定が働かず進行が止まる</td><td><strong>手動の「到着した」操作を用意する</strong>。地下鉄沿線では特に起きやすい</td></tr>
+      <tr><td class="id">E-02</td><td>座標のズレ</td><td>マスタが概値のまま</td><td>手前で到着になる／着いても判定されない</td><td>現地実測で座標を更新。判定半径を設定で調整可能に</td></tr>
+      <tr><td class="id">E-03</td><td>通信断・圏外</td><td>移動中に回線が切れる</td><td>Turn / Visit / Photo が保存できない</td><td>ローカルにキューし、復帰時に送信。プレイはローカル状態で継続</td></tr>
+      <tr><td class="id">E-04</td><td>同じ駅の連続到着</td><td>GPSの揺れで圏内外を往復</td><td>短時間に訪問が重複記録される</td><td><strong>ver.2 では駅の一意制約を外したため、DBでは弾けない。</strong>アプリ側で「同一ターン内・同一駅の再記録は無視」する</td></tr>
+      <tr><td class="id">E-05</td><td>アプリの終了・再起動</td><td>移動中に落ちる</td><td>—</td><td><strong>ver.2 で解消。</strong>サイコロを振った時点で <code>Turn</code> が保存されるため、出目・着地駅・どこまで歩いたかを復元できる</td></tr>
+      <tr><td class="id">E-06</td><td>写真のアップロード失敗</td><td>Blob への送信失敗</td><td>写真が共有されない</td><td>進行は止めない。ローカルに残して再送</td></tr>
+      <tr><td class="id">E-07</td><td>着地駅を通り過ぎる</td><td>気づかず先まで歩いた</td><td>着地駅の圏外でミッションが始まる</td><td>到着通知を出す。記録済みなので戻らずその場で実行してよい</td></tr>
+      <tr><td class="id">E-08</td><td>進行の停滞</td><td><strong>戻る効果が多すぎる／DiceMax が小さく戻る幅が大きい</strong></td><td>いつまでもゴールに近づかない</td><td>準備画面で<strong>戻る効果の総数を表示</strong>して気づけるようにする。区間駅数に対して戻る効果が多い場合は警告</td></tr>
+      <tr><td class="id">E-09</td><td>効果移動の距離が過大</td><td>ジャンプ先が遠い／進む効果が大きい</td><td>一度に数kmを歩くことになる</td><td>ミッション作成時に<strong>移動距離の目安を表示</strong>する。区間の端でのクランプで上限は区間長になる</td></tr>
+      <tr><td class="id">E-10</td><td>二重にサイコロを振る</td><td>複数端末から同時操作</td><td>ターンが二重に作られる</td><td>DB側で<strong>進行中ターンは1つまで</strong>に制限（フィルター付き一意インデックス）。2人目はエラーになる</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section id="s9">
+  <h2><span class="n">9</span>データ書き込み一覧</h2>
+  <p>1ターン（出目 N、効果による移動 M駅）で発生する書き込み。</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>手順</th><th>テーブル</th><th>操作</th><th>行数</th><th>格納する値</th></tr></thead>
+    <tbody>
+      <tr><td>F-01</td><td><code>Turn</code></td><td>INSERT</td><td class="c">1</td><td><code>TurnNo</code> / <code>FromStationId</code> / <code>DiceValue</code> / <code>LandingStationId</code>。<strong>この時点で出目が永続化される</strong></td></tr>
+      <tr><td>F-04</td><td><code>Visit</code></td><td>INSERT</td><td class="c">N−1</td><td><code>TurnId</code> / <code>StationId</code> / <code>VisitKind=1</code>（通り道）</td></tr>
+      <tr><td>F-05</td><td><code>Photo</code></td><td>INSERT</td><td class="c">0〜任意</td><td><code>VisitId</code> / <code>MemberId</code>（撮影者） / <code>BlobUrl</code></td></tr>
+      <tr><td>F-06</td><td><code>Visit</code> ＋ <code>Turn</code></td><td>INSERT ＋ UPDATE</td><td class="c">1</td><td><code>VisitKind=2</code>（着地）／ <code>Turn.ArrivedAt</code></td></tr>
+      <tr><td>F-07</td><td><code>Mission</code></td><td class="nw">SELECT</td><td class="c">—</td><td>着地駅の候補を効果の列ごと取得</td></tr>
+      <tr><td>F-08</td><td><code>Turn</code></td><td>UPDATE</td><td class="c">1</td><td><code>SelectedMissionId</code> / <code>MissionDone</code></td></tr>
+      <tr><td>F-11</td><td><code>Visit</code></td><td>INSERT</td><td class="c">M</td><td><code>VisitKind=3</code>（効果移動の通り道）／<code>4</code>（到達点）</td></tr>
+      <tr><td>F-10</td><td><code>Turn</code></td><td>UPDATE</td><td class="c">1</td><td><code>AppliedEffectType</code> / <code>EndStationId</code> / <code>CompletedAt</code>。<strong>ここで進行中でなくなる</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>ver.1 と違い、<code>Visit</code> の合計行数は区間の駅数と一致しない。戻る・ジャンプがあると再訪ぶんだけ増える。</p>
+</section>
+
+<!-- ================= 10 ================= -->
+<section id="s10">
+  <h2><span class="n">10</span>未確定事項</h2>
+
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>論点</th><th>選択肢</th><th>影響範囲</th><th>暫定</th></tr></thead>
+    <tbody>
+      <tr><td class="id">Q-01</td><td>着地駅のミッションが0個のとき</td><td>① 何もせず次へ ② 予備の共通ミッション ③ 1駅ずらす</td><td>R-08 / F-07</td><td>①</td></tr>
+      <tr><td class="id">Q-02</td><td>誰がサイコロを振るか</td><td>① 1人が振り全端末に同期 ② その場の代表が振るだけ</td><td><strong>リアルタイム同期の要否。E-10 の制限とも関わる</strong></td><td>未定</td></tr>
+      <tr><td class="id">Q-03</td><td>写真を必須にするか</td><td>① 任意 ② 着地駅のみ必須 ③ 全駅必須</td><td>R-19 / F-05</td><td>①</td></tr>
+      <tr><td class="id">Q-10</td><td>効果の発動条件</td><td>① 達成・未達成にかかわらず発動 ② 達成したときだけ発動 ③ 達成なら「進む」、未達成なら「戻る」</td><td>R-09 / F-09。<strong>③はゲーム性が上がるが、ミッションの書き方が複雑になる</strong></td><td>①</td></tr>
+      <tr><td class="id">Q-11</td><td>「もう一度振る」の連鎖上限</td><td>① 3回まで ② 無制限 ③ 効果自体を廃止</td><td>R-13</td><td>① 3回</td></tr>
+      <tr><td class="id">Q-12</td><td>再訪時のミッション</td><td>① 既出を除外して再抽選 ② 除外せず引き直す ③ 再訪では引かない</td><td>R-14 / F-07</td><td>①</td></tr>
+      <tr><td class="id">Q-13</td><td>効果の作成を誰に許すか</td><td>① 全員が自由に付けられる ② ホストのみ ③ 1人あたり効果付きは1個まで</td><td>停滞（E-08）の防止。<strong>全員が「戻る」を書くと進まなくなる</strong></td><td>① だが準備画面で総数を可視化</td></tr>
+      <tr><td class="id">Q-14</td><td>区間外の駅の扱い</td><td>① 盤面に出さない ② 薄く表示して区間外と示す</td><td>画面 SC-04</td><td>②（路線全体の中の位置が分かるため）</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">10.1</span>実装として詰めること</h3>
+  <div class="tw"><table>
+    <thead><tr><th class="id">ID</th><th>課題</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="id">T-01</td><td><s>進行中ターンの保持先</s></td><td><strong>ver.2 で解消。</strong><code>Turn</code> テーブルがサイコロを振った時点で作られるため、出目と着地駅がサーバーに残る</td></tr>
+      <tr><td class="id">T-02</td><td>バックグラウンド測位</td><td>常時測位はバッテリーを消費する。ジオフェンス（<code>CLCircularRegion</code>、同時20件まで）で抑える。<strong>区間が20駅を超えるコースでは、監視対象を進行方向の数駅に絞る必要がある</strong></td></tr>
+      <tr><td class="id">T-03</td><td>座標の精度</td><td>16駅の座標は概値。現地実測での更新が必要。地下駅は出入口か駅中心かも決める</td></tr>
+      <tr><td class="id">T-04</td><td>オフライン耐性</td><td>ローカルを正とし非同期送信。<code>Turn</code> の <code>TurnNo</code> は連番なので、オフライン中の採番が衝突しないようにする</td></tr>
+      <tr><td class="id">T-05</td><td>App Store 審査</td><td>位置情報の常時利用の用途説明、UGC（ミッション文・写真）の扱い</td></tr>
+      <tr><td class="id">T-06</td><td>区間と効果の整合</td><td>区間を変更したとき、区間外の駅を指すジャンプ効果が残る可能性がある。<strong>プレイ開始前に検証し、区間外を指す効果は無効化するか警告する</strong></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer class="foot">
+  <span>01_企画仕様書.md</span>
+  <span>06_schema.sql</span>
+  <span>07_データモデル仕様.html</span>
+  <span>08_画面仕様.html</span>
+</footer>
+
+</div>

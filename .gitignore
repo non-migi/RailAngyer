@@ -1,0 +1,52 @@
+# ------------------------------------------------------------
+# macOS
+# ------------------------------------------------------------
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# ------------------------------------------------------------
+# Xcode / iOS
+# ------------------------------------------------------------
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+
+# CocoaPods / Carthage（使う場合のみ）
+Pods/
+Carthage/Build/
+
+# ------------------------------------------------------------
+# 秘密情報 ── 絶対にコミットしない
+#   接続文字列・パスワードはリポジトリに置かず、
+#   macOS キーチェーンか App Service のアプリケーション設定に置く
+#   （files/09_アプリ用ユーザー.sql を参照）
+# ------------------------------------------------------------
+*.env
+.env.*
+secrets.json
+appsettings.Development.json
+appsettings.Local.json
+*.publishsettings
+*.pubxml
+*.pfx
+
+# ------------------------------------------------------------
+# その他
+# ------------------------------------------------------------
+*.log
+.vscode/
