@@ -33,7 +33,8 @@
 
 ## 現在地
 
-フェーズ0（意思決定）完了、フェーズ1（ローカルMVP）に着手するところ。
+フェーズ1（ローカルMVP）の実装は完了。フェーズ2（共有バックエンド）はサーバー側が揃い、
+アプリ側は同期の土台まで。**残りは参加まわりのUIと、実地テスト。**
 
 - Azure SQL Database 作成済み（無料オファー / Japan East / サーバーレス）
 - スキーマ適用済み（10テーブル、南北線16駅を投入）
@@ -44,13 +45,14 @@
   `https://railangyer.azurewebsites.net/health/db` が DB まで疎通
 - 写真：ストレージ・コンテナ `photos` 作成済み。**SAS発行 → Blobへ直接アップロード →
   メタ登録 → 表示 → 削除を実物で確認済み**
-- 残るはフェーズ2の手順8（アプリ側の送信キューと `/state` の取り込み）とアプリのUI
+- アプリ：**送信キューと `/state` の取り込み**まで実装（圏外で遊んでも後から揃う）。
+  残るは**参加まわりのUI**（招待コード入力・ミッション自作・効果入力）
 
 ## テスト
 
 ```bash
 swift test --package-path RailAngyerCore     # ルール計算 35件
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 27件 + UI 3件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 43件 + UI 3件
 dotnet test RailAngyerApi.Tests               # API 44件
 ```

@@ -231,6 +231,8 @@ final class Photo {
 enum AppSchema {
     static let all: [any PersistentModel.Type] = [
         Course.self, Station.self, MissionSet.self, Member.self,
-        Mission.self, Turn.self, Visit.self, Photo.self
+        Mission.self, Turn.self, Visit.self, Photo.self,
+        // 送信キュー。記録そのものではないが、圏外で落としても残す必要がある
+        PendingChange.self
     ]
 }

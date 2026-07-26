@@ -5,6 +5,7 @@ import RailAngyerCore
 /// プレイ開始後（ターンが1件でもある間）は変更できない（T-06）。
 struct RuleSettingsView: View {
     @Bindable var store: GameSessionStore
+    let sync: SyncService
     @Environment(\.dismiss) private var dismiss
 
     @State private var startOrder = 1
@@ -73,6 +74,8 @@ struct RuleSettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
+                syncSection
+
                 Section {
                     Button("記録をリセット", role: .destructive) { showResetConfirm = true }
                         .disabled(store.room?.turns.isEmpty ?? true)
@@ -101,6 +104,34 @@ struct RuleSettingsView: View {
                 startOrder = store.room?.startStation?.orderNo ?? 1
                 goalOrder = store.room?.goalStation?.orderNo ?? allStations.last?.orderNo ?? 16
                 diceMax = store.room?.diceMax ?? 6
+            }
+        }
+    }
+
+    /// 未送信の状況（SC-20）。
+    /// 送れていなくてもプレイは続けられるので、**警告ではなく状態として見せる**
+    @ViewBuilder
+    private var syncSection: some View {
+        Section("共有") {
+            if sync.isJoined {
+                LabeledContent("未送信", value: sync.pendingCount == 0
+                               ? "なし" : "\(sync.pendingCount) 件")
+                if let at = sync.lastSyncedAt {
+                    LabeledContent("最後に同期", value: at.formatted(date: .omitted, time: .shortened))
+                }
+                if let error = sync.lastError {
+                    Text(error).font(.caption).foregroundStyle(.secondary)
+                }
+                Button("いま送る") {
+                    Task {
+                        await sync.push()
+                        await sync.pull()
+                    }
+                }
+                .disabled(sync.isSyncing)
+            } else {
+                Text("この端末だけで遊んでいます。記録はサーバーに送られません。")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }

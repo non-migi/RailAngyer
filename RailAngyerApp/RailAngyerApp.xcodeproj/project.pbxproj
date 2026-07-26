@@ -16,20 +16,26 @@
 		1D35FAFF3B2971A9C6558F74 /* PhotoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */; };
 		2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E8A6CD54AD50C8860C443 /* ModelsTests.swift */; };
 		22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 02DE3152D31178D49884EE7D /* RailAngyerCore */; };
+		2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */; };
 		3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836563870DB4BE41BCFBBCCE /* TestHooks.swift */; };
 		389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */; };
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
 		61D5521E731DFC7E0520012D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155472042CCA7F23234F9556 /* LocationService.swift */; };
+		6404ED69DE04AC95DF1BB2E7 /* Credentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */; };
+		6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D222C291090136DEE94441 /* ApiClient.swift */; };
 		6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */; };
 		7F846552B332E52C174977BA /* StationMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3904705B0EEBD442E11E0313 /* StationMapView.swift */; };
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
+		C4662713B87E70F0BFB73B47 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B470BF27494F68A94DA16FA /* SyncService.swift */; };
 		C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */; };
+		C6E478F22C510D5C793EFB7C /* ApiConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11D3C151DB16D800074F495 /* ApiConfiguration.swift */; };
 		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
 		E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156CFFC9852BBD282BE20DE /* Theme.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
+		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
 /* End PBXBuildFile section */
@@ -56,6 +62,8 @@
 		114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1156CFFC9852BBD282BE20DE /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		15D222C291090136DEE94441 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
+		160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncServiceTests.swift; sourceTree = "<group>"; };
 		17E8C15DCE6423AA6C330097 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_slow_asabu.gpx; sourceTree = "<group>"; };
 		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
@@ -64,8 +72,10 @@
 		257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreUITests.swift; sourceTree = "<group>"; };
 		3904705B0EEBD442E11E0313 /* StationMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationMapView.swift; sourceTree = "<group>"; };
 		3A20C935B2EE85D434D111CF /* TurnFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnFlowView.swift; sourceTree = "<group>"; };
+		3B470BF27494F68A94DA16FA /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		3C804299584BFF82C68B12EA /* StationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationDetailView.swift; sourceTree = "<group>"; };
 		52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RailAngyerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChange.swift; sourceTree = "<group>"; };
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
 		86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
@@ -76,11 +86,14 @@
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
+		D11D3C151DB16D800074F495 /* ApiConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiConfiguration.swift; sourceTree = "<group>"; };
+		D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Credentials.swift; sourceTree = "<group>"; };
 		D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_sapporo_nakanoshima.gpx; sourceTree = "<group>"; };
 		D80CE7F62882767E29A8AC06 /* DiceRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollView.swift; sourceTree = "<group>"; };
 		DC4114A3D977E18BF4C5CD2F /* RailAngyerAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA6A195889CC18D3B9AEE608 /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
+		F21752CFD8C22E0039BDF405 /* prepare-simulator.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "prepare-simulator.sh"; sourceTree = "<group>"; };
 		F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStoreTests.swift; sourceTree = "<group>"; };
 		FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -115,6 +128,18 @@
 			name = Packages;
 			sourceTree = "<group>";
 		};
+		4B4276E0B38B0958F5104E08 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				15D222C291090136DEE94441 /* ApiClient.swift */,
+				D11D3C151DB16D800074F495 /* ApiConfiguration.swift */,
+				D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */,
+				62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */,
+				3B470BF27494F68A94DA16FA /* SyncService.swift */,
+			);
+			path = Sync;
+			sourceTree = "<group>";
+		};
 		4C992AE3B0F92B4AC09F8D7D /* TekuTekuRailway */ = {
 			isa = PBXGroup;
 			children = (
@@ -144,6 +169,7 @@
 				8CA7C736EF2D6FEE23CC4D23 /* App */,
 				5C621E7524853A340511638A /* Game */,
 				807C1110ED3831FB8489EC6C /* Models */,
+				4B4276E0B38B0958F5104E08 /* Sync */,
 				A5BFFB878130A1D100436850 /* Views */,
 			);
 			path = Sources;
@@ -209,6 +235,7 @@
 			children = (
 				F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */,
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
+				160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -219,6 +246,7 @@
 				22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */,
 				D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */,
 				17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */,
+				F21752CFD8C22E0039BDF405 /* prepare-simulator.sh */,
 			);
 			path = tools;
 			sourceTree = "<group>";
@@ -339,6 +367,7 @@
 			files = (
 				4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */,
 				2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */,
+				2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,10 +375,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */,
+				C6E478F22C510D5C793EFB7C /* ApiConfiguration.swift in Sources */,
 				39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */,
 				CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */,
 				966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */,
 				128DFB62618F00A15A292B2C /* CameraPicker.swift in Sources */,
+				6404ED69DE04AC95DF1BB2E7 /* Credentials.swift in Sources */,
 				ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */,
 				04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */,
 				B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */,
@@ -357,12 +389,14 @@
 				0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */,
 				E686C96515C035CA38FB915A /* Models.swift in Sources */,
 				082E2A379FE47761F6BD6976 /* NotificationService.swift in Sources */,
+				E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */,
 				1D35FAFF3B2971A9C6558F74 /* PhotoStore.swift in Sources */,
 				00F134CDB673ECC381CA12DB /* RootView.swift in Sources */,
 				C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */,
 				0FB2755F66F5820C34CE4DCB /* RuleSettingsView.swift in Sources */,
 				E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */,
 				7F846552B332E52C174977BA /* StationMapView.swift in Sources */,
+				C4662713B87E70F0BFB73B47 /* SyncService.swift in Sources */,
 				3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */,
 				E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */,
 				9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */,

@@ -1,0 +1,369 @@
+import Testing
+import SwiftData
+import Foundation
+@testable import RailAngyerApp
+@testable import RailAngyerCore
+
+/// 送信キューと取り込み（11_API設計.md §4 / 実装順 8）。
+///
+/// 確かめたいことは一つに尽きる。**圏外で遊んでも後から揃うこと。**
+/// 実際の通信は `StubURLProtocol` で差し替えるので、サーバーには触らない。
+@MainActor
+struct SyncServiceTests {
+
+    private let container: ModelContainer
+    private let context: ModelContext
+    private let credentials: InMemoryCredentialStore
+    private let room: MissionSet
+
+    init() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        container = try ModelContainer(for: Schema(AppSchema.all), configurations: config)
+        context = ModelContext(container)
+
+        let course = try MasterSeeder.seedIfNeeded(context)
+        room = try MasterSeeder.seedLocalRoomIfNeeded(context, course: course)
+
+        // 送信の中身は駅のサーバーIDなので、参加時に取り込んである前提で始める
+        // （取り込みそのものは「マスタのサーバーIDを取り込む」で確かめる）
+        course.serverId = 1
+        for station in course.stations { station.serverId = station.orderNo }
+        try context.save()
+
+        credentials = InMemoryCredentialStore(
+            RoomCredentials(roomId: UUID(), memberId: UUID(), token: "test-token"))
+    }
+
+    private func makeService(_ stub: StubURLProtocol.Behavior = .offline) -> SyncService {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        StubURLProtocol.behavior = stub
+
+        let client = ApiClient(baseURL: URL(string: "https://example.invalid")!,
+                               credentials: credentials,
+                               session: URLSession(configuration: config))
+        return SyncService(context: context, client: client, credentials: credentials)
+    }
+
+    private func station(_ orderNo: Int) -> Station? {
+        room.course?.stations.first { $0.orderNo == orderNo }
+    }
+
+    @discardableResult
+    private func makeTurn() -> Turn {
+        let turn = Turn(turnNo: 1, diceValue: 3)
+        turn.missionSet = room
+        turn.fromStation = station(1)
+        turn.landingStation = station(4)
+        context.insert(turn)
+        return turn
+    }
+
+    @discardableResult
+    private func makeVisit(turn: Turn) -> Visit {
+        let visit = Visit(kind: .passing)
+        visit.missionSet = room
+        visit.turn = turn
+        visit.station = station(2)
+        context.insert(visit)
+        return visit
+    }
+
+    // MARK: - マスタ
+
+    @Test("マスタのサーバーIDを取り込む")
+    func pullMasterStampsServerIds() async throws {
+        for station in room.course?.stations ?? [] { station.serverId = nil }
+        try context.save()
+
+        let service = makeService(.json("""
+        [{"courseId":7,"name":"南北線","lineColor":"#00A85A",
+          "stations":[{"stationId":101,"name":"麻生","orderNo":1,
+                       "latitude":43.1,"longitude":141.3}]}]
+        """))
+
+        #expect(await service.pullMaster())
+        #expect(room.course?.serverId == 7)
+        #expect(station(1)?.serverId == 101)
+    }
+
+    @Test("マスタの取り込みで座標は上書きしない")
+    func pullMasterKeepsCorrectedCoordinates() async throws {
+        let corrected = 43.123456        // 現地で実測して直した値のつもり
+        station(1)?.latitude = corrected
+        try context.save()
+
+        let service = makeService(.json("""
+        [{"courseId":7,"name":"南北線","lineColor":"#00A85A",
+          "stations":[{"stationId":101,"name":"麻生","orderNo":1,
+                       "latitude":43.999,"longitude":141.999}]}]
+        """))
+        _ = await service.pullMaster()
+
+        // サーバーの概値で実測値を潰すと、到着判定がまた合わなくなる
+        #expect(station(1)?.latitude == corrected)
+    }
+
+    // MARK: - 積む
+
+    @Test("ターンを積むと未送信件数が増える")
+    func enqueueCountsUp() throws {
+        let service = makeService()
+        try service.enqueueTurn(makeTurn())
+
+        #expect(service.pendingCount == 1)
+    }
+
+    @Test("同じターンへの更新は最新の1件にまとまる")
+    func enqueueCollapsesUpdates() throws {
+        let service = makeService()
+        let turn = makeTurn()
+
+        try service.enqueueTurn(turn)              // 振った直後
+        turn.arrivedAt = Date()
+        try service.enqueueTurn(turn)              // 着地した
+        turn.missionDone = true
+        try service.enqueueTurn(turn)              // ミッション達成
+
+        // PUTは冪等なので、3回ぶん溜めても送るのは最後の状態だけでよい
+        #expect(service.pendingCount == 1)
+
+        let payload = try #require(try SyncQueue(context: context).pending().first?.payload)
+        let json = try #require(try JSONSerialization.jsonObject(with: payload) as? [String: Any])
+        #expect(json["missionDone"] as? Bool == true)
+    }
+
+    @Test("参加していなければ積まない")
+    func enqueueRequiresJoin() throws {
+        try credentials.clear()
+        let service = makeService()
+
+        try service.enqueueTurn(makeTurn())
+
+        #expect(service.pendingCount == 0)
+    }
+
+    // MARK: - 送る
+
+    @Test("オンラインなら送ってキューが空になる")
+    func pushDrainsQueue() async throws {
+        let service = makeService(.json("{}"))
+        try service.enqueueTurn(makeTurn())
+
+        let sent = await service.push()
+
+        #expect(sent == 1)
+        #expect(service.pendingCount == 0)
+        #expect(service.lastSyncedAt != nil)
+    }
+
+    @Test("圏外ならキューに残り、電波が戻れば送れる")
+    func pushKeepsQueueWhenOffline() async throws {
+        let service = makeService(.offline)
+        try service.enqueueTurn(makeTurn())
+
+        #expect(await service.push() == 0)
+        #expect(service.pendingCount == 1)          // プレイはこのまま続けられる
+
+        StubURLProtocol.behavior = .json("{}")
+        #expect(await service.push() == 1)
+        #expect(service.pendingCount == 0)
+    }
+
+    @Test("送る順序は操作した順になる")
+    func pushKeepsOrder() async throws {
+        let service = makeService(.recordingPaths)
+        let turn = makeTurn()
+        try service.enqueueTurn(turn)
+        try service.enqueueVisit(makeVisit(turn: turn))
+
+        await service.push()
+
+        let paths = StubURLProtocol.recordedPaths
+        #expect(paths.count == 2)
+        // 訪問が先に届くと、まだ存在しないターンに紐づけようとして弾かれる
+        #expect(paths.first?.contains("/turns/") == true)
+        #expect(paths.last?.contains("/visits/") == true)
+    }
+
+    @Test("失敗したらそこで止めて、後続に追い越させない")
+    func pushStopsAtFirstFailure() async throws {
+        let service = makeService(.failFirstThenSucceed(status: 503))
+        let turn = makeTurn()
+        try service.enqueueTurn(turn)
+        try service.enqueueVisit(makeVisit(turn: turn))
+
+        let sent = await service.push()
+
+        // 飛ばして次を送ると、あとから古い状態が上書きしてしまう
+        #expect(sent == 0)
+        #expect(StubURLProtocol.recordedPaths.count == 1)
+        #expect(service.pendingCount == 2)
+    }
+
+    @Test("何度送っても直らない失敗は捨てて、キューを詰まらせない")
+    func pushDropsPermanentFailures() async throws {
+        let service = makeService(
+            .status(400, #"{"error":"invalid_dice","message":"出目が不正です"}"#))
+        try service.enqueueTurn(makeTurn())
+
+        let sent = await service.push()
+
+        #expect(sent == 0)
+        #expect(service.pendingCount == 0)   // 400を残すと以降の記録が永久に送れなくなる
+        #expect(service.lastError == "出目が不正です")
+    }
+
+    @Test("トークンが無効なら捨てずに残す")
+    func pushKeepsUnauthorized() async throws {
+        let service = makeService(.status(401, ""))
+        try service.enqueueTurn(makeTurn())
+
+        await service.push()
+
+        // 再参加すれば送れる内容なので、捨ててはいけない
+        #expect(service.pendingCount == 1)
+    }
+
+    // MARK: - 取り込む
+
+    @Test("サーバーの訪問を取り込む")
+    func pullAddsVisits() async throws {
+        let visitId = UUID()
+        let service = makeService(.json("""
+        {"currentStationId":4,"isCleared":false,"activeTurn":null,
+         "visits":[{"visitId":"\(visitId.apiString)","turnId":null,
+                    "stationId":3,"arrivedAt":"2026-07-30T05:22:11","visitKind":1}],
+         "completedTurnCount":1}
+        """))
+
+        #expect(await service.pull())
+
+        let visit = try #require(try context.fetch(FetchDescriptor<Visit>()).first)
+        #expect(visit.id == visitId)
+        #expect(visit.station?.serverId == 3)
+        #expect(visit.visitKind == .passing)
+    }
+
+    @Test("進行中のターンを取り込む")
+    func pullAddsActiveTurn() async throws {
+        let turnId = UUID()
+        let service = makeService(.json("""
+        {"currentStationId":1,"isCleared":false,
+         "activeTurn":{"turnId":"\(turnId.apiString)","turnNo":1,"diceValue":3,
+                       "fromStationId":1,"landingStationId":4,
+                       "rolledAt":"2026-07-30T05:22:11Z","arrivedAt":null,
+                       "selectedMissionId":null,"missionDone":false,"appliedEffectType":null},
+         "visits":[],"completedTurnCount":0}
+        """))
+
+        #expect(await service.pull())
+
+        let turn = try #require(try context.fetch(FetchDescriptor<Turn>()).first)
+        #expect(turn.id == turnId)
+        #expect(turn.landingStation?.orderNo == 4)
+        #expect(turn.isActive)
+    }
+
+    @Test("同じ訪問を二度取り込んでも増えない")
+    func pullIsIdempotent() async throws {
+        let visitId = UUID()
+        let service = makeService(.json("""
+        {"currentStationId":4,"isCleared":false,"activeTurn":null,
+         "visits":[{"visitId":"\(visitId.apiString)","turnId":null,
+                    "stationId":3,"arrivedAt":"2026-07-30T05:22:11Z","visitKind":1}],
+         "completedTurnCount":1}
+        """))
+
+        _ = await service.pull()
+        _ = await service.pull()
+
+        #expect(try context.fetch(FetchDescriptor<Visit>()).count == 1)
+    }
+
+    @Test("取り込みはローカルにしかない記録を消さない")
+    func pullKeepsLocalOnlyRecords() async throws {
+        let service = makeService(.json("""
+        {"currentStationId":1,"isCleared":false,"activeTurn":null,
+         "visits":[],"completedTurnCount":0}
+        """))
+        let local = makeVisit(turn: makeTurn())        // まだ送っていない訪問
+
+        _ = await service.pull()
+
+        // 未送信の記録が消えると、歩いた事実そのものが失われる
+        #expect(try context.fetch(FetchDescriptor<Visit>()).contains { $0.id == local.id })
+    }
+
+    @Test("参加をやめると未送信も消える")
+    func leaveClearsQueue() throws {
+        let service = makeService()
+        try service.enqueueTurn(makeTurn())
+
+        try service.leave()
+
+        #expect(service.pendingCount == 0)
+        #expect(!service.isJoined)
+    }
+}
+
+/// 通信の差し替え。実際のHTTPは出さない
+final class StubURLProtocol: URLProtocol {
+
+    enum Behavior {
+        /// 圏外
+        case offline
+        case json(String)
+        case status(Int, String)
+        /// 送信順を記録しつつ 200 を返す
+        case recordingPaths
+        /// 1件目だけ失敗させる
+        case failFirstThenSucceed(status: Int)
+    }
+
+    nonisolated(unsafe) private static var _behavior: Behavior = .offline
+    nonisolated(unsafe) private static var _paths: [String] = []
+    private static let lock = NSLock()
+
+    static var behavior: Behavior {
+        get { lock.withLock { _behavior } }
+        set { lock.withLock { _behavior = newValue; _paths = [] } }
+    }
+
+    static var recordedPaths: [String] { lock.withLock { _paths } }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func stopLoading() {}
+
+    override func startLoading() {
+        let path = request.url?.path ?? ""
+        let outcome: (status: Int, body: String)? = Self.lock.withLock {
+            Self._paths.append(path)
+            switch Self._behavior {
+            case .offline:
+                return nil
+            case .json(let body):
+                return (200, body)
+            case .status(let status, let body):
+                return (status, body)
+            case .recordingPaths:
+                return (200, "{}")
+            case .failFirstThenSucceed(let status):
+                return Self._paths.count == 1 ? (status, "") : (200, "{}")
+            }
+        }
+
+        guard let outcome else {
+            client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+            return
+        }
+
+        let response = HTTPURLResponse(url: request.url!, statusCode: outcome.status,
+                                       httpVersion: "HTTP/1.1",
+                                       headerFields: ["Content-Type": "application/json"])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data(outcome.body.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+}

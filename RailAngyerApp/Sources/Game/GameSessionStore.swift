@@ -12,6 +12,10 @@ final class GameSessionStore {
 
     private let context: ModelContext
 
+    /// 送信キュー。参加していないあいだ（フェーズ1のローカル遊び）は nil のままでよい。
+    /// **プレイはこれの有無に依存しない**（11_API設計.md §4）
+    var sync: SyncService?
+
     /// 対象のルーム（フェーズ1では1件だけ）
     private(set) var room: MissionSet?
     /// 直前の操作で起きたエラー
@@ -140,6 +144,7 @@ final class GameSessionStore {
             turn.landingStation = station(landing)
             context.insert(turn)
             try context.save()
+            enqueueForSync()
 
             showingAnnouncement = true
         } catch {
@@ -166,6 +171,7 @@ final class GameSessionStore {
                     pendingPassingStation = next   // 写真を撮る間を置く
                 }
                 try context.save()
+                enqueueForSync()
 
             case .effectWalking(let next, let destination):
                 guard expected == nil || expected == next else { return }
@@ -174,6 +180,7 @@ final class GameSessionStore {
                 if !isArrival { pendingPassingStation = next }
                 try context.save()
                 if isArrival { try complete(turn, at: destination) }
+                enqueueForSync()
 
             default:
                 break
@@ -205,6 +212,7 @@ final class GameSessionStore {
         }
         turn.selectedMission = picked
         save()
+        enqueueForSync()
     }
 
     /// ミッションを終える（F-08 → F-09）。
@@ -228,6 +236,7 @@ final class GameSessionStore {
             } else {
                 try complete(turn, at: landing)
             }
+            enqueueForSync()
         } catch {
             lastError = String(describing: error)
         }
@@ -284,6 +293,7 @@ final class GameSessionStore {
             }
             for turn in room.turns { context.delete(turn) }
             try context.save()
+            try sync?.enqueueReset()
         } catch {
             lastError = String(describing: error)
         }
@@ -346,5 +356,27 @@ final class GameSessionStore {
 
     private func save() {
         do { try context.save() } catch { lastError = String(describing: error) }
+    }
+
+    /// 直近のターンと訪問を送信キューへ積み直す。
+    ///
+    /// 同じ対象はキュー側で最新の1件にまとまるので、積みすぎても害はない。
+    /// **積めなくてもプレイは止めない。** ローカルの記録が正で、送信は後から追いつけばよい。
+    private func enqueueForSync() {
+        guard let sync, let room else { return }
+        do {
+            // 始点はどのターンにも属さないので先に積む
+            for visit in room.visits where visit.turn == nil {
+                try sync.enqueueVisit(visit)
+            }
+            guard let turn = room.turns.max(by: { $0.rolledAt < $1.rolledAt }) else { return }
+            // ターンより先に訪問が届くと、まだ無いターンに紐づけようとして弾かれる
+            try sync.enqueueTurn(turn)
+            for visit in turn.visits.sorted(by: { $0.arrivedAt < $1.arrivedAt }) {
+                try sync.enqueueVisit(visit)
+            }
+        } catch {
+            lastError = String(describing: error)
+        }
     }
 }

@@ -5,19 +5,27 @@ import RailAngyerCore
 struct RootView: View {
     @Environment(\.modelContext) private var context
     @State private var store: GameSessionStore?
+    @State private var sync: SyncService?
 
     var body: some View {
         Group {
-            if let store {
-                MainView(store: store)
+            if let store, let sync {
+                MainView(store: store, sync: sync)
             } else {
                 ProgressView()
             }
         }
         .task {
             guard store == nil else { return }
+            let credentials = KeychainCredentialStore()
+            let client = ApiClient(baseURL: ApiConfiguration.baseURL, credentials: credentials)
+            let syncService = SyncService(context: context, client: client, credentials: credentials)
+
             let s = GameSessionStore(context: context)
             s.prepare()
+            s.sync = syncService
+
+            sync = syncService
             store = s
         }
     }
@@ -25,10 +33,15 @@ struct RootView: View {
 
 private struct MainView: View {
     @Bindable var store: GameSessionStore
+    let sync: SyncService
     @State private var location = LocationService()
     @State private var showingSettings = false
     @State private var didAskForNotifications = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// 他の端末の進行を拾う間隔。歩く速さに対してはこれで足りる（11_API設計.md §7）
+    private let pullInterval: Duration = .seconds(30)
 
     var body: some View {
         NavigationStack {
@@ -38,7 +51,7 @@ private struct MainView: View {
             TurnFlowView(store: store, location: location)
         }
         .sheet(isPresented: $showingSettings) {
-            RuleSettingsView(store: store)
+            RuleSettingsView(store: store, sync: sync)
         }
         .task {
             // 到着判定は LocationService から。手動到着と同じ入口を通す
@@ -49,15 +62,41 @@ private struct MainView: View {
             location.rule = ArrivalRule(radius: arrivalRadius)
             location.requestAuthorization()
             syncTarget()
+
+            // アプリもDBも寝ていることがある。起こしておくと実プレイ時の待ちが減る
+            await sync.wakeUpIfJoined()
+            await exchange()
+        }
+        .task {
+            // 定期取得。リアルタイム通信は要らない（§7）
+            while !Task.isCancelled {
+                try? await Task.sleep(for: pullInterval)
+                guard sync.isJoined else { continue }
+                await exchange()
+            }
+        }
+        .onChange(of: scenePhase) {
+            guard scenePhase == .active else { return }
+            Task { await exchange() }
         }
         .onChange(of: store.phase) {
             syncTarget()
             askForNotificationsIfNeeded()
+            // 溜めっぱなしにせず、局面が動いたら送っておく。失敗しても続行できる
+            Task { await sync.push() }
         }
         .onChange(of: arrivalRadius) {
             location.rule = ArrivalRule(radius: arrivalRadius)
             syncTarget()
         }
+    }
+
+    /// **送ってから取りに行く。** 逆にすると、自分のまだ送っていない記録を
+    /// サーバーの古い状態で判断してしまう
+    private func exchange() async {
+        guard sync.isJoined else { return }
+        await sync.push()
+        await sync.pull()
     }
 
     /// 通知の許可は、歩き始めて初めて必要になった時点で聞く。
