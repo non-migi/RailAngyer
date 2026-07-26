@@ -202,6 +202,72 @@ final class GameSessionStore {
         return room.missions.filter { $0.station?.id == station.id && !used.contains($0.id) }
     }
 
+    // MARK: - ミッションの自作（SC-12）
+
+    /// この端末の持ち主
+    var me: Member? {
+        room?.members.first { $0.isMe } ?? room?.members.first
+    }
+
+    /// 自分が書いたお題（駅順）
+    var myMissions: [Mission] {
+        guard let me else { return [] }
+        return (room?.missions ?? [])
+            .filter { $0.member?.id == me.id }
+            .sorted { ($0.station?.orderNo ?? 0) < ($1.station?.orderNo ?? 0) }
+    }
+
+    /// その駅に自分のお題が既にあるか（駅ごとに1人1個まで。UQ-05）
+    func myMission(at order: Int) -> Mission? {
+        myMissions.first { $0.station?.orderNo == order }
+    }
+
+    /// お題を作る・書き換える。
+    ///
+    /// - Returns: 保存できなければ理由。呼び出し側はそのまま画面に出してよい
+    @discardableResult
+    func saveMission(_ existing: Mission?, station order: Int, content: String,
+                     effect: EffectType, value: Int?, jumpTo: Int?) -> String? {
+        guard let room, let me, let target = station(order) else { return "ルームがありません" }
+
+        // 同じ駅に2個目は作れない。差し替えは同じお題を編集する
+        if let duplicate = myMission(at: order), duplicate.id != existing?.id {
+            return "\(target.name)にはすでにあなたのお題があります"
+        }
+
+        let jumpStation = effect.needsStation ? jumpTo.flatMap { station($0) } : nil
+
+        // **書き込む前に弾く。** 通してしまうとサーバーの CHECK 制約で 400 になり、
+        // 圏外で書いたお題がキューから捨てられる
+        if let error = Mission.validationError(content: content,
+                                               effectType: effect,
+                                               effectValue: effect.needsValue ? value : nil,
+                                               hasEffectStation: jumpStation != nil) {
+            return error
+        }
+
+        let mission = existing ?? Mission(content: content)
+        mission.content = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        mission.effectType = effect
+        mission.effectValue = effect.needsValue ? value : nil
+        mission.effectStation = jumpStation
+        mission.station = target
+        mission.missionSet = room
+        mission.member = me
+
+        if existing == nil { context.insert(mission) }
+        save()
+        try? sync?.enqueueMission(mission)
+        return nil
+    }
+
+    func deleteMission(_ mission: Mission) {
+        let id = mission.id
+        context.delete(mission)
+        save()
+        try? sync?.enqueueMissionDelete(missionId: id)
+    }
+
     /// ミッションを抽選する（F-07）。候補が0件ならミッションなしでターンを進める（R-08）
     func drawMission() {
         guard let turn = activeTurn, let landing = turn.landingStation?.orderNo else { return }

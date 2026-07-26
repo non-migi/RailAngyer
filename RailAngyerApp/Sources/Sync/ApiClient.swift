@@ -71,6 +71,20 @@ final class ApiClient {
         return try decode(data)
     }
 
+    /// **自分のぶんだけ**返る。他人のお題はサーバーが伏せる
+    func missions(roomId: UUID) async throws -> [MissionResponse] {
+        let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/missions",
+                                     rawBody: nil, authorized: true)
+        return try decode(data)
+    }
+
+    /// 駅ごとの件数だけ。**内容は返らない**ので、当日の驚きが損なわれない
+    func missionSummary(roomId: UUID) async throws -> [MissionSummaryResponse] {
+        let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/missions/summary",
+                                     rawBody: nil, authorized: true)
+        return try decode(data)
+    }
+
     func state(roomId: UUID) async throws -> StateResponse {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/state",
                                      rawBody: nil, authorized: true)
@@ -238,6 +252,23 @@ struct MemberResponse: Codable {
     let memberId: UUID
     let displayName: String
     let joinedAt: Date
+}
+
+struct MissionResponse: Codable {
+    let missionId: UUID
+    let stationId: Int
+    let content: String
+    let effectType: Int
+    let effectValue: Int?
+    let effectStationId: Int?
+    let createdByName: String
+}
+
+struct MissionSummaryResponse: Codable {
+    let stationId: Int
+    let count: Int
+    let effectCount: Int
+    let backEffectCount: Int
 }
 
 struct StateResponse: Codable {

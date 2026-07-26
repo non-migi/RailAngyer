@@ -125,6 +125,15 @@ final class SyncService {
         try enqueue(path: "/rooms/\(room.apiString)/missions/\(mission.id.apiString)", body: body)
     }
 
+    /// お題の削除を積む
+    func enqueueMissionDelete(missionId: UUID) throws {
+        guard let room = credentials.load()?.roomId else { return }
+        try queue.enqueue(PendingChange(method: "DELETE",
+                                        path: "/rooms/\(room.apiString)/missions/\(missionId.apiString)",
+                                        payload: nil))
+        pendingCount = try queue.count()
+    }
+
     /// 記録リセットを積む（`DELETE /progress`）
     func enqueueReset() throws {
         guard let room = credentials.load()?.roomId else { return }
@@ -240,6 +249,72 @@ final class SyncService {
         let authors = Set(room.missions.compactMap { $0.member?.id })
         for stale in room.members where !serverIds.contains(stale.id) && !authors.contains(stale.id) {
             context.delete(stale)
+        }
+
+        try context.save()
+    }
+
+    // MARK: - ミッション
+
+    /// 自分のお題を取り込む（機種変更や再インストールの後で書き直さずに済む）。
+    /// 他人のお題はサーバーが伏せるので、ここに降りてこない
+    @discardableResult
+    func pullMyMissions() async -> Bool {
+        guard let saved = credentials.load() else { return false }
+        do {
+            let remote = try await client.missions(roomId: saved.roomId)
+            try applyMissions(remote, meId: saved.memberId)
+            return true
+        } catch let error as ApiError {
+            lastError = error.message
+            return false
+        } catch {
+            lastError = String(describing: error)
+            return false
+        }
+    }
+
+    /// 駅ごとの準備状況。**内容は取らない**ので、当日まで中身は伏せたまま数だけ見せられる
+    func missionSummary() async -> [MissionSummaryResponse] {
+        guard let saved = credentials.load() else { return [] }
+        do {
+            return try await client.missionSummary(roomId: saved.roomId)
+        } catch let error as ApiError {
+            lastError = error.message
+            return []
+        } catch {
+            lastError = String(describing: error)
+            return []
+        }
+    }
+
+    private func applyMissions(_ remote: [MissionResponse], meId: UUID) throws {
+        guard let room = try localRoom() else { return }
+
+        let stations = room.course?.stations ?? []
+        let me = room.members.first { $0.id == meId }
+
+        for incoming in remote {
+            guard let station = stations.first(where: { $0.serverId == incoming.stationId }) else {
+                continue
+            }
+            let mission = room.missions.first { $0.id == incoming.missionId }
+                ?? {
+                    let created = Mission(content: incoming.content)
+                    created.id = incoming.missionId
+                    created.missionSet = room
+                    context.insert(created)
+                    return created
+                }()
+
+            mission.content = incoming.content
+            mission.effectTypeRaw = incoming.effectType
+            mission.effectValue = incoming.effectValue
+            mission.effectStation = incoming.effectStationId
+                .flatMap { id in stations.first { $0.serverId == id } }
+            mission.station = station
+            mission.member = me ?? mission.member
+            mission.syncStateRaw = SyncState.synced.rawValue
         }
 
         try context.save()

@@ -125,17 +125,31 @@ final class Mission {
     /// サーバーの CHECK 制約（CK-06 / CK-07）に相当する検証。
     /// ローカルには制約がないため、保存前にこれで弾く。
     var validationError: String? {
-        if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "お題が空です"
-        }
+        Mission.validationError(content: content,
+                                effectType: effectType,
+                                effectValue: effectValue,
+                                hasEffectStation: effectStation != nil)
+    }
+
+    /// 値だけでの検証。
+    ///
+    /// **関係を張る前に呼べるようにしてある。** SwiftData は
+    /// 保存済みのオブジェクトに関係を張った時点でコンテキストに入れてしまうため、
+    /// 「作ってから弾く」と不正なお題が残ってしまう。
+    static func validationError(content: String, effectType: EffectType,
+                                effectValue: Int?, hasEffectStation: Bool) -> String? {
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "お題が空です" }
+        if trimmed.count > 300 { return "お題は300文字までです" }
+
         if effectType.needsValue {
             guard let v = effectValue, (1...9).contains(v) else { return "駅数は1〜9で指定してください" }
         } else if effectValue != nil {
             return "この効果では駅数を指定できません"
         }
         if effectType.needsStation {
-            guard effectStation != nil else { return "移動先の駅を選んでください" }
-        } else if effectStation != nil {
+            guard hasEffectStation else { return "移動先の駅を選んでください" }
+        } else if hasEffectStation {
             return "この効果では移動先を指定できません"
         }
         return nil

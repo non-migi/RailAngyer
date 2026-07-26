@@ -13,6 +13,7 @@
 		0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F5289A8DF49229292880FD /* MasterSeeder.swift */; };
 		0FB2755F66F5820C34CE4DCB /* RuleSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */; };
 		128DFB62618F00A15A292B2C /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9577A67BEAAF07D613F921B7 /* CameraPicker.swift */; };
+		172A96FBBF9EF7A12C8A95D5 /* MissionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */; };
 		1D35FAFF3B2971A9C6558F74 /* PhotoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */; };
 		2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E8A6CD54AD50C8860C443 /* ModelsTests.swift */; };
 		22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 02DE3152D31178D49884EE7D /* RailAngyerCore */; };
@@ -39,6 +40,7 @@
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
+		E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
 		F12263DF0DE9E67292F6AB06 /* courses.json in Resources */ = {isa = PBXBuildFile; fileRef = 2FB2C01086C5A7121DE5417D /* courses.json */; };
 /* End PBXBuildFile section */
@@ -85,9 +87,11 @@
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
 		86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
+		8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionAuthoringTests.swift; sourceTree = "<group>"; };
 		902E8A6CD54AD50C8860C443 /* ModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsTests.swift; sourceTree = "<group>"; };
 		9577A67BEAAF07D613F921B7 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		98F5289A8DF49229292880FD /* MasterSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterSeeder.swift; sourceTree = "<group>"; };
+		991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionEditorView.swift; sourceTree = "<group>"; };
 		A23AB8C2D3BC3C1C41272684 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
@@ -235,6 +239,7 @@
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				9577A67BEAAF07D613F921B7 /* CameraPicker.swift */,
 				D80CE7F62882767E29A8AC06 /* DiceRollView.swift */,
+				991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */,
 				221879CB631B13ABDD16A06A /* RoomJoinView.swift */,
 				A23AB8C2D3BC3C1C41272684 /* RootView.swift */,
 				CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */,
@@ -251,6 +256,7 @@
 			children = (
 				3690BE1B4A227DE6AC162B23 /* Fixtures */,
 				F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */,
+				8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */,
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
 				160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */,
 			);
@@ -396,6 +402,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */,
+				E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */,
 				2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */,
 				2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */,
 			);
@@ -417,6 +424,7 @@
 				B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */,
 				61D5521E731DFC7E0520012D /* LocationService.swift in Sources */,
 				0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */,
+				172A96FBBF9EF7A12C8A95D5 /* MissionEditorView.swift in Sources */,
 				E686C96515C035CA38FB915A /* Models.swift in Sources */,
 				082E2A379FE47761F6BD6976 /* NotificationService.swift in Sources */,
 				E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */,

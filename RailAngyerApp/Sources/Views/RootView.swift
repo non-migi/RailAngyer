@@ -45,7 +45,7 @@ private struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            BoardView(store: store, showingSettings: $showingSettings)
+            BoardView(store: store, sync: sync, showingSettings: $showingSettings)
         }
         .fullScreenCover(isPresented: .constant(store.phase.isInTurn || store.showingAnnouncement)) {
             TurnFlowView(store: store, location: location)

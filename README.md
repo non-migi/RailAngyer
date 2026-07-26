@@ -45,14 +45,14 @@
   `https://railangyer.azurewebsites.net/health/db` が DB まで疎通
 - 写真：ストレージ・コンテナ `photos` 作成済み。**SAS発行 → Blobへ直接アップロード →
   メタ登録 → 表示 → 削除を実物で確認済み**
-- アプリ：**送信キューと `/state` の取り込み**、**招待コードでの参加・ルーム作成**まで実装。
-  残るは**ミッション自作のUI**（駅ごとに1人1個・効果の入力）
+- アプリ：**送信キュー**・**参加/ルーム作成**・**ミッション自作**まで実装。
+  **フェーズ2の作るものは揃った。**残るは実機での通し確認と実地テスト
 
 ## テスト
 
 ```bash
 swift test --package-path RailAngyerCore     # ルール計算 35件
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 47件 + UI 3件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 55件 + UI 3件
 dotnet test RailAngyerApi.Tests               # API 44件
 ```

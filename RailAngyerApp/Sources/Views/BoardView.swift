@@ -4,8 +4,10 @@ import RailAngyerCore
 /// SC-04 盤面。アプリの主画面。
 struct BoardView: View {
     @Bindable var store: GameSessionStore
+    let sync: SyncService
     @Binding var showingSettings: Bool
     @State private var selectedStation: StationSelection?
+    @State private var showingMissions = false
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -23,6 +25,9 @@ struct BoardView: View {
         .sheet(item: $selectedStation) { selection in
             StationDetailView(store: store, order: selection.id)
         }
+        .sheet(isPresented: $showingMissions) {
+            MissionEditorView(store: store, sync: sync)
+        }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -33,6 +38,10 @@ struct BoardView: View {
                     Image(systemName: showsMap ? "list.bullet" : "map")
                 }
                 .accessibilityLabel(showsMap ? "一覧で見る" : "地図で見る")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showingMissions = true } label: { Image(systemName: "square.and.pencil") }
+                    .accessibilityLabel("お題を書く")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingSettings = true } label: { Image(systemName: "gearshape") }
