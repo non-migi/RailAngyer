@@ -22,8 +22,10 @@
 		389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */; };
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
+		4BA80320271A109545402F7F /* JourneySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */; };
 		518D2299AA99EBE7576AE457 /* room.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CB81EAFFC74827CB26EBF /* room.json */; };
 		582BE1269E3829872FFDF18E /* RoomJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 221879CB631B13ABDD16A06A /* RoomJoinView.swift */; };
+		5B961AED1559EB70F013838F /* JourneySummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */; };
 		61D5521E731DFC7E0520012D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155472042CCA7F23234F9556 /* LocationService.swift */; };
 		6404ED69DE04AC95DF1BB2E7 /* Credentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */; };
 		6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D222C291090136DEE94441 /* ApiClient.swift */; };
@@ -36,11 +38,13 @@
 		C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */; };
 		C6E478F22C510D5C793EFB7C /* ApiConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11D3C151DB16D800074F495 /* ApiConfiguration.swift */; };
 		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
+		D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */; };
 		E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156CFFC9852BBD282BE20DE /* Theme.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
 		E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */; };
+		EAEEBA59ABAC4657C7A1758F /* JourneySummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4120077374AB985D7AD2EE89 /* JourneySummary.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
 		F12263DF0DE9E67292F6AB06 /* courses.json in Resources */ = {isa = PBXBuildFile; fileRef = 2FB2C01086C5A7121DE5417D /* courses.json */; };
 /* End PBXBuildFile section */
@@ -82,7 +86,10 @@
 		3A20C935B2EE85D434D111CF /* TurnFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnFlowView.swift; sourceTree = "<group>"; };
 		3B470BF27494F68A94DA16FA /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		3C804299584BFF82C68B12EA /* StationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationDetailView.swift; sourceTree = "<group>"; };
+		4120077374AB985D7AD2EE89 /* JourneySummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummary.swift; sourceTree = "<group>"; };
+		525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryTests.swift; sourceTree = "<group>"; };
 		52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RailAngyerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryUITests.swift; sourceTree = "<group>"; };
 		62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChange.swift; sourceTree = "<group>"; };
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
@@ -94,6 +101,7 @@
 		991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionEditorView.swift; sourceTree = "<group>"; };
 		A23AB8C2D3BC3C1C41272684 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryView.swift; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
 		D11D3C151DB16D800074F495 /* ApiConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiConfiguration.swift; sourceTree = "<group>"; };
@@ -173,6 +181,7 @@
 			children = (
 				C36DD89E35D1609C0821E07B /* GamePhase.swift */,
 				86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */,
+				4120077374AB985D7AD2EE89 /* JourneySummary.swift */,
 				155472042CCA7F23234F9556 /* LocationService.swift */,
 				17E8C15DCE6423AA6C330097 /* NotificationService.swift */,
 				FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */,
@@ -228,6 +237,7 @@
 			children = (
 				04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */,
 				257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */,
+				5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */,
 			);
 			path = UITests;
 			sourceTree = "<group>";
@@ -239,6 +249,7 @@
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				9577A67BEAAF07D613F921B7 /* CameraPicker.swift */,
 				D80CE7F62882767E29A8AC06 /* DiceRollView.swift */,
+				BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */,
 				991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */,
 				221879CB631B13ABDD16A06A /* RoomJoinView.swift */,
 				A23AB8C2D3BC3C1C41272684 /* RootView.swift */,
@@ -256,6 +267,7 @@
 			children = (
 				3690BE1B4A227DE6AC162B23 /* Fixtures */,
 				F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */,
+				525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */,
 				8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */,
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
 				160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */,
@@ -394,6 +406,7 @@
 			files = (
 				389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */,
 				6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */,
+				D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -402,6 +415,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */,
+				5B961AED1559EB70F013838F /* JourneySummaryTests.swift in Sources */,
 				E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */,
 				2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */,
 				2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */,
@@ -422,6 +436,8 @@
 				ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */,
 				04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */,
 				B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */,
+				EAEEBA59ABAC4657C7A1758F /* JourneySummary.swift in Sources */,
+				4BA80320271A109545402F7F /* JourneySummaryView.swift in Sources */,
 				61D5521E731DFC7E0520012D /* LocationService.swift in Sources */,
 				0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */,
 				172A96FBBF9EF7A12C8A95D5 /* MissionEditorView.swift in Sources */,

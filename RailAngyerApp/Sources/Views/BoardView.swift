@@ -8,6 +8,7 @@ struct BoardView: View {
     @Binding var showingSettings: Bool
     @State private var selectedStation: StationSelection?
     @State private var showingMissions = false
+    @State private var showingSummary = false
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -28,6 +29,9 @@ struct BoardView: View {
         .sheet(isPresented: $showingMissions) {
             MissionEditorView(store: store, sync: sync)
         }
+        .sheet(isPresented: $showingSummary) {
+            JourneySummaryView(store: store)
+        }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -38,6 +42,10 @@ struct BoardView: View {
                     Image(systemName: showsMap ? "list.bullet" : "map")
                 }
                 .accessibilityLabel(showsMap ? "一覧で見る" : "地図で見る")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showingSummary = true } label: { Image(systemName: "book.closed") }
+                    .accessibilityLabel("ふりかえり")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingMissions = true } label: { Image(systemName: "square.and.pencil") }
@@ -106,6 +114,9 @@ struct BoardView: View {
             if case .cleared = store.phase {
                 Text("ゴールに到達しました")
                     .font(.headline).foregroundStyle(Theme.line)
+                Button("ふりかえりを見る") { showingSummary = true }
+                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity, minHeight: 48)
                 Button("記録をリセットしてもう一度") { store.resetProgress() }
                     .buttonStyle(.bordered)
                     .frame(maxWidth: .infinity, minHeight: 48)
