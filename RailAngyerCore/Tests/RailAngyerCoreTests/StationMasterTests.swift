@@ -65,15 +65,78 @@ struct StationMasterTests {
         #expect(course.stations(in: back).map(\.name) == ["真駒内", "自衛隊前", "澄川"])
     }
 
-    /// ハーバサインによる概算距離（テスト用。実装では CLLocation.distance を使う）
-    private func distanceMeters(_ a: StationRef, _ b: StationRef) -> Double {
-        let r = 6_371_000.0
-        let dLat = (b.latitude - a.latitude) * .pi / 180
-        let dLon = (b.longitude - a.longitude) * .pi / 180
-        let lat1 = a.latitude * .pi / 180
-        let lat2 = b.latitude * .pi / 180
-        let h = sin(dLat / 2) * sin(dLat / 2)
-            + sin(dLon / 2) * sin(dLon / 2) * cos(lat1) * cos(lat2)
-        return 2 * r * asin(min(1, h.squareRoot()))
+}
+
+/// 追加したコース（フェーズ4）。
+///
+/// 座標はいずれも概値。**値そのものではなく、位置計算が壊れない条件**を確かめる。
+/// 実地で補正するまでは、どのコースも自動到着が合わない駅が出うる。
+struct AdditionalCourseTests {
+
+    private static let courses: [(name: String, count: Int, terminals: (String, String))] = [
+        ("東西線", 19, ("宮の沢", "新さっぽろ")),
+        ("東豊線", 14, ("栄町", "福住")),
+        ("山手線", 30, ("東京", "有楽町"))
+    ]
+
+    @Test("同梱しているコースは4本")
+    func loadsAllCourses() throws {
+        let all = try StationMaster.all()
+        #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線"])
     }
+
+    @Test("駅数と両端が定義どおり", arguments: courses)
+    func stationCountAndTerminals(_ course: (name: String, count: Int, terminals: (String, String))) throws {
+        let loaded = try #require(try StationMaster.all().first { $0.name == course.name })
+        #expect(loaded.stations.count == course.count)
+        #expect(loaded.station(orderNo: 1)?.name == course.terminals.0)
+        #expect(loaded.station(orderNo: course.count)?.name == course.terminals.1)
+    }
+
+    @Test("OrderNo が連続していて駅名が重複しない")
+    func orderNoAndNamesAreSound() throws {
+        for course in try StationMaster.all() {
+            let orders = course.sortedStations.map(\.orderNo)
+            #expect(orders == Array(1...course.stations.count), "\(course.name) の OrderNo に欠番か重複がある")
+            #expect(Set(course.stations.map(\.name)).count == course.stations.count,
+                    "\(course.name) に同名の駅がある")
+        }
+    }
+
+    @Test("隣り合う駅が近すぎない・遠すぎない")
+    func spacingIsPlausible() throws {
+        for course in try StationMaster.all() {
+            let sorted = course.sortedStations
+            for i in 0..<(sorted.count - 1) {
+                let d = distanceMeters(sorted[i], sorted[i + 1])
+                // 到着判定は半径150m。300m未満だと圏内が重なって判定が壊れる
+                #expect(d > 300, "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が近すぎる: \(Int(d))m")
+                #expect(d < 4000, "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が遠すぎる: \(Int(d))m")
+            }
+        }
+    }
+
+    @Test("山手線は一周ぶんの長さになっている")
+    func yamanoteIsRoughlyOneLap() throws {
+        let course = try StationMaster.yamanote()
+        let sorted = course.sortedStations
+        var total: Double = 0
+        for i in 0..<(sorted.count - 1) {
+            total += distanceMeters(sorted[i], sorted[i + 1])
+        }
+        // 実際の営業キロは約34.5km。駅間の直線距離の合計なので、それより短くなる
+        #expect((25_000.0...35_000.0).contains(total), "一周の長さが想定から外れている: \(Int(total))m")
+    }
+}
+
+/// 2駅間の直線距離。座標の妥当性を測るためだけに使う（本番は CLLocation が計算する）
+func distanceMeters(_ a: StationRef, _ b: StationRef) -> Double {
+    let r = 6_371_000.0
+    let dLat = (b.latitude - a.latitude) * .pi / 180
+    let dLon = (b.longitude - a.longitude) * .pi / 180
+    let lat1 = a.latitude * .pi / 180
+    let lat2 = b.latitude * .pi / 180
+    let h = sin(dLat / 2) * sin(dLat / 2)
+        + sin(dLon / 2) * sin(dLon / 2) * cos(lat1) * cos(lat2)
+    return 2 * r * asin(min(1, h.squareRoot()))
 }

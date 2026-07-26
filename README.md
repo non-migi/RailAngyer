@@ -24,6 +24,7 @@
 | [files/10_アプリ設計.md](files/10_アプリ設計.md) | SwiftDataモデル・状態管理・位置判定・GPXテスト手順 |
 | [files/11_API設計.md](files/11_API設計.md) | フェーズ2のAPI。認証・エンドポイント・冪等性・Blob |
 | [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（適用済み） |
+| [files/13_courses.sql](files/13_courses.sql) | 東西線・東豊線・山手線の投入（適用済み） |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
 | [RailAngyerApi/](RailAngyerApi/) | ASP.NET Core の API（フェーズ2。`dotnet test` で検証） |
@@ -45,14 +46,15 @@
   `https://railangyer.azurewebsites.net/health/db` が DB まで疎通
 - 写真：ストレージ・コンテナ `photos` 作成済み。**SAS発行 → Blobへ直接アップロード →
   メタ登録 → 表示 → 削除を実物で確認済み**
-- アプリ：**送信キュー**・**参加/ルーム作成**・**ミッション自作**・**ふりかえり**まで実装。
-  **フェーズ2の作るものは揃った。**残るは実機での通し確認と実地テスト
+- アプリ：**送信キュー**・**参加/ルーム作成**・**ミッション自作**・**ふりかえり**・**予定と出欠**まで実装
+- コースは4本（南北線・東西線・東豊線・山手線）。設定から切り替えられる
+- **フェーズ2〜4の作るものは揃った。**残るは実機での通し確認と実地テスト
 
 ## テスト
 
 ```bash
-swift test --package-path RailAngyerCore     # ルール計算 35件
+swift test --package-path RailAngyerCore     # ルール計算・駅マスタ 40件
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 61件 + UI 4件
-dotnet test RailAngyerApi.Tests               # API 44件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 75件 + UI 4件
+dotnet test RailAngyerApi.Tests               # API 54件
 ```

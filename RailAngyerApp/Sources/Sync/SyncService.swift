@@ -320,6 +320,98 @@ final class SyncService {
         try context.save()
     }
 
+    // MARK: - 予定（フェーズ3）
+
+    /// 予定を積む
+    func enqueueSchedule(_ schedule: Schedule) throws {
+        guard let room = credentials.load()?.roomId else { return }
+        let body = SaveScheduleBody(title: schedule.title,
+                                    startAt: schedule.startAt,
+                                    meetPlace: schedule.meetPlace)
+        try enqueue(path: "/rooms/\(room.apiString)/schedules/\(schedule.id.apiString)", body: body)
+    }
+
+    func enqueueScheduleDelete(scheduleId: UUID) throws {
+        guard let room = credentials.load()?.roomId else { return }
+        try queue.enqueue(PendingChange(
+            method: "DELETE",
+            path: "/rooms/\(room.apiString)/schedules/\(scheduleId.apiString)",
+            payload: nil))
+        pendingCount = try queue.count()
+    }
+
+    /// 出欠を積む。**誰の出欠かはサーバーがトークンから決める**ので、送るのは値だけ
+    func enqueueAttendance(scheduleId: UUID, status: AttendanceStatus) throws {
+        guard let room = credentials.load()?.roomId else { return }
+        try enqueue(path: "/rooms/\(room.apiString)/schedules/\(scheduleId.apiString)/attendance",
+                    body: SaveAttendanceBody(status: status.rawValue))
+    }
+
+    /// 予定と出欠を取り込む。
+    ///
+    /// 予定は**サーバーが正**にする。進行の記録と違い、誰かが消したら消えてほしい
+    /// （消えた予定が端末に残り続けると、集合場所を取り違える）。
+    /// ただし**まだ送っていない予定は消さない**。
+    @discardableResult
+    func pullSchedules() async -> Bool {
+        guard let saved = credentials.load() else { return false }
+        do {
+            let remote = try await client.schedules(roomId: saved.roomId)
+            try applySchedules(remote)
+            return true
+        } catch let error as ApiError {
+            lastError = error.message
+            return false
+        } catch {
+            lastError = String(describing: error)
+            return false
+        }
+    }
+
+    private func applySchedules(_ remote: [ScheduleResponse]) throws {
+        guard let room = try localRoom() else { return }
+        let existing = try context.fetch(FetchDescriptor<Schedule>())
+
+        for incoming in remote {
+            let schedule = existing.first { $0.id == incoming.scheduleId }
+                ?? {
+                    let created = Schedule(title: incoming.title, startAt: incoming.startAt)
+                    created.id = incoming.scheduleId
+                    created.missionSet = room
+                    context.insert(created)
+                    return created
+                }()
+
+            schedule.title = incoming.title
+            schedule.startAt = incoming.startAt
+            schedule.meetPlace = incoming.meetPlace
+            schedule.createdById = incoming.createdBy
+            schedule.syncStateRaw = SyncState.synced.rawValue
+
+            for person in incoming.attendees {
+                if let attendance = schedule.attendees.first(where: { $0.memberId == person.memberId }) {
+                    attendance.displayName = person.displayName
+                    attendance.statusRaw = person.status
+                } else {
+                    let created = Attendance(memberId: person.memberId,
+                                             displayName: person.displayName,
+                                             status: AttendanceStatus(rawValue: person.status) ?? .undecided)
+                    created.schedule = schedule
+                    context.insert(created)
+                }
+            }
+        }
+
+        // サーバーから消えた予定は端末からも消す。ただし未送信のものは残す
+        let remoteIds = Set(remote.map(\.scheduleId))
+        for stale in existing
+        where !remoteIds.contains(stale.id) && stale.syncStateRaw == SyncState.synced.rawValue {
+            context.delete(stale)
+        }
+
+        try context.save()
+    }
+
     // MARK: - 取り込む
 
     /// サーバーの進行を取り込む。**送るものを送ってから取りに行く**（自分の記録が消えないように）
@@ -432,6 +524,16 @@ private struct SaveVisitBody: Encodable {
     let stationId: Int
     let arrivedAt: Date
     let visitKind: Int
+}
+
+private struct SaveScheduleBody: Encodable {
+    let title: String
+    let startAt: Date
+    let meetPlace: String?
+}
+
+private struct SaveAttendanceBody: Encodable {
+    let status: Int
 }
 
 private struct SaveMissionBody: Encodable {

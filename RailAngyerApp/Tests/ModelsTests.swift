@@ -15,26 +15,31 @@ struct ModelsTests {
         return ModelContext(container)
     }
 
-    @Test("マスタを投入すると南北線16駅が入る")
+    @Test("マスタを投入すると同梱コースが全部入り、既定は南北線")
     func seedsMaster() throws {
         let context = try makeContext()
         let course = try MasterSeeder.seedIfNeeded(context)
 
+        // 最初に遊ぶのは南北線。他のコースは設定から選べる（フェーズ4）
         #expect(course.name == "南北線")
-        let stations = try context.fetch(FetchDescriptor<Station>())
-        #expect(stations.count == 16)
-        #expect(stations.sorted { $0.orderNo < $1.orderNo }.first?.name == "麻生")
-        #expect(stations.sorted { $0.orderNo < $1.orderNo }.last?.name == "真駒内")
+        let nanboku = course.stations.sorted { $0.orderNo < $1.orderNo }
+        #expect(nanboku.count == 16)
+        #expect(nanboku.first?.name == "麻生")
+        #expect(nanboku.last?.name == "真駒内")
+
+        let courses = try context.fetch(FetchDescriptor<Course>())
+        #expect(Set(courses.map(\.name)) == ["南北線", "東西線", "東豊線", "山手線"])
     }
 
     @Test("二度投入しても重複しない")
     func seedIsIdempotent() throws {
         let context = try makeContext()
         _ = try MasterSeeder.seedIfNeeded(context)
+        let before = try context.fetch(FetchDescriptor<Station>()).count
         _ = try MasterSeeder.seedIfNeeded(context)
 
-        #expect(try context.fetch(FetchDescriptor<Course>()).count == 1)
-        #expect(try context.fetch(FetchDescriptor<Station>()).count == 16)
+        #expect(try context.fetch(FetchDescriptor<Course>()).count == 4)
+        #expect(try context.fetch(FetchDescriptor<Station>()).count == before)
     }
 
     @Test("ローカルルームは全線・自分1人で作られる")

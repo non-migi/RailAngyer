@@ -85,6 +85,12 @@ final class ApiClient {
         return try decode(data)
     }
 
+    func schedules(roomId: UUID) async throws -> [ScheduleResponse] {
+        let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/schedules",
+                                     rawBody: nil, authorized: true)
+        return try decode(data)
+    }
+
     func state(roomId: UUID) async throws -> StateResponse {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/state",
                                      rawBody: nil, authorized: true)
@@ -269,6 +275,21 @@ struct MissionSummaryResponse: Codable {
     let count: Int
     let effectCount: Int
     let backEffectCount: Int
+}
+
+struct ScheduleResponse: Codable {
+    let scheduleId: UUID
+    let title: String
+    let startAt: Date
+    let meetPlace: String?
+    let createdBy: UUID?
+    let attendees: [AttendeeResponse]
+}
+
+struct AttendeeResponse: Codable {
+    let memberId: UUID
+    let displayName: String
+    let status: Int
 }
 
 struct StateResponse: Codable {

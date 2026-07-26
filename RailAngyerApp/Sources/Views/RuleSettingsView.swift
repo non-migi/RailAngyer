@@ -33,6 +33,28 @@ struct RuleSettingsView: View {
                     }
                 }
 
+                Section {
+                    Picker("コース", selection: Binding(
+                        get: { store.room?.course?.name ?? "" },
+                        set: { name in
+                            guard let course = store.courses.first(where: { $0.name == name }) else { return }
+                            if store.updateCourse(course) {
+                                startOrder = course.stations.map(\.orderNo).min() ?? 1
+                                goalOrder = course.stations.map(\.orderNo).max() ?? 1
+                            }
+                        })) {
+                            ForEach(store.courses) { course in
+                                Text("\(course.name)（\(course.stations.count)駅）").tag(course.name)
+                            }
+                        }
+                } header: {
+                    Text("コース")
+                } footer: {
+                    Text("コースを変えると区間は両端に戻り、**前のコースの駅に書いたお題は消えます**。"
+                         + "山手線は環状ですが、東京から順に並べた直線として扱います。")
+                }
+                .disabled(locked)
+
                 Section("区間") {
                     Picker("スタート", selection: $startOrder) {
                         ForEach(allStations) { Text($0.name).tag($0.orderNo) }

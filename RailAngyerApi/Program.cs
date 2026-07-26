@@ -62,6 +62,7 @@ app.MapRoomEndpoints();
 app.MapMissionEndpoints();
 app.MapProgressEndpoints();
 app.MapPhotoEndpoints();
+app.MapScheduleEndpoints();
 
 app.Run();
 

@@ -56,6 +56,31 @@ public enum StationMaster {
         try load(resource: "nanboku")
     }
 
+    /// 札幌市営地下鉄 東西線（宮の沢 → 新さっぽろ、19駅）
+    public static func tozai() throws -> CourseRef {
+        try load(resource: "tozai")
+    }
+
+    /// 札幌市営地下鉄 東豊線（栄町 → 福住、14駅）
+    public static func toho() throws -> CourseRef {
+        try load(resource: "toho")
+    }
+
+    /// JR山手線（東京 → 有楽町、30駅）。
+    ///
+    /// **環状線だが、直線として並べてある。** `GameEngine` は始点と終点のある区間を
+    /// 前提にしており、一周して戻る動きは扱えない。
+    /// 東京から順に並べた30駅を通しで歩けば、最後の1区間（有楽町→東京）を残して
+    /// ほぼ一周ぶんになる。環状としてきちんと扱うにはルール計算の作り直しが要る。
+    public static func yamanote() throws -> CourseRef {
+        try load(resource: "yamanote")
+    }
+
+    /// 同梱しているコースすべて
+    public static func all() throws -> [CourseRef] {
+        [try nanboku(), try tozai(), try toho(), try yamanote()]
+    }
+
     static func load(resource: String) throws -> CourseRef {
         guard let url = Bundle.module.url(forResource: resource, withExtension: "json") else {
             throw LoadError.resourceNotFound(resource)

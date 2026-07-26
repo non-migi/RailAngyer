@@ -7,17 +7,33 @@ import RailAngyerCore
 /// 初回起動時に1回だけ走る。既に入っていれば何もしない。
 enum MasterSeeder {
 
-    /// コースが1件も無ければ南北線を投入する
+    /// 同梱しているコースをすべて投入し、最初のもの（南北線）を返す。
+    ///
+    /// 既にあるコースは触らない。**駅の座標は上書きしない**ため、
+    /// 現地で実測して直した値がアプリ更新で戻ることはない
+    /// （新しいコースが増えたときだけ足りないぶんを入れる）。
     @discardableResult
     static func seedIfNeeded(_ context: ModelContext) throws -> Course {
-        if let existing = try context.fetch(FetchDescriptor<Course>()).first {
-            return existing
+        let existing = try context.fetch(FetchDescriptor<Course>())
+        var courses = existing
+
+        for ref in try StationMaster.all() where !existing.contains(where: { $0.name == ref.name }) {
+            courses.append(try seed(ref, into: context))
         }
-        return try seedNanboku(context)
+
+        guard let first = courses.first(where: { $0.name == "南北線" }) ?? courses.first else {
+            throw SeedError.emptyCourse
+        }
+        return first
     }
 
+    /// 南北線だけを投入する（既存の呼び出し向け）
+    @discardableResult
     static func seedNanboku(_ context: ModelContext) throws -> Course {
-        let ref = try StationMaster.nanboku()
+        try seed(try StationMaster.nanboku(), into: context)
+    }
+
+    private static func seed(_ ref: CourseRef, into context: ModelContext) throws -> Course {
         let course = Course(name: ref.name, lineColorHex: ref.lineColorHex)
         context.insert(course)
 

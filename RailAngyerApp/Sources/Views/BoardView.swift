@@ -9,6 +9,7 @@ struct BoardView: View {
     @State private var selectedStation: StationSelection?
     @State private var showingMissions = false
     @State private var showingSummary = false
+    @State private var showingSchedules = false
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -32,6 +33,9 @@ struct BoardView: View {
         .sheet(isPresented: $showingSummary) {
             JourneySummaryView(store: store)
         }
+        .sheet(isPresented: $showingSchedules) {
+            ScheduleListView(store: store, sync: sync)
+        }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -42,6 +46,10 @@ struct BoardView: View {
                     Image(systemName: showsMap ? "list.bullet" : "map")
                 }
                 .accessibilityLabel(showsMap ? "一覧で見る" : "地図で見る")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showingSchedules = true } label: { Image(systemName: "calendar") }
+                    .accessibilityLabel("予定")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingSummary = true } label: { Image(systemName: "book.closed") }

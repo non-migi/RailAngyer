@@ -308,6 +308,76 @@ final class GameSessionStore {
         }
     }
 
+    // MARK: - 予定（SC-21 / フェーズ3）
+
+    /// 予定（開催が近い順）。過ぎたものは後ろに回す
+    var schedules: [Schedule] {
+        let all = (try? context.fetch(FetchDescriptor<Schedule>())) ?? []
+        let now = Date()
+        return all.sorted { lhs, rhs in
+            let lhsPast = lhs.startAt < now, rhsPast = rhs.startAt < now
+            if lhsPast != rhsPast { return !lhsPast }
+            return lhsPast ? lhs.startAt > rhs.startAt : lhs.startAt < rhs.startAt
+        }
+    }
+
+    /// 予定を立てる・書き換える。
+    /// - Returns: 保存できなければ理由
+    @discardableResult
+    func saveSchedule(_ existing: Schedule?, title: String,
+                      startAt: Date, meetPlace: String?) -> String? {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "予定の名前を入力してください" }
+        if trimmed.count > 100 { return "予定の名前は100文字までです" }
+
+        // サーバーでも同じ判定をしているが、圏外で書いたものが後から弾かれると分かりにくい
+        if let existing, let owner = existing.createdById,
+           let me = me?.id, owner != me {
+            return "予定を立てた人だけが変更できます"
+        }
+
+        let schedule = existing ?? Schedule(title: trimmed, startAt: startAt)
+        schedule.title = trimmed
+        schedule.startAt = startAt
+        schedule.meetPlace = meetPlace?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+
+        if existing == nil {
+            schedule.missionSet = room
+            schedule.createdById = me?.id
+            context.insert(schedule)
+        }
+        save()
+        try? sync?.enqueueSchedule(schedule)
+        return nil
+    }
+
+    func deleteSchedule(_ schedule: Schedule) {
+        let id = schedule.id
+        context.delete(schedule)
+        save()
+        try? sync?.enqueueScheduleDelete(scheduleId: id)
+    }
+
+    /// 自分の出欠を答える。**他人のぶんは動かせない**
+    func answerAttendance(_ schedule: Schedule, status: AttendanceStatus) {
+        guard let me else { return }
+
+        if let mine = schedule.attendees.first(where: { $0.memberId == me.id }) {
+            mine.status = status
+        } else {
+            let created = Attendance(memberId: me.id, displayName: me.displayName, status: status)
+            created.schedule = schedule
+            context.insert(created)
+        }
+        save()
+        try? sync?.enqueueAttendance(scheduleId: schedule.id, status: status)
+    }
+
+    func myAttendance(_ schedule: Schedule) -> AttendanceStatus {
+        guard let me else { return .undecided }
+        return schedule.attendees.first { $0.memberId == me.id }?.status ?? .undecided
+    }
+
     // MARK: - 写真
 
     /// いま写真を紐づけるべき訪問。
@@ -363,6 +433,35 @@ final class GameSessionStore {
         } catch {
             lastError = String(describing: error)
         }
+    }
+
+    /// 選べるコース（フェーズ4）
+    var courses: [Course] {
+        ((try? context.fetch(FetchDescriptor<Course>())) ?? [])
+            .sorted { $0.stations.count > $1.stations.count }
+    }
+
+    /// 遊ぶコースを変える。進行中は変えられない（T-06）。
+    ///
+    /// **区間は新しいコースの両端に置き直す。** 前のコースの駅を指したままだと、
+    /// 区間の外を指す設定になって進行が破綻する。
+    @discardableResult
+    func updateCourse(_ course: Course) -> Bool {
+        guard let room, room.turns.isEmpty else { return false }
+
+        let sorted = course.stations.sorted { $0.orderNo < $1.orderNo }
+        guard let first = sorted.first, let last = sorted.last else { return false }
+
+        // 前のコースの駅に紐づいたお題は、そのままでは引けない
+        for mission in room.missions where mission.station?.course?.name != course.name {
+            context.delete(mission)
+        }
+
+        room.course = course
+        room.startStation = first
+        room.goalStation = last
+        save()
+        return true
     }
 
     /// 区間と最大出目を変更する。進行中は変えられない（T-06）

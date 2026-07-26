@@ -240,12 +240,73 @@ final class Photo {
     }
 }
 
+// MARK: - 予定（フェーズ3）
+
+@Model
+final class Schedule {
+    var id: UUID = UUID()
+    var title: String = ""
+    var startAt: Date = Date()
+    var meetPlace: String?
+    /// 立てた人。この人だけが直せる（サーバー側でも同じ判定をしている）
+    var createdById: UUID?
+    var syncStateRaw: Int = SyncState.localOnly.rawValue
+
+    var missionSet: MissionSet?
+
+    @Relationship(deleteRule: .cascade, inverse: \Attendance.schedule)
+    var attendees: [Attendance] = []
+
+    init(title: String, startAt: Date, meetPlace: String? = nil) {
+        self.title = title
+        self.startAt = startAt
+        self.meetPlace = meetPlace
+    }
+}
+
+/// 出欠。0=未定 1=参加 2=不参加（サーバーの `ScheduleAttendee.Status` と同じ値）
+@Model
+final class Attendance {
+    /// メンバーIDと予定の組で一意。SwiftDataに複合主キーは無いので、こちらで守る
+    var memberId: UUID = UUID()
+    var displayName: String = ""
+    var statusRaw: Int = AttendanceStatus.undecided.rawValue
+
+    var schedule: Schedule?
+
+    init(memberId: UUID, displayName: String, status: AttendanceStatus = .undecided) {
+        self.memberId = memberId
+        self.displayName = displayName
+        self.statusRaw = status.rawValue
+    }
+
+    var status: AttendanceStatus {
+        get { AttendanceStatus(rawValue: statusRaw) ?? .undecided }
+        set { statusRaw = newValue.rawValue }
+    }
+}
+
+enum AttendanceStatus: Int, CaseIterable {
+    case undecided = 0
+    case going = 1
+    case notGoing = 2
+
+    var label: String {
+        switch self {
+        case .undecided: return "未定"
+        case .going:     return "参加"
+        case .notGoing:  return "不参加"
+        }
+    }
+}
+
 // MARK: - コンテナ
 
 enum AppSchema {
     static let all: [any PersistentModel.Type] = [
         Course.self, Station.self, MissionSet.self, Member.self,
         Mission.self, Turn.self, Visit.self, Photo.self,
+        Schedule.self, Attendance.self,
         // 送信キュー。記録そのものではないが、圏外で落としても残す必要がある
         PendingChange.self
     ]
