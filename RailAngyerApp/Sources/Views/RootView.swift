@@ -65,6 +65,7 @@ private struct MainView: View {
     private func askForNotificationsIfNeeded() {
         guard !didAskForNotifications, case .walking = store.phase else { return }
         didAskForNotifications = true
+        guard !TestHooks.suppressesNotificationPrompt else { return }
         NotificationService.requestAuthorization()
     }
 

@@ -20,6 +20,12 @@ enum TestHooks {
         ProcessInfo.processInfo.environment["RAILANGYER_IN_MEMORY"] == "1"
     }
 
+    /// 通知の許可を求めない（例: `RAILANGYER_NO_NOTIF_PROMPT=1`）。
+    /// UIテストでは許可ダイアログが操作を塞ぐため、検証対象でないときは出さない
+    static var suppressesNotificationPrompt: Bool {
+        ProcessInfo.processInfo.environment["RAILANGYER_NO_NOTIF_PROMPT"] == "1"
+    }
+
     /// 起動時に進行記録を消す（例: `RAILANGYER_RESET=1`）。
     /// 中断・復帰のテストでは、**保存を効かせたまま**初期状態から始める必要があるため、
     /// メモリ上の起動ではなくこちらを使う

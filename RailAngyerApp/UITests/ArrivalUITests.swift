@@ -19,7 +19,10 @@ final class ArrivalUITests: XCTestCase {
         app = XCUIApplication()
         app.launchEnvironment["RAILANGYER_FIXED_DICE"] = "1"   // 必ず1駅進む
         app.launchEnvironment["RAILANGYER_IN_MEMORY"] = "1"    // 毎回まっさらな状態から
+        // 通知の許可ダイアログは操作を塞ぐ。ここでの検証対象ではないので出さない
+        app.launchEnvironment["RAILANGYER_NO_NOTIF_PROMPT"] = "1"
     }
+
 
     /// 麻生から北34条まで歩くと、半径に入った時点で自動的に到着になる
     func testWalkingIntoRadiusTriggersArrival() {

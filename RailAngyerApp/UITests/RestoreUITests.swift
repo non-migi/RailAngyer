@@ -21,7 +21,9 @@ final class RestoreUITests: XCTestCase {
         // 保存を効かせたまま初期状態から始めたいので、メモリ上の起動は使わない
         app.launchEnvironment["RAILANGYER_FIXED_DICE"] = "3"
         app.launchEnvironment["RAILANGYER_RESET"] = "1"
+        app.launchEnvironment["RAILANGYER_NO_NOTIF_PROMPT"] = "1"
     }
+
 
     override func tearDown() {
         // 後続のテストに記録を持ち越さない
