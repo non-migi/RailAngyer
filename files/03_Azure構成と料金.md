@@ -16,6 +16,45 @@
 | SQLデータベース | `RailAngyer` | 実データとコンピューティングの単位。課金もこちら |
 | リージョン | Japan East | — |
 
+### 追加したリソース（2026-07-26）
+
+| 種別 | 名前 | リージョン | 備考 |
+|---|---|---|---|
+| ストレージアカウント | `railangyer` | Japan East | 写真用。コンテナ `photos`（**非公開**）。**ローカル冗長（LRS）** |
+| App Service プラン | `railangyer-plan-japanwest` | **Japan West** | Linux / **F1（無料）** |
+| Web アプリ | `railangyer` | Japan West | `https://railangyer.azurewebsites.net` |
+
+> ⚠️ **App Service が Japan West にあるのは、Japan East の VM 枠が 0 だったため。**
+> `az appservice plan create --sku F1 --location japaneast` は
+> `Operation cannot be completed without additional quota (Current Limit: 0)` で失敗する。
+> Japan West / East Asia / Korea Central / Southeast Asia では作成できた。
+> DB（Japan East）とは別リージョンになるが、国内同士なので往復は数ミリ秒。
+> Japan East に寄せたい場合はサポートに枠の引き上げを申請する。
+
+**F1（無料）の制約** — 身内用なら実害はないが、把握しておく。
+
+| 項目 | 制約 |
+|---|---|
+| CPU | 1日あたり60分のCPU時間（超えると翌日までアプリが止まる） |
+| Always On | 使えない。**一定時間アクセスが無いとアプリが寝る**（初回リクエストが遅い） |
+| スケールアウト | 不可（1インスタンス固定） |
+| 独自ドメイン・SSL | 不可（`*.azurewebsites.net` のみ） |
+
+> DBの自動一時停止と合わせて、**アプリもDBも寝ている状態からの初回リクエストは分単位でかかりうる**。
+> クライアントが起動時に `/health` を投げておく設計（`11_API設計.md`）はこのため。
+
+> 💡 ストレージは既定の `Standard_RAGRS`（読み取りアクセス geo 冗長）で作られたが、
+> 身内の写真置き場には過剰（LRS の約2倍の単価）なため **`Standard_LRS` に変更した**。
+> DB のバックアップ冗長性を LRS にしているのと同じ判断。
+>
+> ```bash
+> az storage account update -n railangyer -g RailAngyer --sku Standard_LRS
+> ```
+>
+> ⚠️ LRS は**単一データセンター内の3重化**。リージョン規模の障害では失われる。
+> 写真は端末側にも残る設計（`10_アプリ設計.md`）なので、これで許容する。
+> 戻すときは同じコマンドで `--sku Standard_RAGRS`。
+
 > サーバーとデータベースが別リソースとして2つ並ぶのは正常。
 > サーバーは「接続の入口＋ファイアウォール・認証・TLSの設定単位」で、それ自体には課金されない。
 
@@ -101,11 +140,46 @@ sqlcmd -S railangyer.database.windows.net -d RailAngyer -U railangyer_app
 unset SQLCMDPASSWORD
 ```
 
+### 実施済み（2026-07-26）
+
+- [x] **ストレージアカウントとコンテナ `photos` を作成**（公開アクセス無効）
+- [x] **App Service（Linux / F1）を作成し、APIをデプロイ** — `az webapp deploy --type zip`
+      HTTPS のみ / 最小TLS 1.2 / FTPS 無効 / HTTP/2 有効
+- [x] **システム割り当てマネージドIDを有効化**（`b92eba42-f068-49ba-81b7-b15d33186fed`）
+- [x] **API層の送信元IPをSQLファイアウォールに追加**（`appsvc-01`〜`appsvc-20`）
+      → `possibleOutboundIpAddresses` を全部入れている。**プランを変えると増減するので都度見直す**
+- [x] 接続文字列を App Service のアプリケーション設定に格納
+      （`ConnectionStrings__RailAngyer` / `ConnectionStrings__Storage`）
+- [x] **疎通確認** — `https://railangyer.azurewebsites.net/health/db` が
+      `{"status":"ok","stations":16}` を返す（App Service → Azure SQL が通った）
+
+```bash
+# デプロイ手順（作業ディレクトリはリポジトリ直下）
+dotnet publish RailAngyerApi -c Release -o /tmp/publish
+(cd /tmp/publish && zip -qr ../app.zip .)
+az webapp deploy -g RailAngyer -n railangyer --src-path /tmp/app.zip --type zip
+```
+
+> ⚠️ **アプリケーション設定を変えたら `az webapp restart` を打つ。**
+> 設定の反映で自動再起動しないことがあり、設定したのに読めていない状態になる
+> （`No database provider has been configured` はこれで起きた）。
+
 ### 次の作業
 
-- [ ] フェーズ2で App Service / Functions を建てたら、**マネージドIDに切り替える**
-      （`09_アプリ用ユーザー.sql` §3.2。パスワード方式のユーザーはその時点で削除する）
-- [ ] API層の送信元IPをファイアウォールに追加する
+- [ ] **マネージドIDに切り替える**（`09_アプリ用ユーザー.sql` §3.2）
+      IDは有効化済みなので、あとはSQL側に包含ユーザーを作り、
+      接続文字列を `Authentication=Active Directory Default` に変えるだけ。
+      切り替えたらパスワード方式の `railangyer_app` を削除する
+- [ ] **Blob もマネージドIDに寄せる**（アカウントキーを持たずに済む）。以下を実行して
+      接続文字列の代わりにユーザー委任SASを発行する形にする。
+      **※ このコマンドは権限の都合で未実行**
+
+```bash
+az role assignment create \
+  --assignee b92eba42-f068-49ba-81b7-b15d33186fed \
+  --role "Storage Blob Data Contributor" \
+  --scope "/subscriptions/22967d92-5dd8-41b2-903c-358fee055a5c/resourceGroups/RailAngyer/providers/Microsoft.Storage/storageAccounts/railangyer"
+```
 
 ---
 
