@@ -66,6 +66,11 @@ final class ApiClient {
 
     // MARK: - 状態
 
+    func room(roomId: UUID) async throws -> RoomResponse {
+        let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)", rawBody: nil, authorized: true)
+        return try decode(data)
+    }
+
     func state(roomId: UUID) async throws -> StateResponse {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/state",
                                      rawBody: nil, authorized: true)
@@ -216,6 +221,23 @@ struct StationResponse: Codable {
     let orderNo: Int
     let latitude: Double
     let longitude: Double
+}
+
+struct RoomResponse: Codable {
+    let roomId: UUID
+    let name: String
+    let courseId: Int
+    let startStationId: Int
+    let goalStationId: Int
+    let diceMax: Int
+    let inviteCode: String
+    let members: [MemberResponse]
+}
+
+struct MemberResponse: Codable {
+    let memberId: UUID
+    let displayName: String
+    let joinedAt: Date
 }
 
 struct StateResponse: Codable {

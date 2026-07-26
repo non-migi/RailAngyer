@@ -21,6 +21,8 @@
 		389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */; };
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
+		518D2299AA99EBE7576AE457 /* room.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CB81EAFFC74827CB26EBF /* room.json */; };
+		582BE1269E3829872FFDF18E /* RoomJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 221879CB631B13ABDD16A06A /* RoomJoinView.swift */; };
 		61D5521E731DFC7E0520012D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155472042CCA7F23234F9556 /* LocationService.swift */; };
 		6404ED69DE04AC95DF1BB2E7 /* Credentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */; };
 		6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D222C291090136DEE94441 /* ApiClient.swift */; };
@@ -38,6 +40,7 @@
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
+		F12263DF0DE9E67292F6AB06 /* courses.json in Resources */ = {isa = PBXBuildFile; fileRef = 2FB2C01086C5A7121DE5417D /* courses.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,9 +70,12 @@
 		17E8C15DCE6423AA6C330097 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_slow_asabu.gpx; sourceTree = "<group>"; };
 		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
+		1E0CB81EAFFC74827CB26EBF /* room.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = room.json; sourceTree = "<group>"; };
+		221879CB631B13ABDD16A06A /* RoomJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomJoinView.swift; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_full.gpx; sourceTree = "<group>"; };
 		257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreUITests.swift; sourceTree = "<group>"; };
+		2FB2C01086C5A7121DE5417D /* courses.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = courses.json; sourceTree = "<group>"; };
 		3904705B0EEBD442E11E0313 /* StationMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationMapView.swift; sourceTree = "<group>"; };
 		3A20C935B2EE85D434D111CF /* TurnFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnFlowView.swift; sourceTree = "<group>"; };
 		3B470BF27494F68A94DA16FA /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
@@ -126,6 +132,15 @@
 				83B5B044FA4688B323E2DFAA /* RailAngyerCore */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		3690BE1B4A227DE6AC162B23 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				2FB2C01086C5A7121DE5417D /* courses.json */,
+				1E0CB81EAFFC74827CB26EBF /* room.json */,
+			);
+			path = Fixtures;
 			sourceTree = "<group>";
 		};
 		4B4276E0B38B0958F5104E08 /* Sync */ = {
@@ -220,6 +235,7 @@
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				9577A67BEAAF07D613F921B7 /* CameraPicker.swift */,
 				D80CE7F62882767E29A8AC06 /* DiceRollView.swift */,
+				221879CB631B13ABDD16A06A /* RoomJoinView.swift */,
 				A23AB8C2D3BC3C1C41272684 /* RootView.swift */,
 				CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */,
 				3C804299584BFF82C68B12EA /* StationDetailView.swift */,
@@ -233,6 +249,7 @@
 		DCDBB0DF0B6A5C4C1B1F264A /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				3690BE1B4A227DE6AC162B23 /* Fixtures */,
 				F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */,
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
 				160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */,
@@ -259,6 +276,7 @@
 			buildConfigurationList = 92FFD654B7EDAB9C5EF05678 /* Build configuration list for PBXNativeTarget "RailAngyerAppTests" */;
 			buildPhases = (
 				9478957569901CD05C0FB8A8 /* Sources */,
+				8D93BEBB8A71D495E57C4851 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -351,6 +369,18 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		8D93BEBB8A71D495E57C4851 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F12263DF0DE9E67292F6AB06 /* courses.json in Resources */,
+				518D2299AA99EBE7576AE457 /* room.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		690E6287758CEB64720D00B9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -391,6 +421,7 @@
 				082E2A379FE47761F6BD6976 /* NotificationService.swift in Sources */,
 				E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */,
 				1D35FAFF3B2971A9C6558F74 /* PhotoStore.swift in Sources */,
+				582BE1269E3829872FFDF18E /* RoomJoinView.swift in Sources */,
 				00F134CDB673ECC381CA12DB /* RootView.swift in Sources */,
 				C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */,
 				0FB2755F66F5820C34CE4DCB /* RuleSettingsView.swift in Sources */,

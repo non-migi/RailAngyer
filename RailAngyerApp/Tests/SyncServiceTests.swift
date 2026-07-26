@@ -104,6 +104,93 @@ struct SyncServiceTests {
         #expect(station(1)?.latitude == corrected)
     }
 
+    @Test("本物のサーバーが返したJSONでマスタを取り込める")
+    func pullMasterAcceptsRealResponse() async throws {
+        // 実際の GET /courses の応答を取っておいたもの。
+        // 手で書いた見本だけで通していると、列名や日時の形が変わったときに気づけない
+        let json = try fixture("courses")
+
+        for station in room.course?.stations ?? [] { station.serverId = nil }
+        try context.save()
+
+        let service = makeService(.json(json))
+        #expect(await service.pullMaster())
+
+        #expect(room.course?.serverId == 1)
+        #expect(station(1)?.serverId == 1)
+        #expect(station(16)?.serverId == 16)
+    }
+
+    // MARK: - ルーム
+
+    @Test("ルームの設定とメンバーを取り込む")
+    func pullRoomAppliesSettings() async throws {
+        let roomId = UUID()
+        let meId = try #require(credentials.load()?.memberId)
+        let service = makeService(.json("""
+        {"roomId":"\(roomId.apiString)","name":"夏の南北線ツアー","courseId":1,
+         "startStationId":3,"goalStationId":12,"diceMax":4,"inviteCode":"ABC123",
+         "members":[{"memberId":"\(meId.apiString)","displayName":"のん",
+                     "joinedAt":"2026-07-30T05:00:00Z"},
+                    {"memberId":"\(UUID().apiString)","displayName":"ケンタ",
+                     "joinedAt":"2026-07-30T05:01:00Z"}]}
+        """))
+
+        #expect(await service.pullRoom())
+
+        // 区間と最大出目はサーバーが正。端末ごとに違う盤面で遊ばないように合わせる
+        #expect(room.id == roomId)
+        #expect(room.name == "夏の南北線ツアー")
+        #expect(room.inviteCode == "ABC123")
+        #expect(room.diceMax == 4)
+        #expect(room.startStation?.orderNo == 3)
+        #expect(room.goalStation?.orderNo == 12)
+        #expect(room.members.count == 2)
+        #expect(room.members.filter(\.isMe).map(\.displayName) == ["のん"])
+    }
+
+    @Test("本物のサーバーが返したJSONでルームを取り込める")
+    func pullRoomAcceptsRealResponse() async throws {
+        // 実際の GET /rooms/{id} の応答。**日時に Z が付かない**（SQLの DATETIME2 をそのまま返すため）。
+        // 手で書いた見本には Z を付けてしまいがちで、この形はテストから漏れる
+        let json = try fixture("room")
+        let payload = try #require(try JSONSerialization.jsonObject(with: Data(json.utf8))
+                                   as? [String: Any])
+        let members = try #require(payload["members"] as? [[String: Any]])
+        let rawId = try #require(members.first?["memberId"] as? String)
+        let meId = try #require(UUID(uuidString: rawId))
+        try credentials.save(RoomCredentials(roomId: UUID(), memberId: meId, token: "t"))
+
+        let service = makeService(.json(json))
+        #expect(await service.pullRoom())
+
+        #expect(room.members.count == 2)
+        #expect(room.members.filter(\.isMe).count == 1)
+        #expect(room.members.allSatisfy { $0.joinedAt.timeIntervalSince1970 > 0 })
+    }
+
+    private func fixture(_ name: String) throws -> String {
+        let url = try #require(Bundle(for: StubURLProtocol.self)
+            .url(forResource: name, withExtension: "json"))
+        return try String(contentsOf: url, encoding: .utf8)
+    }
+
+    @Test("ルームの取り込みを二度行ってもメンバーが重複しない")
+    func pullRoomIsIdempotent() async throws {
+        let meId = try #require(credentials.load()?.memberId)
+        let service = makeService(.json("""
+        {"roomId":"\(UUID().apiString)","name":"ツアー","courseId":1,
+         "startStationId":1,"goalStationId":16,"diceMax":6,"inviteCode":"ABC123",
+         "members":[{"memberId":"\(meId.apiString)","displayName":"のん",
+                     "joinedAt":"2026-07-30T05:00:00Z"}]}
+        """))
+
+        _ = await service.pullRoom()
+        _ = await service.pullRoom()
+
+        #expect(room.members.count == 1)
+    }
+
     // MARK: - 積む
 
     @Test("ターンを積むと未送信件数が増える")

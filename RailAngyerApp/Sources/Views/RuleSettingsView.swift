@@ -12,6 +12,7 @@ struct RuleSettingsView: View {
     @State private var goalOrder = 16
     @State private var diceMax = 6
     @State private var showResetConfirm = false
+    @State private var showingRoom = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     private var allStations: [Station] {
@@ -94,6 +95,9 @@ struct RuleSettingsView: View {
                         .disabled(locked || startOrder == goalOrder)
                 }
             }
+            .sheet(isPresented: $showingRoom) {
+                RoomJoinView(store: store, sync: sync)
+            }
             .confirmationDialog("記録をリセットしますか",
                                 isPresented: $showResetConfirm, titleVisibility: .visible) {
                 Button("リセットする", role: .destructive) { store.resetProgress() }
@@ -113,6 +117,13 @@ struct RuleSettingsView: View {
     @ViewBuilder
     private var syncSection: some View {
         Section("共有") {
+            Button {
+                showingRoom = true
+            } label: {
+                LabeledContent("みんなで遊ぶ",
+                               value: sync.isJoined ? (store.room?.name ?? "参加中") : "未参加")
+            }
+
             if sync.isJoined {
                 LabeledContent("未送信", value: sync.pendingCount == 0
                                ? "なし" : "\(sync.pendingCount) 件")

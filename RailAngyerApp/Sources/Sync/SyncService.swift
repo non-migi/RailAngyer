@@ -183,6 +183,68 @@ final class SyncService {
         return sent
     }
 
+    // MARK: - ルーム
+
+    /// ルームの設定とメンバーを取り込む。
+    ///
+    /// **区間と最大出目はサーバーが正**（T-06。プレイ開始後は変更できない）。
+    /// 端末ごとに違う区間で遊んでいると、同じ盤面を共有できない。
+    @discardableResult
+    func pullRoom() async -> Bool {
+        guard let saved = credentials.load() else { return false }
+        do {
+            let remote = try await client.room(roomId: saved.roomId)
+            try applyRoom(remote, meId: saved.memberId)
+            return true
+        } catch let error as ApiError {
+            lastError = error.message
+            return false
+        } catch {
+            lastError = String(describing: error)
+            return false
+        }
+    }
+
+    private func applyRoom(_ remote: RoomResponse, meId: UUID) throws {
+        guard let room = try localRoom() else { return }
+
+        // ローカルのルームをサーバーのものと同じIDにしておく。
+        // 別々のIDのままだと、どの記録がどのルームのものか後から追えなくなる
+        room.id = remote.roomId
+        room.name = remote.name
+        room.inviteCode = remote.inviteCode
+        room.diceMax = remote.diceMax
+        room.syncStateRaw = SyncState.synced.rawValue
+
+        let stations = room.course?.stations ?? []
+        room.startStation = stations.first { $0.serverId == remote.startStationId } ?? room.startStation
+        room.goalStation = stations.first { $0.serverId == remote.goalStationId } ?? room.goalStation
+
+        for incoming in remote.members {
+            let member = room.members.first { $0.id == incoming.memberId }
+                ?? {
+                    let created = Member(displayName: incoming.displayName)
+                    created.id = incoming.memberId
+                    created.missionSet = room
+                    context.insert(created)
+                    return created
+                }()
+            member.displayName = incoming.displayName
+            member.joinedAt = incoming.joinedAt
+            member.isMe = incoming.memberId == meId
+        }
+
+        // フェーズ1で作った「じぶん」は、参加後は本人のメンバーに置き換わる。
+        // ただしお題を書いた人は消さない（書いた人が辿れなくなる）
+        let serverIds = Set(remote.members.map(\.memberId))
+        let authors = Set(room.missions.compactMap { $0.member?.id })
+        for stale in room.members where !serverIds.contains(stale.id) && !authors.contains(stale.id) {
+            context.delete(stale)
+        }
+
+        try context.save()
+    }
+
     // MARK: - 取り込む
 
     /// サーバーの進行を取り込む。**送るものを送ってから取りに行く**（自分の記録が消えないように）
@@ -255,6 +317,7 @@ final class SyncService {
         let joined = try await client.joinRoom(inviteCode: inviteCode, displayName: displayName)
         try credentials.save(joined.credentials)
         await pullMaster()          // サーバーIDが無いと以降の送信が積めない
+        await pullRoom()            // 区間と最大出目を相手に合わせる
         await pull()
     }
 
@@ -262,6 +325,7 @@ final class SyncService {
         let created = try await client.createRoom(request)
         try credentials.save(created.credentials)
         await pullMaster()
+        await pullRoom()
         return created
     }
 
