@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RailAngyerApi.Auth;
 using RailAngyerApi.Data;
+using RailAngyerApi.Storage;
 
 namespace RailAngyerApi.Endpoints;
 
@@ -155,12 +156,20 @@ public static class ProgressEndpoints
         // --- 記録リセット -------------------------------------------------------
 
         group.MapDelete("/progress", async (Guid roomId, HttpContext http,
-                                            RailAngyerDbContext db, CancellationToken ct) =>
+                                            RailAngyerDbContext db, IPhotoStorage storage,
+                                            CancellationToken ct) =>
         {
             var me = http.Member();
             if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
-            // Photo は Visit の CASCADE で消える。Visit が Turn を参照するので Visit が先
+            // 写真の行は Visit の CASCADE で消えるが、<b>Blobの実体は消えない</b>。
+            // 先に実体を落としておかないと、誰も辿れない孤児だけが残る（§5「孤児Blobの掃除」）
+            if (storage.IsConfigured)
+            {
+                await storage.DeletePrefixAsync(IPhotoStorage.RoomPrefix(roomId), ct);
+            }
+
+            // Visit が Turn を参照するので Visit が先
             await db.Visits.Where(v => v.MissionSetId == roomId).ExecuteDeleteAsync(ct);
             await db.Turns.Where(t => t.MissionSetId == roomId).ExecuteDeleteAsync(ct);
             return Results.NoContent();

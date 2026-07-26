@@ -52,6 +52,11 @@ public class RailAngyerDbContext(DbContextOptions<RailAngyerDbContext> options) 
                 .OnDelete(DeleteBehavior.NoAction);
             e.HasOne(x => x.GoalStation).WithMany().HasForeignKey(x => x.GoalStationId)
                 .OnDelete(DeleteBehavior.NoAction);
+            // 06_schema.sql の FK_MissionSet_Creator。ナビゲーションは持たないが、
+            // <b>EFに教えておかないとテスト用のSQLiteにこの制約が作られない</b>。
+            // Member 側とで参照が循環するため、書き込み順を誤ると本番だけ落ちる
+            e.HasOne<Member>().WithMany().HasForeignKey(x => x.CreatedBy)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         b.Entity<Member>(e =>

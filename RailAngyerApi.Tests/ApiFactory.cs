@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using RailAngyerApi.Data;
+using RailAngyerApi.Storage;
 
 namespace RailAngyerApi.Tests;
 
@@ -19,9 +21,22 @@ public class ApiFactory : WebApplicationFactory<Program>, IDisposable
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
+    /// <summary>Blob の代わり。テストから中身を確認できるよう外に出す</summary>
+    public FakePhotoStorage Photos { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         _connection.Open();   // 開いている間だけインメモリDBが生きる
+
+        // ⚠️ SQLite は既定で外部キーを検査しない。
+        // 自分で開いた接続には EF が PRAGMA を送らないので、ここで有効にする。
+        // これが無いと <b>FK違反が本番でしか出ない</b>
+        //（MissionSet と Member の循環参照による 547 を実際に取り逃がした）
+        using (var pragma = _connection.CreateCommand())
+        {
+            pragma.CommandText = "PRAGMA foreign_keys = ON;";
+            pragma.ExecuteNonQuery();
+        }
 
         builder.UseEnvironment("Testing");
         builder.ConfigureServices(services =>
@@ -34,6 +49,10 @@ public class ApiFactory : WebApplicationFactory<Program>, IDisposable
             foreach (var d in descriptors) services.Remove(d);
 
             services.AddDbContext<RailAngyerDbContext>(o => o.UseSqlite(_connection));
+
+            // Blob も本物には触らない
+            services.RemoveAll<IPhotoStorage>();
+            services.AddSingleton<IPhotoStorage>(Photos);
 
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<RailAngyerDbContext>();

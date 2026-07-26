@@ -23,7 +23,7 @@
 | [files/09_アプリ用ユーザー.sql](files/09_アプリ用ユーザー.sql) | アプリ／API用の最小権限ユーザーとロール |
 | [files/10_アプリ設計.md](files/10_アプリ設計.md) | SwiftDataモデル・状態管理・位置判定・GPXテスト手順 |
 | [files/11_API設計.md](files/11_API設計.md) | フェーズ2のAPI。認証・エンドポイント・冪等性・Blob |
-| [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（**未適用**） |
+| [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（適用済み） |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
 | [RailAngyerApi/](RailAngyerApi/) | ASP.NET Core の API（フェーズ2。`dotnet test` で検証） |
@@ -39,10 +39,12 @@
 - スキーマ適用済み（10テーブル、南北線16駅を投入）
 - アプリ用の最小権限ユーザー作成済み
 - iOSアプリ：フェーズ1の実装は完了。**実地テスト待ち**
-- API：参加・ミッション・進行まで実装（34テスト）
+- API：参加・ミッション・進行・**写真**まで実装（44テスト）
 - **App Service（Linux / F1 無料 / Japan West）にデプロイ済み** —
   `https://railangyer.azurewebsites.net/health/db` が DB まで疎通
-- ストレージアカウントとコンテナ `photos` 作成済み。**写真APIはこれから**
+- 写真：ストレージ・コンテナ `photos` 作成済み。**SAS発行 → Blobへ直接アップロード →
+  メタ登録 → 表示 → 削除を実物で確認済み**
+- 残るはフェーズ2の手順8（アプリ側の送信キューと `/state` の取り込み）とアプリのUI
 
 ## テスト
 
@@ -50,5 +52,5 @@
 swift test --package-path RailAngyerCore     # ルール計算 35件
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 27件 + UI 3件
-dotnet test RailAngyerApi.Tests               # API 34件
+dotnet test RailAngyerApi.Tests               # API 44件
 ```

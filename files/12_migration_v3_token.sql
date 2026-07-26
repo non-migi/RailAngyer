@@ -2,8 +2,8 @@
    RailAngyer スキーマ移行 v2 → v3
    メンバートークン（11_API設計.md §2 / G-5 なりすまし対策）
 
-   ⚠️ このスクリプトはまだ Azure に適用していない。
-      フェーズ2の実装に入るときに、下記を確認してから実行すること。
+   ✅ 2026-07-26 に Azure へ適用済み（何度実行しても安全な書き方にしてある）。
+      これが未適用のうちは POST /rooms が 500 になる（TokenHash 列が無いため）。
 
    実行方法（管理者として）
      sqlcmd -S railangyer.database.windows.net -d RailAngyer \

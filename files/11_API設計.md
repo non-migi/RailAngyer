@@ -292,7 +292,7 @@ API設計を止める理由にはならないので、フェーズ2はこのま�
 | 3 | 参加まわり（`/rooms`, `/rooms/join`）とトークン認証 | 2端末で同じルームに入れる | ✅ |
 | 4 | ミッション（自分のぶんのみ／駅ごとの件数） | 他人のお題が漏れない | ✅ |
 | 5 | 進行（`/state`, `/turns`, `/visits`）と冪等性 | 同じ要求を2回送っても二重にならない | ✅ |
-| 6 | 写真（SAS発行・メタ登録・一覧） | 端末からBlobへ直接上げられる | — |
+| 6 | 写真（SAS発行・メタ登録・一覧） | 端末からBlobへ直接上げられる | ✅ |
 | 7 | App Service へのデプロイと、SQLファイアウォールへの送信IP追加 | 実機から繋がる | ✅ |
 | 8 | アプリ側の送信キューと `/state` の取り込み | 圏外で遊んでも後から揃う | — |
 
@@ -305,13 +305,14 @@ RailAngyerApi/          ASP.NET Core (net10.0) 最小API
   Program.cs            起動・DI・/health
   Data/                 エンティティと DbContext（06_schema.sql に合わせる）
   Auth/                 メンバートークンの発行・検証
-  Endpoints/            /courses /rooms /rooms/join /rooms/{id}
-RailAngyerApi.Tests/    xUnit。SQLiteのインメモリDBで実際のHTTPを通す（34件）
+  Storage/              写真のBlob操作（SAS発行・削除）。テストでは偽物に差し替える
+  Endpoints/            /courses /rooms /rooms/join /rooms/{id} /missions /state /photos
+RailAngyerApi.Tests/    xUnit。SQLiteのインメモリDBで実際のHTTPを通す（44件）
 ```
 
 - **マイグレーションでスキーマを作らない。** テーブルは `06_schema.sql` が正であり、
   EF Core 側はその形に合わせるだけにする（両方から定義が生えると食い違うため）
-- `TokenHash` 列の追加だけは移行が要る → **`12_migration_v3_token.sql`（未適用）**
+- `TokenHash` 列の追加だけは移行が要る → **`12_migration_v3_token.sql`（2026-07-26 適用済み）**
 - 接続文字列はリポジトリに置かない。ローカルは user-secrets、App Service はアプリケーション設定
 - テストは **Azure のDBに触らない**。SQLite のインメモリで完結するので無料枠も消費しない
 
@@ -346,13 +347,40 @@ RailAngyerApi.Tests/    xUnit。SQLiteのインメモリDBで実際のHTTPを通
 > ⚠️ **F1（無料）とサーバーレスDBの組み合わせなので、両方が寝ていると初回が非常に遅い。**
 > クライアントは起動直後に `/health` を投げ、応答を待たずに画面を進めること。
 
-### 手順6（写真）に着手できる状態になった
+### 手順6（写真）— 完了（2026-07-26）
 
-ストレージアカウント `railangyer` とコンテナ `photos`（非公開）を作成済み。
-接続文字列は **App Service のアプリケーション設定 `ConnectionStrings__Storage`**、
-ローカルは **user-secrets の `ConnectionStrings:Storage`** から読む（`Storage:PhotoContainer` = `photos`）。
+`Endpoints/PhotoEndpoints.cs` と `Storage/`（`IPhotoStorage` / `BlobPhotoStorage`）。
+接続文字列は **App Service の `ConnectionStrings__Storage`**、ローカルは
+**user-secrets の `ConnectionStrings:Storage`**（`Storage:PhotoContainer` = `photos`）。
+設定が無いときは起動を妨げず、写真のエンドポイントだけ `503 storage_unavailable` を返す。
+
+| 決めたこと | 理由 |
+|---|---|
+| SASは**単一Blob限定** (`sr=b`)。書き込み `sp=cw` 15分 / 読み取り `sp=r` 1時間 | コンテナ単位や長期のSASを配ると、1枚上げる権限が「ルーム全体の鍵」になる |
+| SASの開始を**5分さかのぼらせる** | 端末の時計が少し進んでいるだけで弾かれるのを防ぐ |
+| `Photo.BlobUrl` には**署名なしのパス**を入れる | 署名付きURLを保存すると期限切れで使えなくなる。SASは都度発行する |
+| 削除は**Blob → 行**の順 | 逆にすると、誰も辿れない孤児Blobが残る（やり直しが効かない） |
+| リセット（`DELETE /progress`）は**プレフィックスでBlobごと消す** | 行はCASCADEで消えるが実体は残る |
+| 写真は**チーム全員に見せる**（お題と違い伏せない） | 一緒に歩いた記録なので、隠す理由がない |
+
+**実物のAzureに対して1往復を確認済み**（SAS発行 → BlobへPUT `201` → メタ登録 `204`
+→ 一覧の読み取りURLで取得 `200`・**内容が一致** → 削除 `204` → 読み取り `404`）。
 
 > 将来的にはアカウントキーをやめ、マネージドIDのユーザー委任SASに寄せる（`03_Azure構成と料金.md` §0）。
+> 切り替え地点は `BlobPhotoStorage.Sas()` の1か所。
+
+### 実機で踏んだ不具合（テストが通っていたのに落ちた）
+
+| 事象 | 原因 | 対処 |
+|---|---|---|
+| `POST /rooms` が **500** | `12_migration_v3_token.sql` が**未適用**で `TokenHash` 列が無かった | 適用した |
+| 適用後も **500**（FK違反 547） | `MissionSet.CreatedBy` → `Member` と `Member.MissionSetId` → `MissionSet` が**循環**していて、1回の `SaveChanges` ではどちらのINSERTが先でも相手がまだ無い | ルーム→メンバー→紐付けの**3段階で保存**する |
+
+> **テストが見逃した理由**：`MissionSet.CreatedBy` の FK が EF のモデルに書かれておらず
+> （`06_schema.sql` にしか無かった）、テスト用のSQLiteにその制約が作られていなかった。
+> モデルに追加したことで、いまは**同じ壊し方をすると `RoomEndpointTests` が落ちる**。
+> あわせて、自前で開いたSQLite接続には `PRAGMA foreign_keys = ON` を送るようにした
+> （EFが張らないので、既定では外部キーが一切効いていなかった）。
 
 ---
 

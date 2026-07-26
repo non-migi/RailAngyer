@@ -2,12 +2,14 @@ using Microsoft.EntityFrameworkCore;
 using RailAngyerApi.Auth;
 using RailAngyerApi.Data;
 using RailAngyerApi.Endpoints;
+using RailAngyerApi.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 接続文字列はリポジトリに置かない。
 // ローカルは user-secrets、App Service ではアプリケーション設定から読む。
 var connectionString = builder.Configuration.GetConnectionString("RailAngyer");
+var storageConnectionString = builder.Configuration.GetConnectionString("Storage");
 
 builder.Services.AddDbContext<RailAngyerDbContext>(options =>
 {
@@ -27,6 +29,13 @@ builder.Services.AddDbContext<RailAngyerDbContext>(options =>
 
 builder.Services.AddScoped<MemberAuthenticator>();
 builder.Services.AddScoped<RequireMemberFilter>();
+
+// 写真の保管先。設定が無くても起動はする（写真のエンドポイントだけ 503 になる）
+builder.Services.AddSingleton<IPhotoStorage>(_ =>
+    string.IsNullOrWhiteSpace(storageConnectionString)
+        ? new UnconfiguredPhotoStorage()
+        : new BlobPhotoStorage(storageConnectionString,
+                               builder.Configuration["Storage:PhotoContainer"] ?? "photos"));
 
 var app = builder.Build();
 
@@ -52,6 +61,7 @@ app.MapGet("/health/db", async (RailAngyerDbContext db, CancellationToken ct) =>
 app.MapRoomEndpoints();
 app.MapMissionEndpoints();
 app.MapProgressEndpoints();
+app.MapPhotoEndpoints();
 
 app.Run();
 

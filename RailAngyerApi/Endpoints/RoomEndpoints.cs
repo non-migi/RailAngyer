@@ -69,10 +69,15 @@ public static class RoomEndpoints
                 JoinedAt = now,
                 TokenHash = MemberTokens.Hash(token)
             };
-            db.Members.Add(member);
-            room.CreatedBy = member.MemberId;
 
-            await db.SaveChangesAsync(ct);
+            // ⚠️ MissionSet.CreatedBy → Member、Member.MissionSetId → MissionSet と参照が循環している。
+            // 3つを一度に SaveChanges すると、どちらのINSERTが先でも相手がまだ無く、
+            // SQL Server が FK 違反（547）を返す。作成者の紐付けだけ後回しにして3段階で書く
+            await db.SaveChangesAsync(ct);          // ① ルーム（作成者は未設定）
+            db.Members.Add(member);
+            await db.SaveChangesAsync(ct);          // ② 作成者
+            room.CreatedBy = member.MemberId;
+            await db.SaveChangesAsync(ct);          // ③ 紐付け
 
             return Results.Created($"/rooms/{room.MissionSetId}",
                 new JoinedRoomDto(room.MissionSetId, room.InviteCode, member.MemberId, token));

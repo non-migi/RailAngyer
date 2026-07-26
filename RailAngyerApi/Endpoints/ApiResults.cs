@@ -17,4 +17,9 @@ public static class ApiResults
 
     public static IResult NotFound(string error, string message) =>
         Results.Json(new ApiError(error, message), statusCode: StatusCodes.Status404NotFound);
+
+    /// <summary>Blobの接続設定が無い状態。設定ミスであり、クライアントの誤りではない</summary>
+    public static IResult StorageUnavailable() =>
+        Results.Json(new ApiError("storage_unavailable", "写真の保管先が設定されていません"),
+                     statusCode: StatusCodes.Status503ServiceUnavailable);
 }
