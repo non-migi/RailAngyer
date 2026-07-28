@@ -402,6 +402,38 @@ final class GameSessionStore {
         }
     }
 
+    // MARK: - 時間とペース
+
+    /// 歩いた時間の内訳（合計・移動・ミッション）
+    var timing: WalkTiming.Total {
+        guard let room else { return .init(walkingSeconds: 0, missionSeconds: 0,
+                                           elapsedSeconds: 0, meters: 0) }
+        return WalkTiming.total(in: room)
+    }
+
+    /// 区間ごとの記録（古い順）。地図の色分けにも使う
+    var legs: [WalkTiming.Leg] {
+        guard let room else { return [] }
+        return WalkTiming.legs(in: room)
+    }
+
+    /// 進行中のターンの内訳。振ってからの経過を画面に出すために使う
+    var currentTurnBreakdown: WalkTiming.TurnBreakdown? {
+        activeTurn.map { WalkTiming.breakdown(of: $0) }
+    }
+
+    /// ある駅に着いた区間の記録（複数回訪れていれば複数件）
+    func legs(arrivingAt order: Int) -> [WalkTiming.Leg] {
+        legs.filter { $0.toOrder == order }
+    }
+
+    /// 写真が1枚でもある駅の番号。地図にピンを出す
+    var photographedOrders: Set<Int> {
+        Set((room?.visits ?? [])
+            .filter { !$0.photos.isEmpty }
+            .compactMap { $0.station?.orderNo })
+    }
+
     /// ある駅で撮った写真のファイル名（新しい順）
     func photoFileNames(at order: Int) -> [String] {
         (room?.visits ?? [])

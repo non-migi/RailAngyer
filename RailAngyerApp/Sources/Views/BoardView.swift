@@ -83,10 +83,41 @@ struct BoardView: View {
                     .tint(Theme.line)
                 Text("現在地　\(store.stationName(store.currentOrder))")
                     .font(.subheadline)
+                timingRow
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
+    }
+
+    /// かかった時間とペース。歩いている最中にいちばん知りたい数字なので、盤面に出す
+    @ViewBuilder
+    private var timingRow: some View {
+        let timing = store.timing
+        if timing.elapsedSeconds > 0 {
+            HStack(spacing: 10) {
+                Label(DurationText.text(timing.elapsedSeconds), systemImage: "clock")
+                Label(DurationText.text(timing.walkingSeconds), systemImage: "figure.walk")
+                if timing.missionSeconds > 0 {
+                    Label(DurationText.text(timing.missionSeconds), systemImage: "checkmark.seal")
+                }
+                if let pace = timing.pace.text {
+                    Spacer()
+                    Text(pace).foregroundStyle(paceColor(timing.pace.category))
+                }
+            }
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private func paceColor(_ category: PaceCategory?) -> Color {
+        switch category {
+        case .fast:   return .blue
+        case .normal: return Theme.line
+        case .slow:   return .red
+        case nil:     return .secondary
+        }
     }
 
     // MARK: - 路線図
