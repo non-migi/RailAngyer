@@ -6,7 +6,8 @@
 
 | 項目 | 値 |
 |---|---|
-| App名 | レイルアンギャー |
+| App Store Connect名 | RailAngyer - レイルアンギャー |
+| Apple ID | `6795570321` |
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
