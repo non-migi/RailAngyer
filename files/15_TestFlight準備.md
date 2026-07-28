@@ -34,12 +34,10 @@
 - [x] Releaseビルド、アーカイブ内のInfo.plist・アイコン・プライバシー文書を確認
 - [x] コア47件、アプリ80件、UI 5件、API 54件を通過
 
-最終アーカイブは
-`/tmp/RailAngyerApp-1.0.0-1-final.xcarchive`。
-2026-07-28のアップロード試行では、認証とApp一覧の取得までは成功し、
-Bundle IDに対応するAppレコードが未作成のため
-`missingApp(bundleId: "com.non-migi.RailAngyerApp")` で停止した。
-レコード作成後は同じアーカイブとExportOptionsで再送信できる。
+Explicit App ID登録後の最終アーカイブは
+`/tmp/RailAngyerApp-1.0.0-1-explicit.xcarchive`。
+2026-07-28 23:39 JSTにApp Store Connectへのアップロードが成功し、
+ビルド `1.0.0 (1)` の処理が開始された。
 
 ## 3. App Store Connectへ入力する文面
 
@@ -102,8 +100,9 @@ Appレコードを作っておく。
 
 ## 6. Appleアカウント側で必要な項目
 
-- [ ] App Store ConnectでAppレコードを作成
+- [x] Explicit App IDとApp Store ConnectのAppレコードを作成
       （名前、主言語、Bundle ID、SKU）
+- [x] ビルド `1.0.0 (1)` をApp Store Connectへアップロード
 - [ ] Beta Review連絡先の電話番号を入力
 - [ ] 必要なら公開用プライバシーポリシーURLを用意
 - [ ] ビルドの処理完了後、輸出コンプライアンスが「不要」になっていることを確認
