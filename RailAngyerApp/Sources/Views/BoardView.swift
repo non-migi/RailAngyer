@@ -47,21 +47,6 @@ struct BoardView: View {
                 }
                 .accessibilityLabel(showsMap ? "一覧で見る" : "地図で見る")
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { showingSchedules = true } label: { Image(systemName: "calendar") }
-                    .accessibilityLabel("予定")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { showingSummary = true } label: { Image(systemName: "book.closed") }
-                    .accessibilityLabel("ふりかえり")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { showingMissions = true } label: { Image(systemName: "square.and.pencil") }
-                    .accessibilityLabel("お題を書く")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { showingSettings = true } label: { Image(systemName: "gearshape") }
-            }
         }
     }
 
@@ -84,10 +69,17 @@ struct BoardView: View {
                 Text("現在地　\(store.stationName(store.currentOrder))")
                     .font(.subheadline)
                 timingRow
+                quickActions
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
+        .background {
+            LinearGradient(
+                colors: [Theme.paper, Theme.line.opacity(0.08)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing)
+        }
     }
 
     /// かかった時間とペース。歩いている最中にいちばん知りたい数字なので、盤面に出す
@@ -115,6 +107,41 @@ struct BoardView: View {
             .minimumScaleFactor(0.75)
             .foregroundStyle(.secondary)
         }
+    }
+
+    private var quickActions: some View {
+        HStack(spacing: 8) {
+            quickAction("予定", systemImage: "calendar") {
+                showingSchedules = true
+            }
+            quickAction("記録", systemImage: "book.closed", accessibilityLabel: "ふりかえり") {
+                showingSummary = true
+            }
+            quickAction("お題", systemImage: "square.and.pencil") {
+                showingMissions = true
+            }
+            quickAction("設定", systemImage: "gearshape") {
+                showingSettings = true
+            }
+        }
+        .padding(.top, 5)
+    }
+
+    private func quickAction(
+        _ title: String,
+        systemImage: String,
+        accessibilityLabel: String? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.caption.weight(.medium))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: 32)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle(radius: 10))
+        .accessibilityLabel(accessibilityLabel ?? title)
     }
 
     private func paceColor(_ category: PaceCategory?) -> Color {
@@ -160,10 +187,13 @@ struct BoardView: View {
                 Text("ゴールに到達しました")
                     .font(.headline).foregroundStyle(Theme.line)
                 Button("ふりかえりを見る") { showingSummary = true }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity, minHeight: 48)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(Theme.line)
+                .frame(maxWidth: .infinity, minHeight: 48)
                 Button("記録をリセットしてもう一度") { store.resetProgress() }
                     .buttonStyle(.bordered)
+                    .controlSize(.large)
                     .frame(maxWidth: .infinity, minHeight: 48)
             } else {
                 Button {
@@ -174,11 +204,12 @@ struct BoardView: View {
                         .frame(maxWidth: .infinity, minHeight: 48)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .tint(Theme.line)
             }
         }
         .padding()
-        .background(.bar)
+        .background(.ultraThinMaterial)
     }
 }
 

@@ -17,23 +17,34 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.games</string>
 	<key>NSCameraUsageDescription</key>
 	<string>到着した駅で写真を撮るためにカメラを使います。</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>画面を見ていない間も駅への到着を検知するために、常に現在地を使います。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>駅に到着したことを判定するために現在地を使います。</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>撮った写真を端末に保存します。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>撮影できない端末では、駅の記録に写真を追加するためライブラリから選びます。</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
 	<key>UILaunchScreen</key>
-	<dict/>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>BrandMark</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<true/>
+	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

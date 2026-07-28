@@ -99,6 +99,25 @@ struct RuleSettingsView: View {
 
                 syncSection
 
+                Section("アプリ情報") {
+                    HStack(spacing: 14) {
+                        Image("BrandMark")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("レイルアンギャー")
+                                .font(.headline)
+                            Text(versionText)
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+
                 Section {
                     Button("記録をリセット", role: .destructive) { showResetConfirm = true }
                         .disabled(store.room?.turns.isEmpty ?? true)
@@ -173,5 +192,13 @@ struct RuleSettingsView: View {
         let start = allStations.first { $0.orderNo == startOrder }
         let goal = allStations.first { $0.orderNo == goalOrder }
         if store.updateRule(start: start, goal: goal, diceMax: diceMax) { dismiss() }
+    }
+
+    private var versionText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+            as? String ?? "—"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion")
+            as? String ?? "—"
+        return "バージョン \(version)（\(build)）"
     }
 }

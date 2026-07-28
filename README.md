@@ -26,6 +26,8 @@
 | [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（適用済み） |
 | [files/13_courses.sql](files/13_courses.sql) | 東西線・東豊線・山手線の投入（適用済み） |
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
+| [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
+| [files/16_プライバシーポリシー.md](files/16_プライバシーポリシー.md) | TestFlight／App Store向けのプライバシーポリシー |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
 | [RailAngyerApi/](RailAngyerApi/) | ASP.NET Core の API（フェーズ2。`dotnet test` で検証） |
@@ -50,6 +52,8 @@
 - アプリ：送信キュー・参加/ルーム作成・ミッション自作・ふりかえり・予定と出欠まで実装
 - 記録：写真駅の地図ピン、合計/移動/ミッション時間、分/km、実線/点線とペース色分けまで実装
 - コースは4本（南北線・東西線・東豊線・山手線）。設定から切り替えられる
+- TestFlight v1.0.0 (1)：App Icon、起動画面、プライバシーマニフェスト、
+  配布文面、自動署名アーカイブまで準備済み（`15_TestFlight準備.md`）
 - **フェーズ2〜4の作るものは揃った。**残るは実機での通し確認と実地テスト
 
 ## テスト

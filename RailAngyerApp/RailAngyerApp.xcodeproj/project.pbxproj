@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00F134CDB673ECC381CA12DB /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23AB8C2D3BC3C1C41272684 /* RootView.swift */; };
+		045FA7877946D72F16F02494 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */; };
 		04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36DD89E35D1609C0821E07B /* GamePhase.swift */; };
 		082E2A379FE47761F6BD6976 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E8C15DCE6423AA6C330097 /* NotificationService.swift */; };
 		0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F5289A8DF49229292880FD /* MasterSeeder.swift */; };
@@ -34,6 +35,7 @@
 		6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */; };
 		7F846552B332E52C174977BA /* StationMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3904705B0EEBD442E11E0313 /* StationMapView.swift */; };
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
+		9BE85712122915E97653D963 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9E62126FFD3D29621A8632A /* Assets.xcassets */; };
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		A2CA329F835DA83F6CF6DB30 /* WalkTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = C69B58A5D87FA9234652A451 /* WalkTiming.swift */; };
 		B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5241C4F1484E4B126481D40B /* WalkTimingTests.swift */; };
@@ -112,7 +114,9 @@
 		991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionEditorView.swift; sourceTree = "<group>"; };
 		A23AB8C2D3BC3C1C41272684 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		B9E62126FFD3D29621A8632A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryView.swift; sourceTree = "<group>"; };
+		BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		C69B58A5D87FA9234652A451 /* WalkTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkTiming.swift; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
@@ -237,6 +241,7 @@
 			isa = PBXGroup;
 			children = (
 				32B8061008BEF13180574D80 /* Packages */,
+				D40DA44D129F9D1C125BBD76 /* Resources */,
 				756A44AD1015702C57180D09 /* Sources */,
 				4C992AE3B0F92B4AC09F8D7D /* TekuTekuRailway */,
 				DCDBB0DF0B6A5C4C1B1F264A /* Tests */,
@@ -275,6 +280,15 @@
 				3A20C935B2EE85D434D111CF /* TurnFlowView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		D40DA44D129F9D1C125BBD76 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B9E62126FFD3D29621A8632A /* Assets.xcassets */,
+				BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		DCDBB0DF0B6A5C4C1B1F264A /* Tests */ = {
@@ -331,6 +345,7 @@
 			buildConfigurationList = 1DAD083941D7D04F7F484156 /* Build configuration list for PBXNativeTarget "RailAngyerApp" */;
 			buildPhases = (
 				E35E6206C05E0E8CCEB47AE1 /* Sources */,
+				5ECCBF00C8E8435F479F2E27 /* Resources */,
 				A1D54A5D089A2FB724E959C8 /* Frameworks */,
 			);
 			buildRules = (
@@ -373,7 +388,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					CCEF20FDF0C405A6F41295D2 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 949FXAWTYZ;
 						ProvisioningStyle = Automatic;
 					};
 					E0148440E85B003E6638EB5B = {
@@ -406,6 +421,15 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		5ECCBF00C8E8435F479F2E27 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9BE85712122915E97653D963 /* Assets.xcassets in Resources */,
+				045FA7877946D72F16F02494 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D93BEBB8A71D495E57C4851 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -558,9 +582,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -568,6 +594,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.non-migi.RailAngyerApp";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -714,9 +741,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -724,6 +753,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.non-migi.RailAngyerApp";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;

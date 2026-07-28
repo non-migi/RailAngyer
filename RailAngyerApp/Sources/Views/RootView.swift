@@ -11,10 +11,13 @@ struct RootView: View {
         Group {
             if let store, let sync {
                 MainView(store: store, sync: sync)
+                    .transition(.opacity)
             } else {
-                ProgressView()
+                LaunchLoadingView()
+                    .transition(.opacity)
             }
         }
+        .tint(Theme.line)
         .task {
             guard store == nil else { return }
             let credentials = KeychainCredentialStore()
@@ -25,8 +28,58 @@ struct RootView: View {
             s.prepare()
             s.sync = syncService
 
-            sync = syncService
-            store = s
+            // 初期化が速い端末でも起動画面が一瞬ちらつかないよう、短い一拍だけ保つ。
+            // UIテストは待たせず、検証時間とタイムアウトを増やさない。
+            if !TestHooks.usesInMemoryStore && !TestHooks.resetsProgressOnLaunch {
+                try? await Task.sleep(for: .milliseconds(350))
+            }
+            withAnimation(.easeOut(duration: 0.25)) {
+                sync = syncService
+                store = s
+            }
+        }
+    }
+}
+
+/// ネイティブの起動画面から盤面へ自然につなぐ、短時間のブランド表示。
+private struct LaunchLoadingView: View {
+    @State private var isMoving = false
+
+    var body: some View {
+        ZStack {
+            Theme.paper.ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                Image("BrandMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 152, height: 152)
+                    .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
+                    .shadow(color: Theme.ink.opacity(0.16), radius: 18, y: 10)
+                    .offset(y: isMoving ? -3 : 3)
+
+                VStack(spacing: 5) {
+                    Text("レイルアンギャー")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Theme.ink)
+                    Text("駅から駅へ、旅の支度中")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.ink.opacity(0.65))
+                }
+
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(Theme.line)
+                    .accessibilityLabel("読み込み中")
+            }
+            .padding(32)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("launchLoading")
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                isMoving = true
+            }
         }
     }
 }
@@ -47,6 +100,7 @@ private struct MainView: View {
         NavigationStack {
             BoardView(store: store, sync: sync, showingSettings: $showingSettings)
         }
+        .tint(Theme.line)
         .fullScreenCover(isPresented: .constant(store.phase.isInTurn || store.showingAnnouncement)) {
             TurnFlowView(store: store, location: location)
         }
