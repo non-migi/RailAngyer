@@ -63,10 +63,6 @@ enum WalkTiming {
 
         for visit in ordered {
             guard let to = visit.station else { continue }
-            defer {
-                previousStation = to
-                previousTime = visit.arrivedAt
-            }
             guard let from = previousStation, from.orderNo != to.orderNo else { continue }
             guard visit.arrivedAt > previousTime else { continue }   // 時刻が前後したら数えない
 
@@ -85,6 +81,8 @@ enum WalkTiming {
                               pace: Pace(meters: meters,
                                          seconds: visit.arrivedAt.timeIntervalSince(previousTime)),
                               isEffectMove: isEffect))
+            previousStation = to
+            previousTime = visit.arrivedAt
         }
         return result
     }

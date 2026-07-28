@@ -35,8 +35,9 @@ struct JourneySummary {
     let landedCount: Int
     let turnCount: Int
     let photoCount: Int
-    let startedAt: Date?
-    let finishedAt: Date?
+    /// 合計・移動・ミッション・その他と平均ペース。
+    /// 画面と共有画像は必ずこの同じ集計値を使う。
+    let timing: WalkTiming.Total
     let isCleared: Bool
     let missionResults: [MissionResult]
     let stations: [StationRecord]
@@ -45,17 +46,14 @@ struct JourneySummary {
         stationCount > 0 ? Double(visitedCount) / Double(stationCount) : 0
     }
 
-    /// 歩いた時間。始点の記録から最後の到着まで
+    /// 最初に振ってから最後の記録まで。進行中なら現在まで。
     var elapsed: TimeInterval? {
-        guard let startedAt, let finishedAt, finishedAt > startedAt else { return nil }
-        return finishedAt.timeIntervalSince(startedAt)
+        timing.elapsedSeconds > 0 ? timing.elapsedSeconds : nil
     }
 
     var elapsedText: String? {
         guard let elapsed else { return nil }
-        let hours = Int(elapsed) / 3600
-        let minutes = (Int(elapsed) % 3600) / 60
-        return hours > 0 ? "\(hours)時間\(minutes)分" : "\(minutes)分"
+        return DurationText.text(elapsed)
     }
 
     var achievedMissionCount: Int { missionResults.filter(\.done).count }
@@ -64,7 +62,7 @@ struct JourneySummary {
 
     /// ルームの記録から集計する。
     /// 途中でも呼べる（クリアしていなくても「いまの記録」を見せられる）
-    init(room: MissionSet, engine: GameEngine?) {
+    init(room: MissionSet, engine: GameEngine?, now: Date = Date()) {
         roomName = room.name
         stationCount = engine?.stationCount ?? (room.course?.stations.count ?? 0)
 
@@ -77,9 +75,7 @@ struct JourneySummary {
         let completedTurns = room.turns.filter { $0.completedAt != nil }
         turnCount = completedTurns.count
         photoCount = visits.reduce(0) { $0 + $1.photos.count }
-
-        startedAt = visits.map(\.arrivedAt).min()
-        finishedAt = visits.map(\.arrivedAt).max()
+        timing = WalkTiming.total(in: room, now: now)
 
         let current = completedTurns
             .max { $0.rolledAt < $1.rolledAt }?

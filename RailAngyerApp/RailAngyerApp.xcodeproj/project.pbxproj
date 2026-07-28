@@ -15,6 +15,7 @@
 		128DFB62618F00A15A292B2C /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9577A67BEAAF07D613F921B7 /* CameraPicker.swift */; };
 		13D49EE28BADFE00529E4BB2 /* CourseSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E2B5CCF0C7C821376CEA9A /* CourseSelectionTests.swift */; };
 		172A96FBBF9EF7A12C8A95D5 /* MissionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */; };
+		18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16793C854280C0258AE421C5 /* TimingUITests.swift */; };
 		1D35FAFF3B2971A9C6558F74 /* PhotoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */; };
 		2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E8A6CD54AD50C8860C443 /* ModelsTests.swift */; };
 		22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 02DE3152D31178D49884EE7D /* RailAngyerCore */; };
@@ -35,6 +36,7 @@
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		A2CA329F835DA83F6CF6DB30 /* WalkTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = C69B58A5D87FA9234652A451 /* WalkTiming.swift */; };
+		B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5241C4F1484E4B126481D40B /* WalkTimingTests.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
 		C4662713B87E70F0BFB73B47 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B470BF27494F68A94DA16FA /* SyncService.swift */; };
 		C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */; };
@@ -78,6 +80,7 @@
 		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		15D222C291090136DEE94441 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
 		160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncServiceTests.swift; sourceTree = "<group>"; };
+		16793C854280C0258AE421C5 /* TimingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingUITests.swift; sourceTree = "<group>"; };
 		17E8C15DCE6423AA6C330097 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_slow_asabu.gpx; sourceTree = "<group>"; };
 		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
@@ -93,6 +96,7 @@
 		3B470BF27494F68A94DA16FA /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		3C804299584BFF82C68B12EA /* StationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationDetailView.swift; sourceTree = "<group>"; };
 		4120077374AB985D7AD2EE89 /* JourneySummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummary.swift; sourceTree = "<group>"; };
+		5241C4F1484E4B126481D40B /* WalkTimingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkTimingTests.swift; sourceTree = "<group>"; };
 		525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryTests.swift; sourceTree = "<group>"; };
 		52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RailAngyerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryUITests.swift; sourceTree = "<group>"; };
@@ -247,6 +251,7 @@
 				04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */,
 				257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */,
 				5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */,
+				16793C854280C0258AE421C5 /* TimingUITests.swift */,
 			);
 			path = UITests;
 			sourceTree = "<group>";
@@ -283,6 +288,7 @@
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
 				5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */,
 				160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */,
+				5241C4F1484E4B126481D40B /* WalkTimingTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -419,6 +425,7 @@
 				389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */,
 				6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */,
 				D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */,
+				18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,6 +440,7 @@
 				2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */,
 				F045E39BD922B1C6A3A942D0 /* ScheduleTests.swift in Sources */,
 				2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */,
+				B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

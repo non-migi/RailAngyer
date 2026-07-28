@@ -152,10 +152,27 @@ private struct SummaryCard: View {
             ProgressView(value: summary.visitedRate)
                 .tint(Theme.line)
 
-            HStack(spacing: 12) {
-                if let elapsed = summary.elapsedText {
-                    Label(elapsed, systemImage: "clock")
+            if summary.timing.elapsedSeconds > 0 {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("時間の内訳")
+                        .font(.caption.weight(.semibold))
+
+                    HStack(spacing: 0) {
+                        timeStat("合計", summary.timing.elapsedSeconds)
+                        timeStat("移動", summary.timing.walkingSeconds)
+                        timeStat("ミッション", summary.timing.missionSeconds)
+                        timeStat("その他", summary.timing.otherSeconds)
+                    }
+
+                    if let pace = summary.timing.pace.text {
+                        Label("平均 \(pace)", systemImage: "gauge.with.dots.needle.50percent")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
                 }
+            }
+
+            HStack(spacing: 12) {
                 if !summary.missionResults.isEmpty {
                     Label("お題 \(summary.achievedMissionCount) / \(summary.missionResults.count)",
                           systemImage: "checkmark.seal")
@@ -183,6 +200,19 @@ private struct SummaryCard: View {
         VStack(spacing: 2) {
             Text(value).font(.title3.bold())
             Text(title).font(.caption2).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func timeStat(_ title: String, _ seconds: TimeInterval) -> some View {
+        VStack(spacing: 2) {
+            Text(DurationText.text(seconds))
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }

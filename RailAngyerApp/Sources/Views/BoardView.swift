@@ -95,18 +95,24 @@ struct BoardView: View {
     private var timingRow: some View {
         let timing = store.timing
         if timing.elapsedSeconds > 0 {
-            HStack(spacing: 10) {
-                Label(DurationText.text(timing.elapsedSeconds), systemImage: "clock")
-                Label(DurationText.text(timing.walkingSeconds), systemImage: "figure.walk")
-                if timing.missionSeconds > 0 {
-                    Label(DurationText.text(timing.missionSeconds), systemImage: "checkmark.seal")
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 10) {
+                    Label("合計 \(DurationText.text(timing.elapsedSeconds))", systemImage: "clock")
+                    Label("移動 \(DurationText.text(timing.walkingSeconds))", systemImage: "figure.walk")
+                    if timing.missionSeconds > 0 {
+                        Label("ミッション \(DurationText.text(timing.missionSeconds))",
+                              systemImage: "checkmark.seal")
+                    }
+                    Spacer(minLength: 0)
                 }
                 if let pace = timing.pace.text {
-                    Spacer()
-                    Text(pace).foregroundStyle(paceColor(timing.pace.category))
+                    Label("平均 \(pace)", systemImage: "gauge.with.dots.needle.50percent")
+                        .foregroundStyle(paceColor(timing.pace.category))
                 }
             }
             .font(.caption.monospacedDigit())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
             .foregroundStyle(.secondary)
         }
     }

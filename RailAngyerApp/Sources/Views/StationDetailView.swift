@@ -11,6 +11,7 @@ struct StationDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var visits: [Visit] { store.visits(at: order) }
+    private var arrivingLegs: [WalkTiming.Leg] { store.legs(arrivingAt: order) }
 
     var body: some View {
         NavigationStack {
@@ -47,6 +48,28 @@ struct StationDetailView: View {
 
         LabeledContent("経緯", value: kindText(visit))
 
+        if let leg = arrivingLegs.first(where: { $0.id == visit.id }) {
+            LabeledContent {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(DurationText.text(leg.seconds))
+                        .monospacedDigit()
+                    if let pace = leg.pace.text {
+                        Text(pace)
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(paceColor(leg.category))
+                    }
+                }
+            } label: {
+                Label("\(leg.fromName)から", systemImage: "figure.walk")
+            }
+
+            if leg.isEffectMove {
+                Text("ミッション効果による移動")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+
         // ミッションは着地したときだけ
         if visit.visitKind == .landing, let turn = visit.turn {
             if let mission = turn.selectedMission {
@@ -69,6 +92,15 @@ struct StationDetailView: View {
         if !visit.photos.isEmpty {
             let names = visit.photos.sorted { $0.takenAt < $1.takenAt }.map(\.localFileName)
             PhotoStrip(fileNames: names)
+        }
+    }
+
+    private func paceColor(_ category: PaceCategory?) -> Color {
+        switch category {
+        case .fast:   return .blue
+        case .normal: return Theme.line
+        case .slow:   return .red
+        case nil:     return .secondary
         }
     }
 

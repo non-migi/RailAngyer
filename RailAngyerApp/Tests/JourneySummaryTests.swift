@@ -117,14 +117,25 @@ struct JourneySummaryTests {
     func reportsElapsedWhileWalking() throws {
         playTurn(dice: 2)
 
-        // 最初と最後の到着を明示的に置き、1時間5分ぶんの記録にする
+        // 振ってから完了までを明示的に置き、1時間5分ぶんの記録にする
         let room = try #require(store.room)
-        let visits = room.visits.sorted { $0.arrivedAt < $1.arrivedAt }
+        let turn = try #require(room.turns.first)
+        let visits = turn.visits.sorted {
+            ($0.station?.orderNo ?? 0) < ($1.station?.orderNo ?? 0)
+        }
         let base = Date().addingTimeInterval(-7_200)
-        for visit in visits { visit.arrivedAt = base.addingTimeInterval(3_900) }
-        try #require(visits.first).arrivedAt = base
+        turn.rolledAt = base
+        try #require(room.visits.first { $0.visitKind == .start }).arrivedAt = base
+        try #require(visits.first).arrivedAt = base.addingTimeInterval(1_800)
+        try #require(visits.last).arrivedAt = base.addingTimeInterval(3_600)
+        turn.arrivedAt = base.addingTimeInterval(3_600)
+        turn.completedAt = base.addingTimeInterval(3_900)
 
         let summary = try summary()
         #expect(summary.elapsedText == "1時間5分")
+        #expect(summary.timing.walkingSeconds == 3_600)
+        #expect(summary.timing.missionSeconds == 300)
+        #expect(summary.timing.otherSeconds == 0)
+        #expect(summary.timing.pace.text != nil)
     }
 }

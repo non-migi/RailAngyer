@@ -13,6 +13,7 @@ struct TurnFlowView: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            turnTiming
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             action
@@ -22,6 +23,49 @@ struct TurnFlowView: View {
         .sheet(isPresented: $showingCamera) {
             CameraPicker { store.attachPhoto($0) }
                 .ignoresSafeArea()
+        }
+    }
+
+    /// 今回のターンの時間とペース。進行中は1秒ごとに「いままで」を更新する。
+    @ViewBuilder
+    private var turnTiming: some View {
+        if let turn = store.activeTurn {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let timing = WalkTiming.breakdown(of: turn, now: context.date)
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack {
+                        Text("今回の記録").font(.caption.weight(.semibold))
+                        Spacer()
+                        Label(DurationText.clock(timing.totalSeconds), systemImage: "clock")
+                    }
+                    HStack(spacing: 12) {
+                        Label("移動 \(DurationText.clock(timing.walkingSeconds))",
+                              systemImage: "figure.walk")
+                        if let pace = timing.pace.text {
+                            Label(pace, systemImage: "gauge.with.dots.needle.50percent")
+                                .foregroundStyle(paceColor(timing.pace.category))
+                        } else {
+                            Text("ペースは駅に着くと表示")
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 10))
+            }
+        }
+    }
+
+    private func paceColor(_ category: PaceCategory?) -> Color {
+        switch category {
+        case .fast:   return .blue
+        case .normal: return Theme.line
+        case .slow:   return .red
+        case nil:     return .secondary
         }
     }
 
