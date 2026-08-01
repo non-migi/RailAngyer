@@ -85,7 +85,9 @@ dotnet test RailAngyerApi.Tests               # API 54件
 > ⚠️ `tools/prepare-simulator.sh` を飛ばすと、位置情報の許可ダイアログが操作を塞ぎ
 > `ArrivalUITests` の自動到着だけが落ちる（アプリの不具合ではない）。
 >
-> ⚠️ **UIテストは画面のあるセッションで流す。** 画面を持たない実行（バックグラウンド）では
-> 10件中8件が `Test crashed with signal kill.` で落ちる。
-> これは変更前のコミットでも同じ顔ぶれが落ちるので、アプリの不具合ではない。
-> ユニットテスト127件は影響を受けない。
+> ⚠️ **UIテストは同じシミュレータで続けて流すと詰まる。** 地図を描く画面が多く、
+> 何度も繰り返すと `Test crashed with signal kill.` / `Restarting after unexpected exit`
+> が並ぶ。**アプリは落ちていない**（手で起動すれば動く）。
+> `xcrun simctl shutdown` → `erase` → `boot` → `prepare-simulator.sh` で作り直せば戻る。
+> 疑わしいときは**変更前のコミットでも**同じ顔ぶれが落ちるか確かめる。
+> ユニットテスト127件はこの影響を受けない。
