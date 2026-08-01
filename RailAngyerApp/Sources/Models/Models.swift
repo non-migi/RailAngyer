@@ -14,6 +14,13 @@ final class Course {
     var serverId: Int?
     var name: String = ""
     var lineColorHex: String?
+    /// 国の名前（表示用）。**いずれ日本の外も扱う**ため、国からたどれるようにしてある
+    var countryName: String = "日本"
+    /// ISO 3166-1 alpha-2
+    var countryCode: String = "JP"
+    /// 通る都道府県を改行区切りで持つ（`JourneyArchive.photoFileNamesText` と同じやり方）。
+    /// SwiftData の配列は移行が重いので、既存のモデルに合わせて文字列で保つ
+    var regionNamesText: String = ""
     /// 環状線か。一周して戻ってこられる
     var isLoop: Bool = false
     /// この路線での到着判定の半径（メートル）。駅間が短い路線だけ持つ
@@ -29,6 +36,19 @@ final class Course {
         self.name = name
         self.lineColorHex = lineColorHex
     }
+
+    /// 通る都道府県。**またぐ路線は複数返る**（阪急京都本線は大阪府と京都府）
+    var regionNames: [String] {
+        get { regionNamesText.split(separator: "\n").map(String.init) }
+        set { regionNamesText = newValue.joined(separator: "\n") }
+    }
+
+    /// 一覧に出す都道府県。古い端末のデータで空なら「その他」にまとめる
+    var regionNamesForDisplay: [String] {
+        regionNames.isEmpty ? ["その他"] : regionNames
+    }
+
+    var stationsInOrder: [Station] { stations.sorted { $0.orderNo < $1.orderNo } }
 }
 
 @Model
@@ -49,6 +69,9 @@ final class Station {
         self.longitude = longitude
     }
 }
+
+/// 距離の見積もりを駅マスタと同じ計算で行う（RailAngyerCore の `WalkEstimator`）
+extension Station: GeoPoint {}
 
 // MARK: - ルーム
 

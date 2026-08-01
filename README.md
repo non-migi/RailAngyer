@@ -26,6 +26,7 @@
 | [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（適用済み） |
 | [files/13_courses.sql](files/13_courses.sql) | 東西線・東豊線・山手線の投入（適用済み） |
 | [files/18_courses_v2.sql](files/18_courses_v2.sql) | 札幌市電の投入と山手線の座標更新（適用済み） |
+| [files/19_courses_v3.sql](files/19_courses_v3.sql) | 阪急京都本線の投入（**未適用**。アプリはJSONから読むので動作には不要） |
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
 | [tools/asc-crashes.py](tools/asc-crashes.py) | TestFlightのクラッシュ報告を取り出す（鍵の作り方は `15_TestFlight準備.md` §8） |
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
@@ -56,8 +57,14 @@
 - 記録：複数の旅、実写真の地図ピン、時間、分/km、連続ペース色まで実装
 - 予定：ルールセットを先に決め、日本時間・日本のカレンダーで作成
 - 駅座標：札幌3路線を国土数値情報 N02-22（JGD2011）へ補正済み
-- コースは5本（南北線・東西線・東豊線・山手線・札幌市電）。設定から切り替えられる。
+- コースは6本（南北線・東西線・東豊線・山手線・札幌市電・阪急京都本線）。設定から切り替えられる。
   **山手線と市電は一周でき、内回り／外回りを選べる**
+- コースは **国 → 都道府県 → 路線** の順にたどって選ぶ。
+  都道府県をまたぐ路線（阪急京都本線）は、通るどちらの県からも見つかる
+- 予定・お題・ターン中の各画面に**区間の地図と、歩く距離・時間の目安**を出す
+  （直線距離に迂回1.3倍を掛けて時速5km。経路探索はしない）
+- 予定は**アプリの外へ共有できる**。日時・集合場所・区間・目安・出欠を1つの文にし、
+  集合場所は地図のリンクにする（相手がアプリを入れていなくても伝わる）
 - TestFlight v1.0.0 (1)：App Icon、起動画面、プライバシーマニフェスト、
   配布文面、Explicit App IDを用意し、ビルド1をApp Store Connectへアップロード済み。
   緑アイコンと新UIのビルド2もApp Store Connectへアップロード済み（処理中）
@@ -67,8 +74,17 @@
 ## テスト
 
 ```bash
-swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース 47件
+swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース・見積もり 76件
+tools/prepare-simulator.sh "iPhone 17 Pro"   # UIテストの前に位置情報を許可する（初回・新環境）
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 81件 + UI 6件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 127件 + UI 10件
 dotnet test RailAngyerApi.Tests               # API 54件
 ```
+
+> ⚠️ `tools/prepare-simulator.sh` を飛ばすと、位置情報の許可ダイアログが操作を塞ぎ
+> `ArrivalUITests` の自動到着だけが落ちる（アプリの不具合ではない）。
+>
+> ⚠️ **UIテストは画面のあるセッションで流す。** 画面を持たない実行（バックグラウンド）では
+> 10件中8件が `Test crashed with signal kill.` で落ちる。
+> これは変更前のコミットでも同じ顔ぶれが落ちるので、アプリの不具合ではない。
+> ユニットテスト127件は影響を受けない。

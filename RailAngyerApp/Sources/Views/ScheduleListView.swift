@@ -29,6 +29,7 @@ struct ScheduleListView: View {
                 ForEach(store.schedules) { schedule in
                     Section {
                         header(schedule)
+                        sectionMap(schedule)
                         attendancePicker(schedule)
                         attendeeList(schedule)
                         Button {
@@ -37,6 +38,11 @@ struct ScheduleListView: View {
                             Label("この予定のお題を書く", systemImage: "square.and.pencil")
                         }
                         .disabled(plan(for: schedule) == nil)
+
+                        ShareLink(item: ScheduleShare.text(for: schedule,
+                                                           course: course(for: schedule))) {
+                            Label("この予定を共有する", systemImage: "square.and.arrow.up")
+                        }
 
                         if isMine(schedule) {
                             Button("この予定を消す", role: .destructive) {
@@ -81,11 +87,26 @@ struct ScheduleListView: View {
         .environment(\.timeZone, TimeZone(identifier: "Asia/Tokyo")!)
     }
 
+    /// 予定の区間を地図と目安で見せる。コースが分からない古い予定には出さない
+    @ViewBuilder
+    private func sectionMap(_ schedule: Schedule) -> some View {
+        let stations = ScheduleShare.sectionStations(schedule, course: course(for: schedule))
+        if stations.count >= 2 {
+            CourseSectionSummaryView(stations: stations,
+                                     caption: "\(schedule.courseName)　"
+                                     + "\(stations.first?.name ?? "") → \(stations.last?.name ?? "")")
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 10, trailing: 16))
+        }
+    }
+
+    private func course(for schedule: Schedule) -> Course? {
+        store.courses.first { $0.name == schedule.courseName }
+    }
+
     /// 予定に決めたルールを、お題の編集画面へ渡す形にする。
     /// コースが決まっていない古い予定には渡せない
     private func plan(for schedule: Schedule) -> MissionPlan? {
-        guard let course = store.courses.first(where: { $0.name == schedule.courseName })
-        else { return nil }
+        guard let course = course(for: schedule) else { return nil }
         return MissionPlan(course: course,
                            startOrder: schedule.startOrder,
                            goalOrder: schedule.goalOrder,
@@ -221,13 +242,28 @@ private struct ScheduleDraftView: View {
         (selectedCourse?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
     }
 
+    /// いま選んでいる区間の駅。地図と目安に渡す
+    private var sectionStations: [Station] {
+        let range = min(startOrder, goalOrder)...max(startOrder, goalOrder)
+        return stations.filter { range.contains($0.orderNo) }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("コース", selection: $courseName) {
-                        ForEach(store.courses) { course in
-                            Text("\(course.name)（\(course.stations.count)駅）").tag(course.name)
+                    NavigationLink {
+                        CoursePickerView(courses: store.courses, selectedName: $courseName)
+                    } label: {
+                        LabeledContent("コース") {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(courseName.isEmpty ? "選ぶ" : courseName)
+                                if let course = selectedCourse {
+                                    Text("\(CourseDirectory.regionText(course))"
+                                         + "　\(course.stations.count)駅")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
                         }
                     }
                     Picker("スタート", selection: $startOrder) {
@@ -244,7 +280,21 @@ private struct ScheduleDraftView: View {
                 } header: {
                     Text("1　ルールセット")
                 } footer: {
-                    Text("予定を立てる前に、歩く路線・区間・サイコロの最大出目を決めます。")
+                    Text("歩く場所は国と都道府県からたどって選びます。"
+                         + "区間とサイコロの最大出目もここで決めます。")
+                }
+
+                if sectionStations.count >= 2 {
+                    Section {
+                        CourseSectionSummaryView(stations: sectionStations)
+                            .listRowInsets(EdgeInsets(top: 10, leading: 16,
+                                                      bottom: 12, trailing: 16))
+                    } header: {
+                        Text("歩く道のり")
+                    } footer: {
+                        Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して"
+                             + "時速5kmで歩いたときの値です。お題や休憩の時間は含みません。")
+                    }
                 }
 
                 Section("2　予定の名前") {

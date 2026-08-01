@@ -77,13 +77,52 @@ struct AdditionalCourseTests {
         ("東西線", 19, ("宮の沢", "新さっぽろ")),
         ("東豊線", 14, ("栄町", "福住")),
         ("山手線", 30, ("東京", "有楽町")),
-        ("札幌市電", 24, ("西4丁目", "狸小路"))
+        ("札幌市電", 24, ("西4丁目", "狸小路")),
+        ("阪急京都本線", 28, ("大阪梅田", "京都河原町"))
     ]
 
-    @Test("同梱しているコースは5本")
+    @Test("同梱しているコースは6本")
     func loadsAllCourses() throws {
         let all = try StationMaster.all()
-        #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電"])
+        #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電",
+                                    "阪急京都本線"])
+    }
+
+    @Test("どのコースも国と都道府県を持っている")
+    func everyCourseHasRegions() throws {
+        for course in try StationMaster.all() {
+            #expect(course.country == "日本")
+            #expect(course.countryCode == "JP")
+            #expect(course.regions.isEmpty == false, "\(course.name) に都道府県が無い")
+        }
+    }
+
+    @Test("都道府県をまたぐ路線は、通る県をすべて持つ")
+    func crossingCourseHasEveryRegion() throws {
+        let hankyu = try StationMaster.hankyuKyoto()
+        #expect(hankyu.regions == ["大阪府", "京都府"])
+        #expect(try StationMaster.yamanote().regions == ["東京都"])
+        #expect(try StationMaster.nanboku().regions == ["北海道"])
+    }
+
+    @Test("阪急京都本線が大阪〜京都の範囲に収まっている")
+    func hankyuCoordinates() throws {
+        let course = try StationMaster.hankyuKyoto()
+        for s in course.stations {
+            #expect((34.6...35.1).contains(s.latitude), "\(s.name) の緯度が範囲外")
+            #expect((135.3...135.9).contains(s.longitude), "\(s.name) の経度が範囲外")
+        }
+    }
+
+    @Test("阪急京都本線の長さが営業キロと合う")
+    func hankyuLength() throws {
+        let sorted = try StationMaster.hankyuKyoto().sortedStations
+        var total: Double = 0
+        for i in 0..<(sorted.count - 1) {
+            total += distanceMeters(sorted[i], sorted[i + 1])
+        }
+        // 営業キロは47.7km。直線距離の合計なので、それより少し短くなる
+        #expect((44_000.0...48_000.0).contains(total), "全長が想定から外れている: \(Int(total))m")
     }
 
     @Test("環状線は山手線と札幌市電")
@@ -139,7 +178,9 @@ struct AdditionalCourseTests {
                 let d = distanceMeters(sorted[i], sorted[i + 1])
                 #expect(d > radius * 2,
                         "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が近すぎる: \(Int(d))m（半径 \(Int(radius))m）")
-                #expect(d < 4000,
+                // 上限は徒歩1時間ぶん。郊外を走る路線には長い駅間がある
+                // （阪急京都本線 高槻市〜上牧は約4.3km＝およそ1時間の徒歩）
+                #expect(d < 5000,
                         "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が遠すぎる: \(Int(d))m")
             }
         }

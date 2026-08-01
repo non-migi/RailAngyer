@@ -289,9 +289,25 @@ struct TurnFlowView: View {
             } else {
                 Text("ミッションはありません").foregroundStyle(.secondary)
             }
+            courseMap(at: station)
             photoSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// いま立っている駅が、選んだコースのどこなのかを出す。
+    /// お題をやっている最中は次の駅へ向かう地図が消えるため、
+    /// **道のり全体の中の現在地**が分かるようにしておく
+    @ViewBuilder
+    private func courseMap(at station: Int) -> some View {
+        let stations = store.stationsInOrder
+        if stations.count >= 2 {
+            CourseSectionMapView(stations: stations,
+                                 isLoop: store.room?.isLap == true,
+                                 highlightedOrder: station)
+                .frame(height: 140)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
     }
 
     /// SC-21 効果による移動

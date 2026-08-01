@@ -36,6 +36,7 @@ struct MissionEditorView: View {
     var body: some View {
         NavigationStack {
             List {
+                mapSection
                 mineSection
                 if sync.isJoined { preparationSection }
             }
@@ -62,6 +63,35 @@ struct MissionEditorView: View {
             .task { await refresh() }
             .refreshable { await refresh() }
         }
+    }
+
+    // MARK: - コースの地図
+
+    /// **どこを歩くコースなのかを見ながらお題を書けるようにする。**
+    /// 駅名だけでは、その駅がどんな場所か（川沿いか、商店街か）を思い出せない。
+    /// お題を書き終えた駅にはチェックを付け、書き残しを地図の上で分かるようにする
+    @ViewBuilder
+    private var mapSection: some View {
+        if stations.count >= 2 {
+            Section {
+                CourseSectionSummaryView(stations: stations,
+                                         markedOrders: writtenOrders,
+                                         caption: sectionCaption)
+                    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 12, trailing: 16))
+            } footer: {
+                Text("チェックの付いた駅には、あなたのお題があります。")
+            }
+        }
+    }
+
+    private var writtenOrders: Set<Int> {
+        Set(missions.compactMap { $0.station?.orderNo })
+    }
+
+    private var sectionCaption: String {
+        let name = course?.name ?? ""
+        guard let start = stations.first, let goal = stations.last else { return name }
+        return "\(name)　\(start.name) → \(goal.name)"
     }
 
     // MARK: - 自分のお題
@@ -200,10 +230,22 @@ private struct MissionDraftView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("駅") {
+                Section {
                     Picker("駅", selection: $stationOrder) {
                         ForEach(selectableStations) { Text($0.name).tag($0.orderNo) }
                     }
+                    if stations.count >= 2 {
+                        // 選んだ駅が区間のどこにあるかを地図で示す。
+                        // 端どうしの駅は歩く距離が変わるため、書くお題の重さも変わる
+                        CourseSectionMapView(stations: stations,
+                                             highlightedOrder: stationOrder)
+                            .frame(height: 150)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16,
+                                                      bottom: 10, trailing: 16))
+                    }
+                } header: {
+                    Text("駅")
                 }
 
                 Section {

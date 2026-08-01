@@ -22,6 +22,12 @@ public struct StationRef: Codable, Sendable, Hashable, Identifiable {
 public struct CourseRef: Codable, Sendable {
     public let name: String
     public let lineColorHex: String
+    /// 国の名前（表示用）。**いずれ日本の外も扱う**ため、国から先にたどれる形にしてある
+    public let country: String
+    /// ISO 3166-1 alpha-2。並び順と旗の表示に使う
+    public let countryCode: String
+    /// 通る行政区画（日本では都道府県）。**またぐ路線は複数持つ**
+    public let regions: [String]
     public let stations: [StationRef]
     /// 環状線か。一周して戻ってこられる
     public let isLoop: Bool
@@ -40,6 +46,10 @@ public struct CourseRef: Codable, Sendable {
         name = try c.decode(String.self, forKey: .name)
         lineColorHex = try c.decode(String.self, forKey: .lineColorHex)
         stations = try c.decode([StationRef].self, forKey: .stations)
+        // 国と地方を書いていない定義は日本のものとして読む（既存の5コースはすべて日本）
+        country = try c.decodeIfPresent(String.self, forKey: .country) ?? "日本"
+        countryCode = try c.decodeIfPresent(String.self, forKey: .countryCode) ?? "JP"
+        regions = try c.decodeIfPresent([String].self, forKey: .regions) ?? []
         // 既存のコース定義には無い項目なので、書いていなければ直線・既定半径として読む
         isLoop = try c.decodeIfPresent(Bool.self, forKey: .isLoop) ?? false
         arrivalRadius = try c.decodeIfPresent(Double.self, forKey: .arrivalRadius)
@@ -109,9 +119,18 @@ public enum StationMaster {
         try load(resource: "shiden")
     }
 
+    /// 阪急京都本線（大阪梅田 → 京都河原町、28駅）。
+    ///
+    /// 座標は OpenStreetMap の駅ノード（© OpenStreetMap contributors / ODbL）。
+    /// 直線距離の合計は約46.8kmで、営業キロ47.7kmとよく合う。
+    public static func hankyuKyoto() throws -> CourseRef {
+        try load(resource: "hankyu_kyoto")
+    }
+
     /// 同梱しているコースすべて
     public static func all() throws -> [CourseRef] {
-        [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden()]
+        [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden(),
+         try hankyuKyoto()]
     }
 
     static func load(resource: String) throws -> CourseRef {

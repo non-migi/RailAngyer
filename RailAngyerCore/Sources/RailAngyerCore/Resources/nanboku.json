@@ -1,6 +1,9 @@
 {
   "name": "南北線",
   "lineColorHex": "#00A85A",
+  "country": "日本",
+  "countryCode": "JP",
+  "regions": ["北海道"],
   "stations": [
     {
       "name": "麻生",
