@@ -5,98 +5,98 @@
     {
       "name": "麻生",
       "orderNo": 1,
-      "latitude": 43.1147,
-      "longitude": 141.3406
+      "latitude": 43.10834,
+      "longitude": 141.33848
     },
     {
       "name": "北34条",
       "orderNo": 2,
-      "latitude": 43.1065,
-      "longitude": 141.3428
+      "latitude": 43.100105,
+      "longitude": 141.34213
     },
     {
       "name": "北24条",
       "orderNo": 3,
-      "latitude": 43.0985,
-      "longitude": 141.3444
+      "latitude": 43.08961,
+      "longitude": 141.344825
     },
     {
       "name": "北18条",
       "orderNo": 4,
-      "latitude": 43.0905,
-      "longitude": 141.3455
+      "latitude": 43.081645,
+      "longitude": 141.346755
     },
     {
       "name": "北12条",
       "orderNo": 5,
-      "latitude": 43.08,
-      "longitude": 141.3466
+      "latitude": 43.0747,
+      "longitude": 141.348495
     },
     {
       "name": "さっぽろ",
       "orderNo": 6,
-      "latitude": 43.0682,
-      "longitude": 141.3505
+      "latitude": 43.06586,
+      "longitude": 141.350665
     },
     {
       "name": "大通",
       "orderNo": 7,
-      "latitude": 43.0608,
-      "longitude": 141.3506
+      "latitude": 43.0600266667,
+      "longitude": 141.3521366667
     },
     {
       "name": "すすきの",
       "orderNo": 8,
       "latitude": 43.0553,
-      "longitude": 141.3535
+      "longitude": 141.353365
     },
     {
       "name": "中島公園",
       "orderNo": 9,
-      "latitude": 43.0492,
-      "longitude": 141.3546
+      "latitude": 43.048475,
+      "longitude": 141.355055
     },
     {
       "name": "幌平橋",
       "orderNo": 10,
-      "latitude": 43.041,
-      "longitude": 141.3554
+      "latitude": 43.04022,
+      "longitude": 141.355835
     },
     {
       "name": "中の島",
       "orderNo": 11,
-      "latitude": 43.0345,
-      "longitude": 141.3562
+      "latitude": 43.03745,
+      "longitude": 141.361195
     },
     {
       "name": "平岸",
       "orderNo": 12,
-      "latitude": 43.0272,
-      "longitude": 141.3576
+      "latitude": 43.03462,
+      "longitude": 141.36837
     },
     {
       "name": "南平岸",
       "orderNo": 13,
-      "latitude": 43.0197,
-      "longitude": 141.361
+      "latitude": 43.02666,
+      "longitude": 141.3713433333
     },
     {
       "name": "澄川",
       "orderNo": 14,
-      "latitude": 43.011,
-      "longitude": 141.3618
+      "latitude": 43.016825,
+      "longitude": 141.36736
     },
     {
       "name": "自衛隊前",
       "orderNo": 15,
-      "latitude": 43.0018,
-      "longitude": 141.362
+      "latitude": 43.006005,
+      "longitude": 141.364915
     },
     {
       "name": "真駒内",
       "orderNo": 16,
-      "latitude": 42.9915,
-      "longitude": 141.354
+      "latitude": 42.99118,
+      "longitude": 141.358545
     }
   ]
 }

@@ -142,6 +142,11 @@ public class Schedule
     public string Title { get; set; } = "";
     public DateTime StartAt { get; set; }
     public string? MeetPlace { get; set; }
+    public int? CourseId { get; set; }
+    public string? CourseName { get; set; }
+    public int? StartOrder { get; set; }
+    public int? GoalOrder { get; set; }
+    public byte? DiceMax { get; set; }
     public Guid? CreatedBy { get; set; }
 
     public List<ScheduleAttendee> Attendees { get; set; } = [];

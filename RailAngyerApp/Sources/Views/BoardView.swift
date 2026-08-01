@@ -97,9 +97,10 @@ struct BoardView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                if let pace = timing.pace.text {
-                    Label("平均 \(pace)", systemImage: "gauge.with.dots.needle.50percent")
-                        .foregroundStyle(paceColor(timing.pace.category))
+                    if let pace = timing.pace.text {
+                        Label("平均 \(pace)", systemImage: "gauge.with.dots.needle.50percent")
+                        .foregroundStyle(PacePalette.color(
+                            minutesPerKilometer: timing.pace.minutesPerKilometer))
                 }
             }
             .font(.caption.monospacedDigit())
@@ -144,15 +145,6 @@ struct BoardView: View {
         .accessibilityLabel(accessibilityLabel ?? title)
     }
 
-    private func paceColor(_ category: PaceCategory?) -> Color {
-        switch category {
-        case .fast:   return .blue
-        case .normal: return Theme.line
-        case .slow:   return .red
-        case nil:     return .secondary
-        }
-    }
-
     // MARK: - 路線図
 
     private var route: some View {
@@ -191,7 +183,7 @@ struct BoardView: View {
                 .controlSize(.large)
                 .tint(Theme.line)
                 .frame(maxWidth: .infinity, minHeight: 48)
-                Button("記録をリセットしてもう一度") { store.resetProgress() }
+                Button("記録を保存して新しい旅へ") { store.resetProgress() }
                     .buttonStyle(.bordered)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity, minHeight: 48)

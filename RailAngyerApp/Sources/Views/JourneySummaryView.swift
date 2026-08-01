@@ -167,7 +167,8 @@ private struct SummaryCard: View {
                     if let pace = summary.timing.pace.text {
                         Label("平均 \(pace)", systemImage: "gauge.with.dots.needle.50percent")
                             .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(PacePalette.color(
+                                minutesPerKilometer: summary.timing.pace.minutesPerKilometer))
                     }
                 }
             }
@@ -233,4 +234,127 @@ private struct ShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+/// 現在の旅と保存済みの旅をまとめて見る一覧。
+struct JourneyHistoryView: View {
+    @Bindable var store: GameSessionStore
+    @State private var showingCurrent = false
+
+    var body: some View {
+        List {
+            if !(store.room?.turns.isEmpty ?? true) {
+                Section("進行中") {
+                    Button {
+                        showingCurrent = true
+                    } label: {
+                        Label("いまの旅の記録", systemImage: "figure.walk.motion")
+                            .font(.headline)
+                    }
+                }
+            }
+
+            Section("これまでの旅") {
+                if store.archives.isEmpty {
+                    ContentUnavailableView("保存済みの記録はありません",
+                                           systemImage: "clock.arrow.circlepath",
+                                           description: Text("旅を終えて新しい旅を始めると、ここに追加されます"))
+                }
+                ForEach(store.archives) { archive in
+                    NavigationLink {
+                        JourneyArchiveDetailView(archive: archive)
+                    } label: {
+                        archiveRow(archive)
+                    }
+                }
+                .onDelete { offsets in
+                    for archive in offsets.map({ store.archives[$0] }) {
+                        store.deleteArchive(archive)
+                    }
+                }
+            }
+        }
+        .navigationTitle("記録")
+        .sheet(isPresented: $showingCurrent) { JourneySummaryView(store: store) }
+    }
+
+    private func archiveRow(_ archive: JourneyArchive) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text(archive.courseName.nilIfEmpty ?? archive.roomName).font(.headline)
+                Spacer()
+                if archive.isCleared {
+                    Label("完走", systemImage: "flag.checkered")
+                        .font(.caption).foregroundStyle(Theme.line)
+                }
+            }
+            Text(archive.endedAt.formatted(
+                .dateTime.locale(Locale(identifier: "ja_JP")).year().month().day().weekday()))
+                .font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 14) {
+                Label(DurationText.text(archive.elapsedSeconds), systemImage: "clock")
+                Label("\(archive.visitedCount)駅", systemImage: "mappin.and.ellipse")
+                if archive.photoCount > 0 {
+                    Label("\(archive.photoCount)", systemImage: "photo")
+                }
+            }
+            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct JourneyArchiveDetailView: View {
+    let archive: JourneyArchive
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(archive.courseName.nilIfEmpty ?? archive.roomName)
+                        .font(.largeTitle.bold())
+                    Text(archive.endedAt.formatted(
+                        .dateTime.locale(Locale(identifier: "ja_JP"))
+                            .year().month().day().weekday().hour().minute()))
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 0) {
+                    archiveStat("時間", DurationText.text(archive.elapsedSeconds))
+                    archiveStat("駅", "\(archive.visitedCount) / \(archive.stationCount)")
+                    archiveStat("ターン", "\(archive.turnCount)")
+                }
+
+                if !archive.routeSummary.isEmpty {
+                    Label(archive.routeSummary, systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                        .font(.subheadline)
+                }
+
+                if !archive.photoFileNames.isEmpty {
+                    Text("写真").font(.headline)
+                    LazyVGrid(columns: [.init(.adaptive(minimum: 96))], spacing: 8) {
+                        ForEach(archive.photoFileNames, id: \.self) { name in
+                            if let image = PhotoStore.load(name) {
+                                Image(uiImage: image)
+                                    .resizable().scaledToFill()
+                                    .frame(height: 112)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                            }
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("旅の記録")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func archiveStat(_ title: String, _ value: String) -> some View {
+        VStack(spacing: 5) {
+            Text(value).font(.title3.bold()).minimumScaleFactor(0.7)
+            Text(title).font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
 }

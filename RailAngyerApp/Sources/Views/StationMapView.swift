@@ -37,7 +37,7 @@ struct StationMapView: View {
                 ZStack {
                     Circle().fill(Theme.line)
                     Image(systemName: "tram.fill")
-                        .font(.caption).foregroundStyle(.white)
+                        .font(.caption).foregroundStyle(Theme.onLine)
                 }
                 .frame(width: 28, height: 28)
             }

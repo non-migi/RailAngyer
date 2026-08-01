@@ -9,8 +9,8 @@ import CoreLocation
 final class ArrivalUITests: XCTestCase {
 
     /// 南北線の座標（RailAngyerCore の同梱マスタと同じ値）
-    private let asabu = CLLocationCoordinate2D(latitude: 43.1147, longitude: 141.3406)
-    private let kita34 = CLLocationCoordinate2D(latitude: 43.1065, longitude: 141.3428)
+    private let asabu = CLLocationCoordinate2D(latitude: 43.10834, longitude: 141.33848)
+    private let kita34 = CLLocationCoordinate2D(latitude: 43.100105, longitude: 141.34213)
 
     private var app: XCUIApplication!
 
@@ -106,6 +106,9 @@ final class ArrivalUITests: XCTestCase {
     /// 盤面が出るのを待ってからサイコロを振る。
     /// 起動直後はマスタの投入が走るため、待たずに叩くと取りこぼす
     private func rollFromBoard() {
+        let startButton = app.buttons["startJourney"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 15), "ホームが出ていない")
+        startButton.tap()
         let rollButton = app.buttons["サイコロを振る"]
         XCTAssertTrue(rollButton.waitForExistence(timeout: 15), "盤面が出ていない")
         rollButton.tap()

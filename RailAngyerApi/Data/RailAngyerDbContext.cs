@@ -130,6 +130,7 @@ public class RailAngyerDbContext(DbContextOptions<RailAngyerDbContext> options) 
             e.HasKey(x => x.ScheduleId);
             e.Property(x => x.Title).HasMaxLength(100).IsRequired();
             e.Property(x => x.MeetPlace).HasMaxLength(100);
+            e.Property(x => x.CourseName).HasMaxLength(50);
         });
 
         b.Entity<ScheduleAttendee>(e =>

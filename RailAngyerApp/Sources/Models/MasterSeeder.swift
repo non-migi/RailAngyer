@@ -4,22 +4,34 @@ import RailAngyerCore
 
 /// 同梱の駅マスタを SwiftData へ投入する（10_アプリ設計.md §8 手順2）。
 ///
-/// 初回起動時に1回だけ走る。既に入っていれば何もしない。
+/// 初回起動時に投入し、同梱マスタの改訂時は既存座標も同期する。
 enum MasterSeeder {
 
     /// 同梱しているコースをすべて投入し、最初のもの（南北線）を返す。
     ///
-    /// 既にあるコースは触らない。**駅の座標は上書きしない**ため、
-    /// 現地で実測して直した値がアプリ更新で戻ることはない
-    /// （新しいコースが増えたときだけ足りないぶんを入れる）。
+    /// 座標は国土交通省「国土数値情報 鉄道データ（N02-22 / JGD2011）」に合わせる。
+    /// 旧版の概略座標が端末に残っていても、アプリ更新時に正しい位置へ直す。
     @discardableResult
     static func seedIfNeeded(_ context: ModelContext) throws -> Course {
         let existing = try context.fetch(FetchDescriptor<Course>())
         var courses = existing
 
-        for ref in try StationMaster.all() where !existing.contains(where: { $0.name == ref.name }) {
-            courses.append(try seed(ref, into: context))
+        for ref in try StationMaster.all() {
+            if let course = existing.first(where: { $0.name == ref.name }) {
+                course.lineColorHex = ref.lineColorHex
+                for source in ref.sortedStations {
+                    guard let station = course.stations.first(where: {
+                        $0.orderNo == source.orderNo && $0.name == source.name
+                    }) else { continue }
+                    station.latitude = source.latitude
+                    station.longitude = source.longitude
+                }
+            } else {
+                courses.append(try seed(ref, into: context))
+            }
         }
+
+        try context.save()
 
         guard let first = courses.first(where: { $0.name == "南北線" }) ?? courses.first else {
             throw SeedError.emptyCourse
@@ -117,6 +129,39 @@ enum MasterSeeder {
         }
         try context.save()
         return created
+    }
+
+    /// 旧ビルドが自動投入したお題だけを取り除く。ユーザーが書いたお題は残す。
+    static func removeBundledSampleMissions(_ context: ModelContext,
+                                            room: MissionSet) throws {
+        let bundled: Set<String> = [
+            "駅の看板を入れて記念撮影する",
+            "商店街で一番安い自販機を見つける",
+            "すれ違った犬の数を報告する",
+            "地上に出て、方角を指差しで当てる",
+            "時計台の方角を全員で指差す。割れたら",
+            "ラーメンを食べて元気になる",
+            "ベンチで5分休憩する",
+            "橋の上から川を眺める",
+            "この区間で一番よかった駅を全員で決める",
+            "自販機で当たりを狙う",
+            "ゴールまでの意気込みを一言ずつ"
+        ]
+        let samples = room.missions.filter {
+            bundled.contains($0.content) && $0.syncStateRaw == SyncState.localOnly.rawValue
+        }
+        var changed = !samples.isEmpty
+        for mission in samples { context.delete(mission) }
+        for mission in room.missions where !samples.contains(where: { $0.id == mission.id }) {
+            if mission.effectType != .none || mission.effectValue != nil || mission.effectStation != nil {
+                changed = true
+            }
+            mission.effectType = .none
+            mission.effectValue = nil
+            mission.effectStation = nil
+        }
+        guard changed else { return }
+        try context.save()
     }
 
     enum SeedError: Error { case emptyCourse }

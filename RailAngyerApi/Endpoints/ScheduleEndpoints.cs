@@ -29,7 +29,8 @@ public static class ScheduleEndpoints
                 .Where(s => s.MissionSetId == roomId)
                 .OrderBy(s => s.StartAt)
                 .Select(s => new ScheduleDto(
-                    s.ScheduleId, s.Title, s.StartAt, s.MeetPlace, s.CreatedBy,
+                    s.ScheduleId, s.Title, s.StartAt, s.MeetPlace,
+                    s.CourseId, s.CourseName, s.StartOrder, s.GoalOrder, s.DiceMax, s.CreatedBy,
                     s.Attendees.Select(a => new AttendeeDto(a.MemberId, a.Member!.DisplayName, a.Status))
                                .ToList()))
                 .ToListAsync(ct);
@@ -58,6 +59,18 @@ public static class ScheduleEndpoints
             {
                 return ApiResults.BadRequest("meet_place_too_long", "集合場所は100文字までです");
             }
+            if (req.CourseName is { Length: > 50 })
+            {
+                return ApiResults.BadRequest("course_name_too_long", "コース名は50文字までです");
+            }
+            if (req.StartOrder is { } start && req.GoalOrder is { } goal && start == goal)
+            {
+                return ApiResults.BadRequest("same_start_goal", "スタートとゴールは別の駅にしてください");
+            }
+            if (req.DiceMax is < 1 or > 9)
+            {
+                return ApiResults.BadRequest("invalid_dice", "サイコロの最大出目は1〜9です");
+            }
 
             var schedule = await db.Schedules
                 .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId, ct);
@@ -85,6 +98,11 @@ public static class ScheduleEndpoints
             schedule.Title = req.Title;
             schedule.StartAt = req.StartAt;
             schedule.MeetPlace = req.MeetPlace;
+            schedule.CourseId = req.CourseId;
+            schedule.CourseName = req.CourseName;
+            schedule.StartOrder = req.StartOrder;
+            schedule.GoalOrder = req.GoalOrder;
+            schedule.DiceMax = req.DiceMax is { } dice ? (byte)dice : null;
 
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
@@ -157,9 +175,13 @@ public static class ScheduleEndpoints
     }
 }
 
-public record SaveScheduleRequest(string Title, DateTime StartAt, string? MeetPlace);
+public record SaveScheduleRequest(string Title, DateTime StartAt, string? MeetPlace,
+                                  int? CourseId = null, string? CourseName = null,
+                                  int? StartOrder = null, int? GoalOrder = null,
+                                  int? DiceMax = null);
 public record SaveAttendanceRequest(int Status);
 
 public record ScheduleDto(Guid ScheduleId, string Title, DateTime StartAt, string? MeetPlace,
-                          Guid? CreatedBy, List<AttendeeDto> Attendees);
+                          int? CourseId, string? CourseName, int? StartOrder, int? GoalOrder,
+                          byte? DiceMax, Guid? CreatedBy, List<AttendeeDto> Attendees);
 public record AttendeeDto(Guid MemberId, string DisplayName, byte Status);

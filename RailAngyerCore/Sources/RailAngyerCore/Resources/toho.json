@@ -2,19 +2,19 @@
   "name": "東豊線",
   "lineColorHex": "#0080C6",
   "stations": [
-    { "name": "栄町",         "orderNo": 1,  "latitude": 43.1180, "longitude": 141.3800 },
-    { "name": "新道東",       "orderNo": 2,  "latitude": 43.1080, "longitude": 141.3757 },
-    { "name": "元町",         "orderNo": 3,  "latitude": 43.0958, "longitude": 141.3722 },
-    { "name": "環状通東",     "orderNo": 4,  "latitude": 43.0846, "longitude": 141.3688 },
-    { "name": "東区役所前",   "orderNo": 5,  "latitude": 43.0784, "longitude": 141.3639 },
-    { "name": "北13条東",     "orderNo": 6,  "latitude": 43.0731, "longitude": 141.3592 },
-    { "name": "さっぽろ",     "orderNo": 7,  "latitude": 43.0679, "longitude": 141.3524 },
-    { "name": "大通",         "orderNo": 8,  "latitude": 43.0608, "longitude": 141.3520 },
-    { "name": "豊水すすきの", "orderNo": 9,  "latitude": 43.0546, "longitude": 141.3555 },
-    { "name": "学園前",       "orderNo": 10, "latitude": 43.0450, "longitude": 141.3630 },
-    { "name": "豊平公園",     "orderNo": 11, "latitude": 43.0392, "longitude": 141.3688 },
-    { "name": "美園",         "orderNo": 12, "latitude": 43.0330, "longitude": 141.3760 },
-    { "name": "月寒中央",     "orderNo": 13, "latitude": 43.0270, "longitude": 141.3852 },
-    { "name": "福住",         "orderNo": 14, "latitude": 43.0201, "longitude": 141.3956 }
+    { "name": "栄町",         "orderNo": 1,  "latitude": 43.11302, "longitude": 141.367145 },
+    { "name": "新道東",       "orderNo": 2,  "latitude": 43.1046266667, "longitude": 141.3691966667 },
+    { "name": "元町",         "orderNo": 3,  "latitude": 43.09404, "longitude": 141.371785 },
+    { "name": "環状通東",     "orderNo": 4,  "latitude": 43.08238, "longitude": 141.374425 },
+    { "name": "東区役所前",   "orderNo": 5,  "latitude": 43.078215, "longitude": 141.36527 },
+    { "name": "北13条東",     "orderNo": 6,  "latitude": 43.076825, "longitude": 141.354935 },
+    { "name": "さっぽろ",     "orderNo": 7,  "latitude": 43.06624, "longitude": 141.353885 },
+    { "name": "大通",         "orderNo": 8,  "latitude": 43.0606866667, "longitude": 141.3553166667 },
+    { "name": "豊水すすきの", "orderNo": 9,  "latitude": 43.054095, "longitude": 141.35699 },
+    { "name": "学園前",       "orderNo": 10, "latitude": 43.04771, "longitude": 141.368955 },
+    { "name": "豊平公園",     "orderNo": 11, "latitude": 43.04211, "longitude": 141.376165 },
+    { "name": "美園",         "orderNo": 12, "latitude": 43.0361833333, "longitude": 141.3857733333 },
+    { "name": "月寒中央",     "orderNo": 13, "latitude": 43.0299266667, "longitude": 141.3967333333 },
+    { "name": "福住",         "orderNo": 14, "latitude": 43.021825, "longitude": 141.402885 }
   ]
 }

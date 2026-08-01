@@ -317,6 +317,7 @@ RailAngyerApi.Tests/    xUnit。SQLiteのインメモリDBで実際のHTTPを通
 - **マイグレーションでスキーマを作らない。** テーブルは `06_schema.sql` が正であり、
   EF Core 側はその形に合わせるだけにする（両方から定義が生えると食い違うため）
 - `TokenHash` 列の追加だけは移行が要る → **`12_migration_v3_token.sql`（2026-07-26 適用済み）**
+- 予定ルール列と札幌3路線の座標補正 → **`17_migration_v4_schedule_rules.sql`（2026-08-01 適用済み）**
 - 接続文字列はリポジトリに置かない。ローカルは user-secrets、App Service はアプリケーション設定
 - テストは **Azure のDBに触らない**。SQLite のインメモリで完結するので無料枠も消費しない
 

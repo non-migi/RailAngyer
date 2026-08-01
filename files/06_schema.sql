@@ -193,10 +193,17 @@ CREATE TABLE dbo.Schedule (
     Title        NVARCHAR(100)    NOT NULL,
     StartAt      DATETIME2(0)     NOT NULL,
     MeetPlace    NVARCHAR(100)    NULL,
+    CourseId     INT              NULL,
+    CourseName   NVARCHAR(50)     NULL,
+    StartOrder   INT              NULL,
+    GoalOrder    INT              NULL,
+    DiceMax      TINYINT          NULL,
     CreatedBy    UNIQUEIDENTIFIER NULL,
     CONSTRAINT PK_Schedule            PRIMARY KEY (ScheduleId),
     CONSTRAINT FK_Schedule_MissionSet FOREIGN KEY (MissionSetId) REFERENCES dbo.MissionSet(MissionSetId),
-    CONSTRAINT FK_Schedule_Creator    FOREIGN KEY (CreatedBy)    REFERENCES dbo.Member(MemberId)
+    CONSTRAINT FK_Schedule_Creator    FOREIGN KEY (CreatedBy)    REFERENCES dbo.Member(MemberId),
+    CONSTRAINT CK_Schedule_Dice       CHECK (DiceMax IS NULL OR DiceMax BETWEEN 1 AND 9),
+    CONSTRAINT CK_Schedule_Section    CHECK (StartOrder IS NULL OR GoalOrder IS NULL OR StartOrder <> GoalOrder)
 );
 GO
 
@@ -330,8 +337,7 @@ GO
 /* ============================================================
    8. マスタ投入 ── 札幌市営地下鉄 南北線（麻生 → 真駒内、16駅）
 
-   ⚠️ 緯度経度は概値。半径150mの到着判定にそのまま使うとズレる駅が出る。
-      現地でGPSを見ながら要調整。
+   座標は国土交通省「国土数値情報 鉄道データ（N02-22）」の駅区間中央（JGD2011）。
    ============================================================ */
 
 INSERT INTO dbo.Course (Name, LineColor) VALUES (N'南北線', N'#00A85A');
@@ -339,22 +345,22 @@ INSERT INTO dbo.Course (Name, LineColor) VALUES (N'南北線', N'#00A85A');
 DECLARE @CourseId INT = SCOPE_IDENTITY();
 
 INSERT INTO dbo.Station (CourseId, Name, OrderNo, Latitude, Longitude) VALUES
-    (@CourseId, N'麻生',      1, 43.1147, 141.3406),
-    (@CourseId, N'北34条',    2, 43.1065, 141.3428),
-    (@CourseId, N'北24条',    3, 43.0985, 141.3444),
-    (@CourseId, N'北18条',    4, 43.0905, 141.3455),
-    (@CourseId, N'北12条',    5, 43.0800, 141.3466),
-    (@CourseId, N'さっぽろ',  6, 43.0682, 141.3505),
-    (@CourseId, N'大通',      7, 43.0608, 141.3506),
-    (@CourseId, N'すすきの',  8, 43.0553, 141.3535),
-    (@CourseId, N'中島公園',  9, 43.0492, 141.3546),
-    (@CourseId, N'幌平橋',   10, 43.0410, 141.3554),
-    (@CourseId, N'中の島',   11, 43.0345, 141.3562),
-    (@CourseId, N'平岸',     12, 43.0272, 141.3576),
-    (@CourseId, N'南平岸',   13, 43.0197, 141.3610),
-    (@CourseId, N'澄川',     14, 43.0110, 141.3618),
-    (@CourseId, N'自衛隊前', 15, 43.0018, 141.3620),
-    (@CourseId, N'真駒内',   16, 42.9915, 141.3540);
+    (@CourseId, N'麻生',      1, 43.108340, 141.338480),
+    (@CourseId, N'北34条',    2, 43.100105, 141.342130),
+    (@CourseId, N'北24条',    3, 43.089610, 141.344825),
+    (@CourseId, N'北18条',    4, 43.081645, 141.346755),
+    (@CourseId, N'北12条',    5, 43.074700, 141.348495),
+    (@CourseId, N'さっぽろ',  6, 43.065860, 141.350665),
+    (@CourseId, N'大通',      7, 43.060027, 141.352137),
+    (@CourseId, N'すすきの',  8, 43.055300, 141.353365),
+    (@CourseId, N'中島公園',  9, 43.048475, 141.355055),
+    (@CourseId, N'幌平橋',   10, 43.040220, 141.355835),
+    (@CourseId, N'中の島',   11, 43.037450, 141.361195),
+    (@CourseId, N'平岸',     12, 43.034620, 141.368370),
+    (@CourseId, N'南平岸',   13, 43.026660, 141.371343),
+    (@CourseId, N'澄川',     14, 43.016825, 141.367360),
+    (@CourseId, N'自衛隊前', 15, 43.006005, 141.364915),
+    (@CourseId, N'真駒内',   16, 42.991180, 141.358545);
 GO
 
 

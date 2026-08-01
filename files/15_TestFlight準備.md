@@ -1,6 +1,6 @@
 # RailAngyer TestFlight 配布準備
 
-> 更新日: 2026-07-28。TestFlight v1.0 の正とする。
+> 更新日: 2026-08-01。TestFlight v1.0 の正とする。
 
 ## 1. 配布ビルド
 
@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `1` |
+| ビルド | `2` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -34,11 +34,21 @@
 - [x] 自動署名で端末向けアーカイブを作成
 - [x] Releaseビルド、アーカイブ内のInfo.plist・アイコン・プライバシー文書を確認
 - [x] コア47件、アプリ80件、UI 5件、API 54件を通過
+- [x] 緑のApp Icon、歩行マスコットの起動／DB読み込み画面へ刷新
+- [x] ホームと明示的な「旅をスタート」、複数の旅の記録を追加
+- [x] 予定のルールセット、日本基準カレンダー、お題の効果／初期値廃止を反映
+- [x] 札幌3路線の駅座標を国土数値情報 N02-22（JGD2011）へ更新
+- [x] 写真そのものを使う地図ピンと、連続的なペース配色を追加
+- [x] ビルド2候補でコア47件、アプリ81件、UI 6件、API 54件を通過
+- [x] `17_migration_v4_schedule_rules.sql` を本番DBへ適用し、対応APIをApp Serviceへ再配置
 
 Explicit App ID登録後の最終アーカイブは
 `/tmp/RailAngyerApp-1.0.0-1-explicit.xcarchive`。
 2026-07-28 23:39 JSTにApp Store Connectへのアップロードが成功し、
 ビルド `1.0.0 (1)` の処理が開始された。
+
+今回の変更版 `1.0.0 (2)` は、2026-08-01 09:11 JSTにアップロード成功。
+App Store Connectで処理中。
 
 ## 3. App Store Connectへ入力する文面
 
@@ -83,13 +93,13 @@ xcodebuild \
   -scheme RailAngyerApp \
   -configuration Release \
   -destination 'generic/platform=iOS' \
-  -archivePath /tmp/RailAngyerApp-1.0.0-1.xcarchive \
+  -archivePath /tmp/RailAngyerApp-1.0.0-2.xcarchive \
   -allowProvisioningUpdates \
   archive
 
 xcodebuild \
   -exportArchive \
-  -archivePath /tmp/RailAngyerApp-1.0.0-1.xcarchive \
+  -archivePath /tmp/RailAngyerApp-1.0.0-2.xcarchive \
   -exportOptionsPlist RailAngyerApp/ExportOptions-TestFlight.plist \
   -exportPath /tmp/RailAngyerApp-TestFlight \
   -allowProvisioningUpdates
@@ -104,6 +114,7 @@ Appレコードを作っておく。
 - [x] Explicit App IDとApp Store ConnectのAppレコードを作成
       （名前、主言語、Bundle ID、SKU）
 - [x] ビルド `1.0.0 (1)` をApp Store Connectへアップロード
+- [x] ビルド `1.0.0 (2)` をApp Store Connectへアップロード
 - [ ] Beta Review連絡先の電話番号を入力
 - [ ] 必要なら公開用プライバシーポリシーURLを用意
 - [ ] ビルドの処理完了後、輸出コンプライアンスが「不要」になっていることを確認
@@ -122,4 +133,4 @@ Appレコードを作っておく。
 - [ ] 圏外→復帰時の送信キュー
 - [ ] 地下駅の手動到着
 - [ ] 4〜5時間利用時の電池残量
-- [ ] 全駅の座標補正
+- [x] 札幌3路線の全駅座標補正（国土数値情報 N02-22）

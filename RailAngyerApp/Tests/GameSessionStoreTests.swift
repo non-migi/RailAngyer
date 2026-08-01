@@ -259,6 +259,7 @@ struct GameSessionStoreTests {
         #expect(store.currentOrder == 1)
         #expect(store.missionCandidates(at: 2).count == 1, "ミッションは残る")
         #expect(store.room?.diceMax == 2, "設定も残る")
+        #expect(store.archives.count == 1, "終えた旅は履歴として残る")
     }
 
     @Test("プレイを始めたら区間を変更できない（T-06）")

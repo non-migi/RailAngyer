@@ -19,7 +19,8 @@ public class ScheduleEndpointTests(ApiFactory factory) : IClassFixture<ApiFactor
         var scheduleId = Guid.NewGuid();
 
         var save = await client.PutAsJsonAsync($"/rooms/{room.RoomId}/schedules/{scheduleId}",
-            new SaveScheduleRequest("南北線を歩く", StartAt, "麻生駅 改札前"));
+            new SaveScheduleRequest("南北線を歩く", StartAt, "麻生駅 改札前",
+                                    1, "南北線", 1, 16, 6));
         Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
 
         var schedules = await client.GetFromJsonAsync<List<ScheduleDto>>($"/rooms/{room.RoomId}/schedules");
@@ -27,6 +28,10 @@ public class ScheduleEndpointTests(ApiFactory factory) : IClassFixture<ApiFactor
         var schedule = Assert.Single(schedules!);
         Assert.Equal("南北線を歩く", schedule.Title);
         Assert.Equal("麻生駅 改札前", schedule.MeetPlace);
+        Assert.Equal("南北線", schedule.CourseName);
+        Assert.Equal(1, schedule.StartOrder);
+        Assert.Equal(16, schedule.GoalOrder);
+        Assert.Equal((byte)6, schedule.DiceMax);
     }
 
     [Fact]

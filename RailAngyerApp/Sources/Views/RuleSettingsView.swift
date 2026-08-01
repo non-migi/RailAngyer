@@ -93,7 +93,7 @@ struct RuleSettingsView: View {
                          + "半径を大きくしすぎると隣の駅の圏内と重なるため、"
                          + "\(Int(ArrivalRule.radiusRange.upperBound))m までに制限しています。")
                         .font(.caption).foregroundStyle(.secondary)
-                    Text("座標は概値のため、現地で判定が合わない駅があれば調整してください。")
+                    Text("札幌3路線は国土交通省の鉄道データ（JGD2011）に合わせた駅位置です。")
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
@@ -119,10 +119,10 @@ struct RuleSettingsView: View {
                 }
 
                 Section {
-                    Button("記録をリセット", role: .destructive) { showResetConfirm = true }
+                    Button("記録を保存して新しい旅へ", role: .destructive) { showResetConfirm = true }
                         .disabled(store.room?.turns.isEmpty ?? true)
                 } footer: {
-                    Text("訪問記録と写真がすべて消えます。ミッションと設定は残ります。")
+                    Text("現在の旅は「記録」に保存され、同じルールで新しい旅を始められます。")
                 }
             }
             .navigationTitle("ルール設定")
@@ -139,11 +139,11 @@ struct RuleSettingsView: View {
             .sheet(isPresented: $showingRoom) {
                 RoomJoinView(store: store, sync: sync)
             }
-            .confirmationDialog("記録をリセットしますか",
+            .confirmationDialog("現在の旅を保存して、新しい旅を始めますか",
                                 isPresented: $showResetConfirm, titleVisibility: .visible) {
-                Button("リセットする", role: .destructive) { store.resetProgress() }
+                Button("保存して新しい旅へ", role: .destructive) { store.resetProgress() }
             } message: {
-                Text("訪問記録と写真が消えます。取り消せません。")
+                Text("訪問記録と写真は過去の旅として残ります。")
             }
             .onAppear {
                 startOrder = store.room?.startStation?.orderNo ?? 1

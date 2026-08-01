@@ -47,29 +47,41 @@ private struct LaunchLoadingView: View {
 
     var body: some View {
         ZStack {
-            Theme.paper.ignoresSafeArea()
+            LinearGradient(colors: [Color(red: 0.02, green: 0.50, blue: 0.25),
+                                    Color(red: 0.01, green: 0.24, blue: 0.14)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
 
-            VStack(spacing: 18) {
-                Image("BrandMark")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 152, height: 152)
-                    .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
-                    .shadow(color: Theme.ink.opacity(0.16), radius: 18, y: 10)
-                    .offset(y: isMoving ? -3 : 3)
+            VStack(spacing: 26) {
+                ZStack(alignment: .bottom) {
+                    Capsule().fill(.white.opacity(0.22)).frame(width: 250, height: 3)
+                    HStack(spacing: 34) {
+                        ForEach(0..<6, id: \.self) { _ in
+                            Circle().fill(.white.opacity(0.55)).frame(width: 6, height: 6)
+                        }
+                    }
+                    Image("WalkingMascot")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 142, height: 142)
+                        .offset(x: isMoving ? 64 : -64, y: isMoving ? -7 : -2)
+                        .rotationEffect(.degrees(isMoving ? 1.5 : -1.5))
+                        .shadow(color: .black.opacity(0.22), radius: 12, y: 7)
+                }
+                .frame(height: 158)
 
                 VStack(spacing: 5) {
                     Text("レイルアンギャー")
                         .font(.title2.weight(.bold))
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(.white)
                     Text("駅から駅へ、旅の支度中")
                         .font(.subheadline)
-                        .foregroundStyle(Theme.ink.opacity(0.65))
+                        .foregroundStyle(.white.opacity(0.78))
                 }
 
                 ProgressView()
                     .controlSize(.small)
-                    .tint(Theme.line)
+                    .tint(.white)
                     .accessibilityLabel("読み込み中")
             }
             .padding(32)
@@ -77,7 +89,7 @@ private struct LaunchLoadingView: View {
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("launchLoading")
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 1.35).repeatForever(autoreverses: true)) {
                 isMoving = true
             }
         }
@@ -89,7 +101,12 @@ private struct MainView: View {
     let sync: SyncService
     @State private var location = LocationService()
     @State private var showingSettings = false
+    @State private var showingSchedules = false
+    @State private var showingMissions = false
     @State private var didAskForNotifications = false
+    @State private var didRequestLocation = false
+    @State private var selectedTab: AppTab = .home
+    @State private var isInitialDatabaseLoad = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
     @Environment(\.scenePhase) private var scenePhase
 
@@ -97,8 +114,30 @@ private struct MainView: View {
     private let pullInterval: Duration = .seconds(30)
 
     var body: some View {
-        NavigationStack {
-            BoardView(store: store, sync: sync, showingSettings: $showingSettings)
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                HomeDashboardView(
+                    store: store,
+                    startJourney: startJourney,
+                    showSchedules: { showingSchedules = true },
+                    showMissions: { showingMissions = true },
+                    showRecords: { selectedTab = .records },
+                    showSettings: { showingSettings = true })
+            }
+            .tag(AppTab.home)
+            .tabItem { Label("ホーム", systemImage: "house.fill") }
+
+            NavigationStack {
+                BoardView(store: store, sync: sync, showingSettings: $showingSettings)
+            }
+            .tag(AppTab.journey)
+            .tabItem { Label("旅", systemImage: "map.fill") }
+
+            NavigationStack {
+                JourneyHistoryView(store: store)
+            }
+            .tag(AppTab.records)
+            .tabItem { Label("記録", systemImage: "chart.bar.xaxis") }
         }
         .tint(Theme.line)
         .fullScreenCover(isPresented: .constant(store.phase.isInTurn || store.showingAnnouncement)) {
@@ -107,6 +146,28 @@ private struct MainView: View {
         .sheet(isPresented: $showingSettings) {
             RuleSettingsView(store: store, sync: sync)
         }
+        .sheet(isPresented: $showingSchedules) {
+            ScheduleListView(store: store, sync: sync)
+        }
+        .sheet(isPresented: $showingMissions) {
+            MissionEditorView(store: store, sync: sync)
+        }
+        .overlay {
+            if isInitialDatabaseLoad {
+                DatabaseLoadingView()
+                    .transition(.opacity)
+            }
+        }
+        .overlay(alignment: .top) {
+            if sync.isSyncing && !isInitialDatabaseLoad {
+                Label("データを同期中", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(.regularMaterial, in: Capsule())
+                    .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+                    .padding(.top, 4)
+            }
+        }
         .task {
             // 到着判定は LocationService から。手動到着と同じ入口を通す
             location.onArrive = { order in
@@ -114,12 +175,13 @@ private struct MainView: View {
                 notifyArrival(at: order)
             }
             location.rule = ArrivalRule(radius: arrivalRadius)
-            location.requestAuthorization()
             syncTarget()
 
             // アプリもDBも寝ていることがある。起こしておくと実プレイ時の待ちが減る
+            isInitialDatabaseLoad = sync.isJoined
             await sync.wakeUpIfJoined()
             await exchange()
+            withAnimation(.easeOut(duration: 0.2)) { isInitialDatabaseLoad = false }
         }
         .task {
             // 定期取得。リアルタイム通信は要らない（§7）
@@ -143,6 +205,21 @@ private struct MainView: View {
             location.rule = ArrivalRule(radius: arrivalRadius)
             syncTarget()
         }
+        .onChange(of: selectedTab) {
+            if selectedTab == .journey { prepareLocationIfNeeded() }
+        }
+    }
+
+    private func startJourney() {
+        selectedTab = .journey
+        prepareLocationIfNeeded()
+        // ここではサイコロを振らない。盤面の「サイコロを振る」を押して初めて開始する。
+    }
+
+    private func prepareLocationIfNeeded() {
+        guard !didRequestLocation else { return }
+        didRequestLocation = true
+        location.requestAuthorization()
     }
 
     /// **送ってから取りに行く。** 逆にすると、自分のまだ送っていない記録を
@@ -190,6 +267,205 @@ private struct MainView: View {
                                  longitude: station.longitude))
         default:
             location.stop()
+        }
+    }
+}
+
+private enum AppTab: Hashable { case home, journey, records }
+
+/// 予定・現在の進捗・過去の記録を、起動直後にまとめて確認するホーム。
+private struct HomeDashboardView: View {
+    @Bindable var store: GameSessionStore
+    let startJourney: () -> Void
+    let showSchedules: () -> Void
+    let showMissions: () -> Void
+    let showRecords: () -> Void
+    let showSettings: () -> Void
+
+    private var hasProgress: Bool { !(store.room?.turns.isEmpty ?? true) }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                hero
+                scheduleCard
+                recordsCard
+                actions
+            }
+            .padding()
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("ホーム")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: showSettings) { Image(systemName: "gearshape") }
+                    .accessibilityLabel("設定")
+            }
+        }
+    }
+
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(hasProgress ? "旅を続けよう" : "次の駅へ、歩き出そう")
+                        .font(.title2.bold())
+                    Text(store.room?.course?.name ?? "コースを準備中")
+                        .font(.subheadline).foregroundStyle(.white.opacity(0.75))
+                }
+                Spacer()
+                Image("WalkingMascot")
+                    .resizable().scaledToFit().frame(width: 88, height: 88)
+            }
+
+            HStack(spacing: 0) {
+                metric("現在地", store.stationName(store.currentOrder))
+                metric("訪問", "\(store.visitedCount)駅")
+                metric("時間", DurationText.text(store.timing.elapsedSeconds))
+            }
+
+            Button(action: startJourney) {
+                Label(hasProgress ? "旅を再開" : "旅をスタート",
+                      systemImage: hasProgress ? "play.fill" : "figure.walk.motion")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.white)
+            .foregroundStyle(Theme.ink)
+            .accessibilityIdentifier("startJourney")
+        }
+        .padding(20)
+        .foregroundStyle(.white)
+        .background(
+            LinearGradient(colors: [Color(red: 0.02, green: 0.55, blue: 0.27),
+                                    Color(red: 0.01, green: 0.28, blue: 0.17)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: Theme.line.opacity(0.24), radius: 18, y: 9)
+    }
+
+    private func metric(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(value).font(.headline.monospacedDigit()).lineLimit(1).minimumScaleFactor(0.7)
+            Text(title).font(.caption2).foregroundStyle(.white.opacity(0.68))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var scheduleCard: some View {
+        Button(action: showSchedules) {
+            dashboardCard(title: "次の予定", icon: "calendar") {
+                if let schedule = store.nextSchedule {
+                    Text(schedule.title).font(.headline)
+                    Text(schedule.startAt.formatted(
+                        .dateTime.locale(Locale(identifier: "ja_JP"))
+                            .month().day().weekday().hour().minute()))
+                        .foregroundStyle(.secondary)
+                    if !schedule.courseName.isEmpty {
+                        Text("\(schedule.courseName)・サイコロ1〜\(schedule.diceMax)")
+                            .font(.caption).foregroundStyle(Theme.line)
+                    }
+                } else {
+                    Text("まだ予定はありません")
+                    Text("ルールセットから予定を立てる")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var recordsCard: some View {
+        Button(action: showRecords) {
+            dashboardCard(title: "最近の記録", icon: "chart.line.uptrend.xyaxis") {
+                if let archive = store.archives.first {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(DurationText.text(archive.elapsedSeconds)).font(.title2.bold())
+                        Spacer()
+                        Text("\(archive.visitedCount)駅・写真\(archive.photoCount)枚")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Text(archive.endedAt.formatted(
+                        .dateTime.locale(Locale(identifier: "ja_JP")).year().month().day()))
+                        .font(.caption).foregroundStyle(.secondary)
+                } else if hasProgress {
+                    Text("進行中の旅").font(.headline)
+                    Text("\(store.visitedCount)駅訪問・\(DurationText.text(store.timing.elapsedSeconds))")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else {
+                    Text("歩いた旅はここに積み重なります")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func dashboardCard<Content: View>(
+        title: String, icon: String, @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label(title, systemImage: icon).font(.headline)
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+            }
+            content()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(17)
+        .background(Color(.secondarySystemGroupedBackground),
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var actions: some View {
+        HStack(spacing: 10) {
+            actionButton("予定", "calendar.badge.plus", showSchedules)
+            actionButton("お題", "square.and.pencil", showMissions)
+            actionButton("記録", "clock.arrow.circlepath", showRecords)
+        }
+    }
+
+    private func actionButton(_ title: String, _ icon: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 7) {
+                Image(systemName: icon).font(.title3)
+                Text(title).font(.caption.weight(.semibold))
+            }
+            .frame(maxWidth: .infinity, minHeight: 58)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle(radius: 16))
+    }
+}
+
+/// DBやApp Serviceのコールドスタート中にも、止まって見えないようにする全画面表示。
+private struct DatabaseLoadingView: View {
+    @State private var walking = false
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.01, green: 0.34, blue: 0.18).opacity(0.97).ignoresSafeArea()
+            VStack(spacing: 18) {
+                Image("WalkingMascot")
+                    .resizable().scaledToFit().frame(width: 128, height: 128)
+                    .offset(x: walking ? 34 : -34, y: walking ? -4 : 2)
+                Text("旅の記録を読み込み中")
+                    .font(.headline).foregroundStyle(.white)
+                Text("データベースを起こしています。少しだけお待ちください")
+                    .font(.caption).foregroundStyle(.white.opacity(0.72))
+                ProgressView().tint(.white)
+            }
+            .padding(28)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("旅の記録を読み込み中")
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
+                walking = true
+            }
         }
     }
 }

@@ -282,6 +282,11 @@ struct ScheduleResponse: Codable {
     let title: String
     let startAt: Date
     let meetPlace: String?
+    let courseId: Int?
+    let courseName: String?
+    let startOrder: Int?
+    let goalOrder: Int?
+    let diceMax: Int?
     let createdBy: UUID?
     let attendees: [AttendeeResponse]
 }

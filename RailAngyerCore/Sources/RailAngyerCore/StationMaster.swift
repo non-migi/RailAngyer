@@ -39,7 +39,8 @@ public struct CourseRef: Codable, Sendable {
 
 /// アプリに同梱したマスタの読み込み。
 ///
-/// 座標は概値のため、現地で実測して更新する必要がある（03_Azure構成と料金.md E-02 / T-03）。
+/// 札幌3路線の座標は国土交通省「国土数値情報 鉄道データ（N02-22）」の
+/// 駅区間中央を採用している（測地系 JGD2011）。
 public enum StationMaster {
 
     public enum LoadError: Error, CustomStringConvertible {

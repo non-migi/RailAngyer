@@ -41,16 +41,18 @@ struct CourseSelectionTests {
         #expect(store.engine?.stationCount == 19)
     }
 
-    @Test("前のコースに書いたお題は消える")
-    func switchingDropsMissionsOfOldCourse() throws {
+    @Test("コースを変えると、そのコースのお題だけが一覧に出る")
+    func switchingScopesMissionsToCourse() throws {
         store.saveMission(nil, station: 4, content: "南北線のお題",
                           effect: .none, value: nil, jumpTo: nil)
         #expect(store.myMissions.count == 1)
 
         _ = store.updateCourse(try course("東豊線"))
 
-        // 引けないお題が残ると、抽選の候補が合わなくなる
+        // 新しいコースにはまだ何も書いていない。
+        // 南北線のぶんは**消さずに残す**（予定のために用意したお題を失わないため）
         #expect(store.myMissions.isEmpty)
+        #expect(store.myMissions(in: try course("南北線")).count == 1)
     }
 
     @Test("プレイを始めたらコースは変えられない")

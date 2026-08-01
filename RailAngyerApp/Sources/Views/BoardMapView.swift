@@ -10,7 +10,7 @@ import RailAngyerCore
 /// 線の引き分け:
 /// - **これから行くところ**は点線。まだ歩いていないことを一目で分かるようにする
 /// - **実際に通ったところ**は実線で、**その区間の速さで色を変える**
-///   （速い=青 / ふつう=緑 / ゆっくり=赤）
+///   （分/kmに応じて、速い青 → 標準の緑 → ゆっくりの赤へ連続変化）
 struct BoardMapView: View {
     @Bindable var store: GameSessionStore
     @Binding var selectedStation: StationSelection?
@@ -32,7 +32,8 @@ struct BoardMapView: View {
             // 実際に通ったところ。実線、速さで色分け
             ForEach(walkedLegs) { leg in
                 MapPolyline(coordinates: leg.points)
-                    .stroke(color(for: leg.category), style: walkedStyle)
+                    .stroke(PacePalette.color(minutesPerKilometer: leg.minutesPerKilometer),
+                            style: walkedStyle)
             }
 
             ForEach(stations) { station in
@@ -55,34 +56,43 @@ struct BoardMapView: View {
         let isCurrent = station.orderNo == store.currentOrder
         let isVisited = store.visitedOrders.contains(station.orderNo)
         let isLanded = store.landedOrders.contains(station.orderNo)
-        let hasPhoto = store.photographedOrders.contains(station.orderNo)
+        let photos = store.photoFileNames(at: station.orderNo)
 
         ZStack(alignment: .topTrailing) {
-            ZStack {
-                Circle()
-                    .fill(isVisited ? Theme.line : Color(.systemBackground))
-                    .overlay(Circle().strokeBorder(Theme.line, lineWidth: isCurrent ? 4 : 2))
-                if isLanded {
-                    Image(systemName: "flag.fill")
-                        .font(.system(size: 9)).foregroundStyle(.white)
+            if let fileName = photos.first, let image = PhotoStore.load(fileName) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: isCurrent ? 50 : 42, height: isCurrent ? 50 : 42)
+                    .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 3))
+                    .overlay(Circle().strokeBorder(Theme.line, lineWidth: isCurrent ? 3 : 1))
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(isVisited ? Theme.line : Color(.systemBackground))
+                        .overlay(Circle().strokeBorder(Theme.line, lineWidth: isCurrent ? 4 : 2))
+                    if isLanded {
+                        Image(systemName: "flag.fill")
+                            .font(.system(size: 9)).foregroundStyle(Theme.onLine)
+                    }
                 }
+                .frame(width: isCurrent ? 26 : (isVisited ? 18 : 14),
+                       height: isCurrent ? 26 : (isVisited ? 18 : 14))
             }
-            .frame(width: isCurrent ? 26 : (isVisited ? 18 : 14),
-                   height: isCurrent ? 26 : (isVisited ? 18 : 14))
 
-            // 写真を撮った駅。あとで見返すとき、どこで撮ったかが地図で分かる
-            if hasPhoto {
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 8))
+            if !photos.isEmpty {
+                Text("\(photos.count)")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .padding(3)
-                    .background(Circle().fill(.orange))
-                    .offset(x: 6, y: -6)
+                    .frame(minWidth: 18, minHeight: 18)
+                    .background(Circle().fill(Theme.ink))
+                    .offset(x: 5, y: -5)
                     .accessibilityLabel("\(station.name)で撮った写真がある")
             }
         }
-        .frame(width: 32, height: 32)
-        .shadow(radius: isCurrent ? 3 : 0)
+        .frame(width: 54, height: 54)
+        .shadow(color: .black.opacity(0.2), radius: isCurrent || !photos.isEmpty ? 5 : 0, y: 2)
     }
 
     // MARK: - 線
@@ -95,16 +105,6 @@ struct BoardMapView: View {
         StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round)
     }
 
-    /// 速さの色。**色だけに頼らせない**ため、凡例と数字も併せて出す
-    private func color(for category: PaceCategory?) -> Color {
-        switch category {
-        case .fast:   return .blue
-        case .normal: return Theme.line
-        case .slow:   return .red
-        case nil:     return Theme.line.opacity(0.6)   // 測れなかった区間
-        }
-    }
-
     private func coordinate(_ station: Station) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude)
     }
@@ -114,7 +114,7 @@ struct BoardMapView: View {
     struct WalkedLeg: Identifiable {
         let id: UUID
         let points: [CLLocationCoordinate2D]
-        let category: PaceCategory?
+        let minutesPerKilometer: Double?
     }
 
     /// 実際に通った区間。戻る効果やジャンプで同じ区間を何度も通ることがあるので、
@@ -127,20 +127,22 @@ struct BoardMapView: View {
             guard let from = byOrder[leg.fromOrder], let to = byOrder[leg.toOrder] else { return nil }
             return WalkedLeg(id: leg.id,
                              points: [coordinate(from), coordinate(to)],
-                             category: leg.category)
+                             minutesPerKilometer: leg.pace.minutesPerKilometer)
         }
     }
 
     // MARK: - 凡例
 
     private var legend: some View {
-        HStack(spacing: 12) {
-            ForEach(PaceCategory.allCases, id: \.self) { category in
-                HStack(spacing: 4) {
-                    Capsule().fill(color(for: category)).frame(width: 14, height: 4)
-                    Text(category.label)
-                }
+        VStack(spacing: 5) {
+            HStack {
+                Text("速い")
+                Spacer()
+                Text("標準")
+                Spacer()
+                Text("ゆっくり")
             }
+            Capsule().fill(PacePalette.gradient).frame(width: 190, height: 7)
             HStack(spacing: 4) {
                 Capsule().fill(Theme.line.opacity(0.5)).frame(width: 14, height: 4)
                 Text("これから")

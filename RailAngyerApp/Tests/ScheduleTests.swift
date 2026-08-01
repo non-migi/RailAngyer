@@ -43,6 +43,22 @@ struct ScheduleTests {
         #expect(store.schedules.isEmpty)
     }
 
+    @Test("予定には最初に決めたルールセットが残る")
+    func savesRuleSet() throws {
+        let course = try #require(store.room?.course)
+
+        let error = store.saveSchedule(nil, title: "地下鉄を歩く", startAt: startAt,
+                                       meetPlace: nil, course: course,
+                                       startOrder: 2, goalOrder: 10, diceMax: 4)
+
+        #expect(error == nil)
+        let schedule = try #require(store.schedules.first)
+        #expect(schedule.courseName == "南北線")
+        #expect(schedule.startOrder == 2)
+        #expect(schedule.goalOrder == 10)
+        #expect(schedule.diceMax == 4)
+    }
+
     @Test("集合場所は空なら持たない")
     func emptyMeetPlaceBecomesNil() throws {
         store.saveSchedule(nil, title: "歩く", startAt: startAt, meetPlace: "   ")
@@ -116,6 +132,28 @@ struct ScheduleTests {
 
     @Test("消すと一覧から消える")
     func deleteRemovesFromList() throws {
+        store.saveSchedule(nil, title: "歩く", startAt: startAt, meetPlace: nil)
+        let schedule = try #require(store.schedules.first)
+
+        store.deleteSchedule(schedule)
+
+        #expect(store.schedules.isEmpty)
+    }
+
+    @Test("立てた予定はその場で一覧に出る")
+    func newScheduleAppearsImmediately() throws {
+        #expect(store.schedules.isEmpty)
+
+        store.saveSchedule(nil, title: "南北線を歩く", startAt: startAt, meetPlace: nil)
+
+        // 一覧はその場で読み直す。fetch のままだと画面が描き直されず、
+        // 「追加したのに出てこない」ように見えていた
+        #expect(store.schedules.map(\.title) == ["南北線を歩く"])
+        #expect(store.nextSchedule?.title == "南北線を歩く")
+    }
+
+    @Test("消した予定はその場で一覧から消える")
+    func deletedScheduleDisappearsImmediately() throws {
         store.saveSchedule(nil, title: "歩く", startAt: startAt, meetPlace: nil)
         let schedule = try #require(store.schedules.first)
 

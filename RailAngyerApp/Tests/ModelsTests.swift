@@ -24,6 +24,7 @@ struct ModelsTests {
         #expect(course.name == "南北線")
         let nanboku = course.stations.sorted { $0.orderNo < $1.orderNo }
         #expect(nanboku.count == 16)
+        #expect(abs((nanboku.first?.latitude ?? 0) - 43.10834) < 0.000_001)
         #expect(nanboku.first?.name == "麻生")
         #expect(nanboku.last?.name == "真駒内")
 

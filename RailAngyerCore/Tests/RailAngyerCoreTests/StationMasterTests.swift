@@ -3,7 +3,7 @@ import Testing
 @testable import RailAngyerCore
 
 /// 同梱した南北線マスタの検証。
-/// 座標は概値のため値そのものは検証せず、**位置計算が壊れない条件**だけを確かめる。
+/// 位置計算が壊れない条件と、公式データへ補正した代表座標を確かめる。
 struct StationMasterTests {
 
     @Test("南北線が16駅で読み込める")

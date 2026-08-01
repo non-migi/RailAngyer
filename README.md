@@ -28,6 +28,7 @@
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
 | [files/16_プライバシーポリシー.md](files/16_プライバシーポリシー.md) | TestFlight／App Store向けのプライバシーポリシー |
+| [files/17_migration_v4_schedule_rules.sql](files/17_migration_v4_schedule_rules.sql) | 予定ルールと札幌駅座標のDB移行（適用済み） |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
 | [RailAngyerApi/](RailAngyerApi/) | ASP.NET Core の API（フェーズ2。`dotnet test` で検証） |
@@ -49,11 +50,14 @@
   `https://railangyer.azurewebsites.net/health/db` が DB まで疎通
 - 写真：ストレージ・コンテナ `photos` 作成済み。**SAS発行 → Blobへ直接アップロード →
   メタ登録 → 表示 → 削除を実物で確認済み**
-- アプリ：送信キュー・参加/ルーム作成・ミッション自作・ふりかえり・予定と出欠まで実装
-- 記録：写真駅の地図ピン、合計/移動/ミッション時間、分/km、実線/点線とペース色分けまで実装
+- アプリ：ホームから明示的に開始し、参加/ルーム・お題・予定・進行を扱う構成
+- 記録：複数の旅、実写真の地図ピン、時間、分/km、連続ペース色まで実装
+- 予定：ルールセットを先に決め、日本時間・日本のカレンダーで作成
+- 駅座標：札幌3路線を国土数値情報 N02-22（JGD2011）へ補正済み
 - コースは4本（南北線・東西線・東豊線・山手線）。設定から切り替えられる
 - TestFlight v1.0.0 (1)：App Icon、起動画面、プライバシーマニフェスト、
-  配布文面、Explicit App IDを用意し、App Store Connectへアップロード済み
+  配布文面、Explicit App IDを用意し、ビルド1をApp Store Connectへアップロード済み。
+  緑アイコンと新UIのビルド2もApp Store Connectへアップロード済み（処理中）
   （`15_TestFlight準備.md`）
 - **フェーズ2〜4の作るものは揃った。**残るは実機での通し確認と実地テスト
 
@@ -62,6 +66,6 @@
 ```bash
 swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース 47件
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 80件 + UI 5件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 81件 + UI 6件
 dotnet test RailAngyerApi.Tests               # API 54件
 ```

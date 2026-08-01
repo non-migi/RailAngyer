@@ -16,6 +16,9 @@ final class TimingUITests: XCTestCase {
     func testShowsTimingAcrossScreens() {
         app.launch()
 
+        let startButton = app.buttons["startJourney"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 15), "ホームが出ていない")
+        startButton.tap()
         let roll = app.buttons["サイコロを振る"]
         XCTAssertTrue(roll.waitForExistence(timeout: 15))
         roll.tap()
@@ -30,11 +33,10 @@ final class TimingUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["今回の記録"].waitForExistence(timeout: 5))
         app.buttons["北34条 に到着した"].tap()
 
-        let draw = app.buttons["ミッションを引く"]
-        XCTAssertTrue(draw.waitForExistence(timeout: 5))
-        draw.tap()
-        XCTAssertTrue(app.buttons["達成した"].waitForExistence(timeout: 5))
-        app.buttons["達成した"].tap()
+        // 初期お題は入れない仕様。お題がない駅では、そのまま次へ進む。
+        let next = app.buttons["次へ"]
+        XCTAssertTrue(next.waitForExistence(timeout: 5))
+        next.tap()
 
         XCTAssertTrue(roll.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '合計 '"))

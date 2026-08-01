@@ -33,13 +33,15 @@ final class GameSessionStore {
     // MARK: - 準備
 
     /// マスタとローカルルームを用意する。初回起動時に1回だけ効く。
-    func prepare(sampleMissions: Bool = true) {
+    func prepare(sampleMissions: Bool = false) {
         do {
             let course = try MasterSeeder.seedIfNeeded(context)
             let room = try MasterSeeder.seedLocalRoomIfNeeded(context, course: course)
             if sampleMissions { try MasterSeeder.seedSampleMissionsIfNeeded(context, room: room) }
+            try MasterSeeder.removeBundledSampleMissions(context, room: room)
             self.room = room
-            if TestHooks.resetsProgressOnLaunch { resetProgress() }
+            reloadSchedules()
+            if TestHooks.resetsProgressOnLaunch { resetProgress(archive: false) }
         } catch {
             lastError = String(describing: error)
         }
@@ -210,32 +212,44 @@ final class GameSessionStore {
     }
 
     /// 自分が書いたお題（駅順）
-    var myMissions: [Mission] {
-        guard let me else { return [] }
+    var myMissions: [Mission] { myMissions(in: room?.course) }
+
+    /// あるコースに書いた、自分のお題。
+    ///
+    /// **予定の段階から書けるようにする**ため、いま遊んでいるコース以外も指定できる。
+    /// お題は駅に紐づき、駅はコースに属するので、コースが決まれば場所も決まる。
+    func myMissions(in course: Course?) -> [Mission] {
+        guard let me, let course else { return [] }
         return (room?.missions ?? [])
-            .filter { $0.member?.id == me.id }
+            .filter { $0.member?.id == me.id && $0.station?.course?.name == course.name }
             .sorted { ($0.station?.orderNo ?? 0) < ($1.station?.orderNo ?? 0) }
     }
 
     /// その駅に自分のお題が既にあるか（駅ごとに1人1個まで。UQ-05）
-    func myMission(at order: Int) -> Mission? {
-        myMissions.first { $0.station?.orderNo == order }
+    func myMission(at order: Int, in course: Course? = nil) -> Mission? {
+        myMissions(in: course ?? room?.course).first { $0.station?.orderNo == order }
     }
 
     /// お題を作る・書き換える。
     ///
     /// - Returns: 保存できなければ理由。呼び出し側はそのまま画面に出してよい
+    /// - Parameter course: 書き込む先のコース。省略すると、いま遊んでいるコース。
+    ///   予定の段階では、まだ始めていないコースにも書ける
     @discardableResult
     func saveMission(_ existing: Mission?, station order: Int, content: String,
-                     effect: EffectType, value: Int?, jumpTo: Int?) -> String? {
-        guard let room, let me, let target = station(order) else { return "ルームがありません" }
+                     effect: EffectType, value: Int?, jumpTo: Int?,
+                     in course: Course? = nil) -> String? {
+        let targetCourse = course ?? room?.course
+        guard let room, let me,
+              let target = station(order, in: targetCourse) else { return "ルームがありません" }
 
         // 同じ駅に2個目は作れない。差し替えは同じお題を編集する
-        if let duplicate = myMission(at: order), duplicate.id != existing?.id {
+        if let duplicate = myMission(at: order, in: targetCourse), duplicate.id != existing?.id {
             return "\(target.name)にはすでにあなたのお題があります"
         }
 
-        let jumpStation = effect.needsStation ? jumpTo.flatMap { station($0) } : nil
+        let jumpStation = effect.needsStation
+            ? jumpTo.flatMap { station($0, in: targetCourse) } : nil
 
         // **書き込む前に弾く。** 通してしまうとサーバーの CHECK 制約で 400 になり、
         // 圏外で書いたお題がキューから捨てられる
@@ -310,22 +324,34 @@ final class GameSessionStore {
 
     // MARK: - 予定（SC-21 / フェーズ3）
 
-    /// 予定（開催が近い順）。過ぎたものは後ろに回す
-    var schedules: [Schedule] {
+    /// 予定（開催が近い順）。過ぎたものは後ろに回す。
+    ///
+    /// **保持した配列を返す。** その場で `fetch` すると、
+    /// 予定を足しても `@Observable` が変化に気づかず、画面が描き直されない
+    /// （追加したのに一覧に出ない、という見え方になる）。
+    private(set) var schedules: [Schedule] = []
+
+    /// 予定を読み直す。予定を触ったあとと、サーバーから取り込んだあとに呼ぶ
+    func reloadSchedules() {
         let all = (try? context.fetch(FetchDescriptor<Schedule>())) ?? []
         let now = Date()
-        return all.sorted { lhs, rhs in
+        schedules = all.sorted { lhs, rhs in
             let lhsPast = lhs.startAt < now, rhsPast = rhs.startAt < now
             if lhsPast != rhsPast { return !lhsPast }
             return lhsPast ? lhs.startAt > rhs.startAt : lhs.startAt < rhs.startAt
         }
     }
 
+    /// 次に開催される予定。
+    var nextSchedule: Schedule? { schedules.first { $0.startAt >= Date() } }
+
     /// 予定を立てる・書き換える。
     /// - Returns: 保存できなければ理由
     @discardableResult
     func saveSchedule(_ existing: Schedule?, title: String,
-                      startAt: Date, meetPlace: String?) -> String? {
+                      startAt: Date, meetPlace: String?,
+                      course: Course? = nil, startOrder: Int? = nil,
+                      goalOrder: Int? = nil, diceMax: Int? = nil) -> String? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "予定の名前を入力してください" }
         if trimmed.count > 100 { return "予定の名前は100文字までです" }
@@ -336,10 +362,21 @@ final class GameSessionStore {
             return "予定を立てた人だけが変更できます"
         }
 
+        let selectedCourse = course ?? room?.course
+        let selectedStart = startOrder ?? room?.startStation?.orderNo ?? 0
+        let selectedGoal = goalOrder ?? room?.goalStation?.orderNo ?? 0
+        guard selectedCourse != nil else { return "コースを選んでください" }
+        if selectedStart == selectedGoal { return "スタートとゴールは別の駅にしてください" }
+
         let schedule = existing ?? Schedule(title: trimmed, startAt: startAt)
         schedule.title = trimmed
         schedule.startAt = startAt
         schedule.meetPlace = meetPlace?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+        schedule.courseServerId = selectedCourse?.serverId
+        schedule.courseName = selectedCourse?.name ?? ""
+        schedule.startOrder = selectedStart
+        schedule.goalOrder = selectedGoal
+        schedule.diceMax = min(max(diceMax ?? room?.diceMax ?? 6, 1), 9)
 
         if existing == nil {
             schedule.missionSet = room
@@ -347,6 +384,7 @@ final class GameSessionStore {
             context.insert(schedule)
         }
         save()
+        reloadSchedules()               // 追加した予定をその場で一覧に出す
         try? sync?.enqueueSchedule(schedule)
         return nil
     }
@@ -355,6 +393,7 @@ final class GameSessionStore {
         let id = schedule.id
         context.delete(schedule)
         save()
+        reloadSchedules()
         try? sync?.enqueueScheduleDelete(scheduleId: id)
     }
 
@@ -450,21 +489,95 @@ final class GameSessionStore {
             .sorted { $0.arrivedAt < $1.arrivedAt }
     }
 
-    /// 記録をリセットして最初からやり直す（SC-20）。
-    /// 写真の実体もここで消す（DBの行だけ消すとファイルが孤児になる）
-    func resetProgress() {
+    // MARK: - 保存済みの旅
+
+    /// 終えた旅（新しい順）。現在の旅とは別に何件でも残る。
+    var archives: [JourneyArchive] {
+        ((try? context.fetch(FetchDescriptor<JourneyArchive>())) ?? [])
+            .sorted { $0.endedAt > $1.endedAt }
+    }
+
+    /// 記録を保存して最初からやり直す（SC-20）。
+    /// `archive` が true なら写真ファイルも履歴から参照するため残す。
+    func resetProgress(archive: Bool = true) {
         guard let room else { return }
         do {
-            for visit in room.visits {
-                for photo in visit.photos { PhotoStore.delete(photo.localFileName) }
-                context.delete(visit)          // Photo の行は cascade で消える
+            if archive { try archiveCurrentJourney(room) }
+
+            // 画面に残る一時状態を先に落とす。消したターンや訪問を掴んだまま
+            // 描き直しが走ると、SwiftData が「元のデータが無い」と言って落ちる
+            pendingPassingStation = nil
+            showingAnnouncement = false
+
+            // 関係をたどりながら消すと途中で配列が変わる。**先に控えを取ってから消す**
+            let visits = Array(room.visits)
+            let turns = Array(room.turns)
+            let photos = visits.flatMap(\.photos)
+            let photoFileNames = photos.map(\.localFileName)
+
+            // 参照を外してから消す。cascade の順序に任せると、
+            // 消えた行を別の行が指したままになることがある
+            for photo in photos {
+                photo.visit = nil
+                photo.member = nil
+                context.delete(photo)
             }
-            for turn in room.turns { context.delete(turn) }
+            for visit in visits {
+                visit.turn = nil
+                visit.station = nil
+                visit.missionSet = nil
+                context.delete(visit)
+            }
+            for turn in turns {
+                turn.selectedMission = nil
+                turn.fromStation = nil
+                turn.landingStation = nil
+                turn.endStation = nil
+                turn.missionSet = nil
+                context.delete(turn)
+            }
             try context.save()
+
+            // 記録として残すなら実体は消さない。破棄するときだけ消す
+            if !archive {
+                for fileName in photoFileNames { PhotoStore.delete(fileName) }
+            }
+
             try sync?.enqueueReset()
         } catch {
             lastError = String(describing: error)
         }
+    }
+
+    func deleteArchive(_ archive: JourneyArchive) {
+        for fileName in archive.photoFileNames { PhotoStore.delete(fileName) }
+        context.delete(archive)
+        save()
+    }
+
+    private func archiveCurrentJourney(_ room: MissionSet) throws {
+        guard !room.turns.isEmpty else { return }
+        let summary = JourneySummary(room: room, engine: engine)
+        let startedAt = room.turns.map(\.rolledAt).min() ?? Date()
+        let endedAt = room.turns.compactMap(\.completedAt).max()
+            ?? room.visits.map(\.arrivedAt).max() ?? Date()
+        let archive = JourneyArchive(roomName: summary.roomName,
+                                     courseName: room.course?.name ?? "",
+                                     startedAt: startedAt,
+                                     endedAt: endedAt)
+        archive.elapsedSeconds = summary.timing.elapsedSeconds
+        archive.walkingSeconds = summary.timing.walkingSeconds
+        archive.meters = summary.timing.meters
+        archive.visitedCount = summary.visitedCount
+        archive.stationCount = summary.stationCount
+        archive.turnCount = summary.turnCount
+        archive.photoCount = summary.photoCount
+        archive.isCleared = summary.isCleared
+        archive.routeSummary = summary.stations.filter { $0.visitCount > 0 }
+            .map(\.name).joined(separator: " → ")
+        archive.photoFileNamesText = summary.stations.flatMap(\.photoFileNames)
+            .joined(separator: "\n")
+        context.insert(archive)
     }
 
     /// 選べるコース（フェーズ4）
@@ -484,11 +597,9 @@ final class GameSessionStore {
         let sorted = course.stations.sorted { $0.orderNo < $1.orderNo }
         guard let first = sorted.first, let last = sorted.last else { return false }
 
-        // 前のコースの駅に紐づいたお題は、そのままでは引けない
-        for mission in room.missions where mission.station?.course?.name != course.name {
-            context.delete(mission)
-        }
-
+        // 別のコースに書いたお題は**消さない**。予定の段階から書けるようにしたので、
+        // コースを変えるたびに消すと、次の旅のために用意したお題まで失われる。
+        // 抽選は着地した駅（＝いまのコースの駅）で引くため、混ざる心配はない
         room.course = course
         room.startStation = first
         room.goalStation = last
@@ -508,8 +619,10 @@ final class GameSessionStore {
 
     // MARK: - 補助
 
-    func station(_ order: Int) -> Station? {
-        room?.course?.stations.first { $0.orderNo == order }
+    func station(_ order: Int) -> Station? { station(order, in: room?.course) }
+
+    func station(_ order: Int, in course: Course?) -> Station? {
+        course?.stations.first { $0.orderNo == order }
     }
 
     func stationName(_ order: Int) -> String { station(order)?.name ?? "-" }

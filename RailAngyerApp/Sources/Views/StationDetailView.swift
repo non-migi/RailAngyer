@@ -56,7 +56,8 @@ struct StationDetailView: View {
                     if let pace = leg.pace.text {
                         Text(pace)
                             .font(.caption.monospacedDigit())
-                            .foregroundStyle(paceColor(leg.category))
+                            .foregroundStyle(PacePalette.color(
+                                minutesPerKilometer: leg.pace.minutesPerKilometer))
                     }
                 }
             } label: {
@@ -92,15 +93,6 @@ struct StationDetailView: View {
         if !visit.photos.isEmpty {
             let names = visit.photos.sorted { $0.takenAt < $1.takenAt }.map(\.localFileName)
             PhotoStrip(fileNames: names)
-        }
-    }
-
-    private func paceColor(_ category: PaceCategory?) -> Color {
-        switch category {
-        case .fast:   return .blue
-        case .normal: return Theme.line
-        case .slow:   return .red
-        case nil:     return .secondary
         }
     }
 

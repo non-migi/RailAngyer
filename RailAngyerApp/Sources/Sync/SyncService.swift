@@ -308,10 +308,10 @@ final class SyncService {
                 }()
 
             mission.content = incoming.content
-            mission.effectTypeRaw = incoming.effectType
-            mission.effectValue = incoming.effectValue
-            mission.effectStation = incoming.effectStationId
-                .flatMap { id in stations.first { $0.serverId == id } }
+            // 現行ルールではお題は行動だけ。旧サーバーに残る効果は取り込まない。
+            mission.effectType = .none
+            mission.effectValue = nil
+            mission.effectStation = nil
             mission.station = station
             mission.member = me ?? mission.member
             mission.syncStateRaw = SyncState.synced.rawValue
@@ -327,7 +327,12 @@ final class SyncService {
         guard let room = credentials.load()?.roomId else { return }
         let body = SaveScheduleBody(title: schedule.title,
                                     startAt: schedule.startAt,
-                                    meetPlace: schedule.meetPlace)
+                                    meetPlace: schedule.meetPlace,
+                                    courseId: schedule.courseServerId,
+                                    courseName: schedule.courseName,
+                                    startOrder: schedule.startOrder,
+                                    goalOrder: schedule.goalOrder,
+                                    diceMax: schedule.diceMax)
         try enqueue(path: "/rooms/\(room.apiString)/schedules/\(schedule.id.apiString)", body: body)
     }
 
@@ -385,6 +390,11 @@ final class SyncService {
             schedule.title = incoming.title
             schedule.startAt = incoming.startAt
             schedule.meetPlace = incoming.meetPlace
+            if let courseId = incoming.courseId { schedule.courseServerId = courseId }
+            if let courseName = incoming.courseName { schedule.courseName = courseName }
+            if let startOrder = incoming.startOrder { schedule.startOrder = startOrder }
+            if let goalOrder = incoming.goalOrder { schedule.goalOrder = goalOrder }
+            if let diceMax = incoming.diceMax { schedule.diceMax = diceMax }
             schedule.createdById = incoming.createdBy
             schedule.syncStateRaw = SyncState.synced.rawValue
 
@@ -530,6 +540,11 @@ private struct SaveScheduleBody: Encodable {
     let title: String
     let startAt: Date
     let meetPlace: String?
+    let courseId: Int?
+    let courseName: String
+    let startOrder: Int
+    let goalOrder: Int
+    let diceMax: Int
 }
 
 private struct SaveAttendanceBody: Encodable {

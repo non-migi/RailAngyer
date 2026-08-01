@@ -16,9 +16,22 @@ final class SummaryUITests: XCTestCase {
         app.launchEnvironment["RAILANGYER_NO_NOTIF_PROMPT"] = "1"
     }
 
+    func testRequiresExplicitStartFromHome() {
+        app.launch()
+
+        XCTAssertTrue(app.buttons["startJourney"].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.buttons["サイコロを振る"].isHittable,
+                       "スタート前にゲーム盤を操作できてはいけない")
+        XCTAssertFalse(app.staticTexts["今回の記録"].exists,
+                       "起動しただけでターンが始まってはいけない")
+    }
+
     func testOpensSummaryFromBoard() {
         app.launch()
 
+        let startButton = app.buttons["startJourney"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 15), "ホームが出ていない")
+        startButton.tap()
         XCTAssertTrue(app.buttons["サイコロを振る"].waitForExistence(timeout: 15), "盤面が出ていない")
 
         app.buttons["ふりかえり"].tap()

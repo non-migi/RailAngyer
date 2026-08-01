@@ -248,6 +248,12 @@ final class Schedule {
     var title: String = ""
     var startAt: Date = Date()
     var meetPlace: String?
+    /// 予定時点のルール。ルーム設定を後から変えても、集合予定の内容は変わらない。
+    var courseServerId: Int?
+    var courseName: String = ""
+    var startOrder: Int = 0
+    var goalOrder: Int = 0
+    var diceMax: Int = 6
     /// 立てた人。この人だけが直せる（サーバー側でも同じ判定をしている）
     var createdById: UUID?
     var syncStateRaw: Int = SyncState.localOnly.rawValue
@@ -261,6 +267,43 @@ final class Schedule {
         self.title = title
         self.startAt = startAt
         self.meetPlace = meetPlace
+    }
+}
+
+// MARK: - 保存済みの旅
+
+/// 1回の旅を終えた時点のスナップショット。
+///
+/// 現在進行中の `Turn` / `Visit` とは分けて残すため、何度遊んでも過去の記録を一覧できる。
+@Model
+final class JourneyArchive {
+    var id: UUID = UUID()
+    var roomName: String = ""
+    var courseName: String = ""
+    var startedAt: Date = Date()
+    var endedAt: Date = Date()
+    var elapsedSeconds: Double = 0
+    var walkingSeconds: Double = 0
+    var meters: Double = 0
+    var visitedCount: Int = 0
+    var stationCount: Int = 0
+    var turnCount: Int = 0
+    var photoCount: Int = 0
+    var isCleared: Bool = false
+    /// 駅名を矢印で連結した表示用文字列。
+    var routeSummary: String = ""
+    /// Application Support 内のファイル名を改行区切りで保持する。
+    var photoFileNamesText: String = ""
+
+    init(roomName: String, courseName: String, startedAt: Date, endedAt: Date) {
+        self.roomName = roomName
+        self.courseName = courseName
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+    }
+
+    var photoFileNames: [String] {
+        photoFileNamesText.split(separator: "\n").map(String.init)
     }
 }
 
@@ -306,7 +349,7 @@ enum AppSchema {
     static let all: [any PersistentModel.Type] = [
         Course.self, Station.self, MissionSet.self, Member.self,
         Mission.self, Turn.self, Visit.self, Photo.self,
-        Schedule.self, Attendance.self,
+        Schedule.self, Attendance.self, JourneyArchive.self,
         // 送信キュー。記録そのものではないが、圏外で落としても残す必要がある
         PendingChange.self
     ]

@@ -43,7 +43,8 @@ struct TurnFlowView: View {
                               systemImage: "figure.walk")
                         if let pace = timing.pace.text {
                             Label(pace, systemImage: "gauge.with.dots.needle.50percent")
-                                .foregroundStyle(paceColor(timing.pace.category))
+                                .foregroundStyle(PacePalette.color(
+                                    minutesPerKilometer: timing.pace.minutesPerKilometer))
                         } else {
                             Text("ペースは駅に着くと表示")
                                 .foregroundStyle(.tertiary)
@@ -57,15 +58,6 @@ struct TurnFlowView: View {
                 .background(Color(.secondarySystemGroupedBackground),
                             in: RoundedRectangle(cornerRadius: 10))
             }
-        }
-    }
-
-    private func paceColor(_ category: PaceCategory?) -> Color {
-        switch category {
-        case .fast:   return .blue
-        case .normal: return Theme.line
-        case .slow:   return .red
-        case nil:     return .secondary
         }
     }
 

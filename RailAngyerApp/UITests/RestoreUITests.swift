@@ -15,7 +15,7 @@ final class RestoreUITests: XCTestCase {
         // 現在地を始点に戻す。前のテストが残した位置のままだと、
         // 出発した瞬間に目的地の圏内にいて自動到着してしまう
         XCUIDevice.shared.location = XCUILocation(
-            location: CLLocation(latitude: 43.1147, longitude: 141.3406))   // 麻生
+            location: CLLocation(latitude: 43.10834, longitude: 141.33848))   // 麻生
 
         app = XCUIApplication()
         // 保存を効かせたまま初期状態から始めたいので、メモリ上の起動は使わない
@@ -36,6 +36,9 @@ final class RestoreUITests: XCTestCase {
     func testResumesWalkingAfterRelaunch() {
         app.launch()
 
+        let startButton = app.buttons["startJourney"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 15), "ホームが出ていない")
+        startButton.tap()
         let rollButton = app.buttons["サイコロを振る"]
         XCTAssertTrue(rollButton.waitForExistence(timeout: 15), "盤面が出ていない")
         rollButton.tap()

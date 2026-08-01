@@ -119,4 +119,44 @@ struct MissionAuthoringTests {
 
         #expect(store.myMissions.map(\.content) == ["自分のお題"])
     }
+
+    @Test("予定の段階で、まだ始めていないコースにもお題を書ける")
+    func writesMissionForAnotherCourse() throws {
+        let tozai = try #require(store.courses.first { $0.name == "東西線" })
+
+        let error = store.saveMission(nil, station: 3, content: "琴似で写真を撮る",
+                                      effect: .none, value: nil, jumpTo: nil, in: tozai)
+
+        #expect(error == nil)
+        // いま遊んでいる南北線の一覧には出ない。東西線の一覧に出る
+        #expect(store.myMissions.isEmpty)
+        #expect(store.myMissions(in: tozai).map(\.content) == ["琴似で写真を撮る"])
+    }
+
+    @Test("コースが違えば同じ駅番号にも書ける")
+    func sameOrderOnDifferentCourses() throws {
+        let tozai = try #require(store.courses.first { $0.name == "東西線" })
+        store.saveMission(nil, station: 3, content: "南北線のお題",
+                          effect: .none, value: nil, jumpTo: nil)
+
+        let error = store.saveMission(nil, station: 3, content: "東西線のお題",
+                                      effect: .none, value: nil, jumpTo: nil, in: tozai)
+
+        #expect(error == nil)
+        #expect(store.myMissions.count == 1)
+        #expect(store.myMissions(in: tozai).count == 1)
+    }
+
+    @Test("コースを変えても、別のコースに書いたお題は残る")
+    func keepsMissionsOfOtherCoursesWhenSwitching() throws {
+        let tozai = try #require(store.courses.first { $0.name == "東西線" })
+        store.saveMission(nil, station: 4, content: "南北線のお題",
+                          effect: .none, value: nil, jumpTo: nil)
+
+        _ = store.updateCourse(tozai)
+
+        // 予定のために用意したお題が、コース切り替えで消えてしまわないこと
+        let nanboku = try #require(store.courses.first { $0.name == "南北線" })
+        #expect(store.myMissions(in: nanboku).count == 1)
+    }
 }
