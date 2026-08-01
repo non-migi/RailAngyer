@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `4` |
+| ビルド | `5` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -126,6 +126,7 @@ Appレコードを作っておく。
 - [x] ビルド `1.0.0 (1)` をApp Store Connectへアップロード
 - [x] ビルド `1.0.0 (2)` をApp Store Connectへアップロード
 - [x] ビルド `1.0.0 (3)` をApp Store Connectへアップロード（不具合報告への対処版）
+- [x] ビルド `1.0.0 (4)`（起動時クラッシュの修正）と `1.0.0 (5)`（起動の待ち・環状線・市電）を送信
 - [x] App Store Connect API のキーを設定し、ビルドとクラッシュ報告を自動で見られるようにした
 - [x] ビルド `3` のテスト項目（日本語）をAPIから登録
 - [ ] Beta Review連絡先の電話番号を入力
@@ -239,7 +240,8 @@ python3 tools/asc-crashes.py --save /tmp/crash # 本体(.ips)も保存する
 
 | ビルド | 処理 | 内部テスト | 外部テスト | 期限 |
 |---|---|---|---|---|
-| `1.0.0 (4)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出 | 2026-10-30 |
+| `1.0.0 (5)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出 | 2026-10-30 |
+| `1.0.0 (4)` | VALID | 配布中 | 未提出 | 2026-10-30 |
 | `1.0.0 (3)` | VALID | 配布中 | 未提出（READY_FOR_BETA_SUBMISSION） | 2026-10-30 |
 | `1.0.0 (2)` | VALID | 配布中 | 未提出 | 2026-10-29 |
 | `1.0.0 (1)` | VALID | 配布中 | 未提出 | 2026-10-26 |

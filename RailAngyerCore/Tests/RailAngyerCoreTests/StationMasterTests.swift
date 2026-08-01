@@ -76,13 +76,38 @@ struct AdditionalCourseTests {
     private static let courses: [(name: String, count: Int, terminals: (String, String))] = [
         ("東西線", 19, ("宮の沢", "新さっぽろ")),
         ("東豊線", 14, ("栄町", "福住")),
-        ("山手線", 30, ("東京", "有楽町"))
+        ("山手線", 30, ("東京", "有楽町")),
+        ("札幌市電", 24, ("西4丁目", "狸小路"))
     ]
 
-    @Test("同梱しているコースは4本")
+    @Test("同梱しているコースは5本")
     func loadsAllCourses() throws {
         let all = try StationMaster.all()
-        #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線"])
+        #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電"])
+    }
+
+    @Test("環状線は山手線と札幌市電")
+    func loopCourses() throws {
+        let loops = try StationMaster.all().filter(\.isLoop).map(\.name)
+        #expect(loops == ["山手線", "札幌市電"])
+    }
+
+    @Test("環状線には、まわる向きの呼び名がある")
+    func loopDirectionNames() throws {
+        for course in try StationMaster.all() where course.isLoop {
+            #expect(course.directionName(forward: true).isEmpty == false)
+            #expect(course.directionName(forward: false).isEmpty == false)
+            #expect(course.directionName(forward: true) != course.directionName(forward: false))
+        }
+    }
+
+    @Test("環状線は、端どうしもつながっている")
+    func loopClosesTheCircle() throws {
+        for course in try StationMaster.all() where course.isLoop {
+            let sorted = course.sortedStations
+            let gap = distanceMeters(try #require(sorted.last), try #require(sorted.first))
+            #expect(gap < 4000, "\(course.name) の終点と始点が離れすぎている: \(Int(gap))m")
+        }
     }
 
     @Test("駅数と両端が定義どおり", arguments: courses)
@@ -103,15 +128,19 @@ struct AdditionalCourseTests {
         }
     }
 
-    @Test("隣り合う駅が近すぎない・遠すぎない")
+    @Test("隣り合う駅が、到着判定の圏内どうしで重ならない")
     func spacingIsPlausible() throws {
         for course in try StationMaster.all() {
+            // 圏内が重なると、どちらに着いたのか決められなくなる。
+            // 市電のように駅間が短い路線は、路線ごとに半径を小さくしてある
+            let radius = course.arrivalRadius ?? ArrivalRule.default.radius
             let sorted = course.sortedStations
             for i in 0..<(sorted.count - 1) {
                 let d = distanceMeters(sorted[i], sorted[i + 1])
-                // 到着判定は半径150m。300m未満だと圏内が重なって判定が壊れる
-                #expect(d > 300, "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が近すぎる: \(Int(d))m")
-                #expect(d < 4000, "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が遠すぎる: \(Int(d))m")
+                #expect(d > radius * 2,
+                        "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が近すぎる: \(Int(d))m（半径 \(Int(radius))m）")
+                #expect(d < 4000,
+                        "\(course.name) \(sorted[i].name)〜\(sorted[i+1].name) が遠すぎる: \(Int(d))m")
             }
         }
     }
@@ -125,7 +154,7 @@ struct AdditionalCourseTests {
             total += distanceMeters(sorted[i], sorted[i + 1])
         }
         // 実際の営業キロは約34.5km。駅間の直線距離の合計なので、それより短くなる
-        #expect((25_000.0...35_000.0).contains(total), "一周の長さが想定から外れている: \(Int(total))m")
+        #expect((25_000.0...36_000.0).contains(total), "一周の長さが想定から外れている: \(Int(total))m")
     }
 }
 

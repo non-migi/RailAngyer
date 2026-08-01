@@ -29,7 +29,7 @@ struct ModelsTests {
         #expect(nanboku.last?.name == "真駒内")
 
         let courses = try context.fetch(FetchDescriptor<Course>())
-        #expect(Set(courses.map(\.name)) == ["南北線", "東西線", "東豊線", "山手線"])
+        #expect(Set(courses.map(\.name)) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電"])
     }
 
     @Test("二度投入しても重複しない")
@@ -39,7 +39,7 @@ struct ModelsTests {
         let before = try context.fetch(FetchDescriptor<Station>()).count
         _ = try MasterSeeder.seedIfNeeded(context)
 
-        #expect(try context.fetch(FetchDescriptor<Course>()).count == 4)
+        #expect(try context.fetch(FetchDescriptor<Course>()).count == 5)
         #expect(try context.fetch(FetchDescriptor<Station>()).count == before)
     }
 

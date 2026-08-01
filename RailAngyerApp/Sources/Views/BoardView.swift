@@ -57,14 +57,14 @@ struct BoardView: View {
             if let engine = store.engine {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("踏破").font(.caption).foregroundStyle(.secondary)
-                    Text("\(store.visitedCount) / \(engine.stationCount)")
+                    Text("\(store.visitedCount) / \(engine.distinctStationCount)")
                         .font(.title3.monospacedDigit().weight(.semibold))
                         .foregroundStyle(Theme.line)
                     Spacer()
                     Text("サイコロ 1〜\(engine.diceMax)")
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                ProgressView(value: Double(store.visitedCount), total: Double(engine.stationCount))
+                ProgressView(value: Double(store.visitedCount), total: Double(engine.distinctStationCount))
                     .tint(Theme.line)
                 Text("現在地　\(store.stationName(store.currentOrder))")
                     .font(.subheadline)

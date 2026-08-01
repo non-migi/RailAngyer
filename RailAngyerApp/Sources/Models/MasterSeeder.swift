@@ -47,6 +47,10 @@ enum MasterSeeder {
 
     private static func seed(_ ref: CourseRef, into context: ModelContext) throws -> Course {
         let course = Course(name: ref.name, lineColorHex: ref.lineColorHex)
+        course.isLoop = ref.isLoop
+        course.arrivalRadius = ref.arrivalRadius
+        course.forwardDirectionName = ref.directionName(forward: true)
+        course.backwardDirectionName = ref.directionName(forward: false)
         context.insert(course)
 
         for s in ref.sortedStations {

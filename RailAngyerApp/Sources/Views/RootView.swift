@@ -152,14 +152,17 @@ private struct MainView: View {
         .sheet(isPresented: $showingMissions) {
             MissionEditorView(store: store, sync: sync)
         }
-        .overlay {
-            if isInitialDatabaseLoad {
-                DatabaseLoadingView()
-                    .transition(.opacity)
-            }
-        }
         .overlay(alignment: .top) {
-            if sync.isSyncing && !isInitialDatabaseLoad {
+            if isInitialDatabaseLoad {
+                // **全画面で塞がない。** サーバーは寝ていると起きるまで数分かかるが、
+                // 遊ぶだけなら端末の中で完結する。待たせる理由がない
+                Label("サーバーを起こしています", systemImage: "zzz")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(.regularMaterial, in: Capsule())
+                    .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+                    .padding(.top, 4)
+            } else if sync.isSyncing {
                 Label("データを同期中", systemImage: "arrow.triangle.2.circlepath")
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 12).padding(.vertical, 8)
@@ -174,14 +177,20 @@ private struct MainView: View {
                 store.arriveAtNextStop(expected: order)
                 notifyArrival(at: order)
             }
-            location.rule = ArrivalRule(radius: arrivalRadius)
+            location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
             syncTarget()
 
-            // アプリもDBも寝ていることがある。起こしておくと実プレイ時の待ちが減る
-            isInitialDatabaseLoad = sync.isJoined
-            await sync.wakeUpIfJoined()
-            await exchange()
-            withAnimation(.easeOut(duration: 0.2)) { isInitialDatabaseLoad = false }
+            // アプリもDBも寝ていることがある。**起こすのは待たずに裏で進める。**
+            // 起きるまで数分かかることがあり、そのあいだ画面を止めると
+            // 「立ち上がらないアプリ」に見えてしまう
+            if sync.isJoined {
+                isInitialDatabaseLoad = true
+                Task {
+                    await sync.wakeUpIfJoined()
+                    await exchange()
+                    withAnimation(.easeOut(duration: 0.2)) { isInitialDatabaseLoad = false }
+                }
+            }
         }
         .task {
             // 定期取得。リアルタイム通信は要らない（§7）
@@ -202,7 +211,7 @@ private struct MainView: View {
             Task { await sync.push() }
         }
         .onChange(of: arrivalRadius) {
-            location.rule = ArrivalRule(radius: arrivalRadius)
+            location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
             syncTarget()
         }
         .onChange(of: selectedTab) {
@@ -441,31 +450,3 @@ private struct HomeDashboardView: View {
     }
 }
 
-/// DBやApp Serviceのコールドスタート中にも、止まって見えないようにする全画面表示。
-private struct DatabaseLoadingView: View {
-    @State private var walking = false
-
-    var body: some View {
-        ZStack {
-            Color(red: 0.01, green: 0.34, blue: 0.18).opacity(0.97).ignoresSafeArea()
-            VStack(spacing: 18) {
-                Image("WalkingMascot")
-                    .resizable().scaledToFit().frame(width: 128, height: 128)
-                    .offset(x: walking ? 34 : -34, y: walking ? -4 : 2)
-                Text("旅の記録を読み込み中")
-                    .font(.headline).foregroundStyle(.white)
-                Text("データベースを起こしています。少しだけお待ちください")
-                    .font(.caption).foregroundStyle(.white.opacity(0.72))
-                ProgressView().tint(.white)
-            }
-            .padding(28)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("旅の記録を読み込み中")
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
-                walking = true
-            }
-        }
-    }
-}

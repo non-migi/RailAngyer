@@ -94,11 +94,19 @@ final class GameSessionStore {
 
     var engine: GameEngine? { room?.engine }
 
-    /// 区間内の駅を進む向きに並べたもの
+    /// 区間内の駅を進む向きに並べたもの。
+    ///
+    /// 一周では最後にスタート駅へ戻るが、**同じ駅を二度並べない**
+    /// （画面の一覧で同じ駅が重なると、SwiftUI が行を取り違える）
     var stationsInOrder: [Station] {
         guard let room, let engine else { return [] }
         let all = room.course?.stations ?? []
-        return engine.orderedRange.compactMap { order in all.first { $0.orderNo == order } }
+        var seen = Set<Int>()
+        return engine.orderedRange.compactMap { position in
+            let orderNo = engine.stationOrder(at: position)
+            guard seen.insert(orderNo).inserted else { return nil }
+            return all.first { $0.orderNo == orderNo }
+        }
     }
 
     /// 進行中のターン（あれば1件）
@@ -110,7 +118,10 @@ final class GameSessionStore {
         let completed = room.turns
             .filter { $0.completedAt != nil }
             .max { $0.turnNo < $1.turnNo }
-        return completed?.endStation?.orderNo ?? room.startStation?.orderNo ?? 1
+        // 一周では駅の通し番号が元に戻ってしまうので、記録した位置を優先する
+        return completed?.endPosition
+            ?? completed?.endStation?.orderNo
+            ?? room.startStation?.orderNo ?? 1
     }
 
     /// 一度でも訪れた駅の数（再訪は重複して数えない。DV-06）
@@ -138,11 +149,11 @@ final class GameSessionStore {
         // 通り道の駅に着いた直後は、写真を撮る間を置く
         if let pending = pendingPassingStation { return .arrivedPassing(station: pending) }
 
-        let landing = turn.landingStation?.orderNo ?? currentOrder
+        let landing = turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
 
         // 出目による移動中
         if turn.arrivedAt == nil {
-            let from = turn.fromStation?.orderNo ?? currentOrder
+            let from = turn.fromPosition ?? turn.fromStation?.orderNo ?? currentOrder
             let stops = engine.path(from: from, to: landing)
             let done = visitedOrders(in: turn, kinds: [.passing, .landing])
             let remaining = stops.filter { !done.contains($0) }
@@ -187,6 +198,8 @@ final class GameSessionStore {
             turn.missionSet = room
             turn.fromStation = station(currentOrder)
             turn.landingStation = station(landing)
+            turn.fromPosition = currentOrder
+            turn.landingPosition = landing
             context.insert(turn)
             try context.save()
             enqueueForSync()
@@ -208,7 +221,7 @@ final class GameSessionStore {
             switch phase {
             case .walking(let next, _):
                 guard expected == nil || expected == next else { return }
-                let isLanding = next == turn.landingStation?.orderNo
+                let isLanding = next == (turn.landingPosition ?? turn.landingStation?.orderNo)
                 try record(visit: isLanding ? .landing : .passing, at: next, turn: turn)
                 if isLanding {
                     turn.arrivedAt = Date()
@@ -342,7 +355,8 @@ final class GameSessionStore {
 
     /// ミッションを抽選する（F-07）。候補が0件ならミッションなしでターンを進める（R-08）
     func drawMission() {
-        guard let turn = activeTurn, let landing = turn.landingStation?.orderNo else { return }
+        guard let turn = activeTurn,
+              let landing = turn.landingPosition ?? turn.landingStation?.orderNo else { return }
         let candidates = missionCandidates(at: landing)
         guard let picked = candidates.randomElement() else {
             finishMission(done: false)   // 候補0件。効果なしとして扱う
@@ -363,7 +377,7 @@ final class GameSessionStore {
         let effect = mission?.effectType ?? .none
         turn.appliedEffectType = effect
 
-        let landing = turn.landingStation?.orderNo ?? currentOrder
+        let landing = turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
         let destination = engine.endOrder(landing: landing,
                                           effect: effect,
                                           value: mission?.effectValue,
@@ -665,6 +679,48 @@ final class GameSessionStore {
         return true
     }
 
+    /// 一周する／しないを切り替える（環状コースだけ）。
+    /// 一周のときはスタートとゴールを同じ駅にする
+    @discardableResult
+    func updateLap(_ on: Bool) -> Bool {
+        guard let room, room.turns.isEmpty, room.course?.isLoop == true else { return false }
+        let sorted = (room.course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
+        guard let first = sorted.first, let last = sorted.last else { return false }
+
+        if on {
+            room.goalStation = room.startStation ?? first
+            room.startStation = room.goalStation
+        } else {
+            room.startStation = first
+            room.goalStation = last
+        }
+        save()
+        return true
+    }
+
+    /// まわる向きを変える（`1` = 通し番号が増える向き / `-1` = 減る向き）
+    @discardableResult
+    func updateLoopDirection(_ direction: Int) -> Bool {
+        guard let room, room.turns.isEmpty else { return false }
+        room.loopDirectionRaw = direction >= 0 ? 1 : -1
+        save()
+        return true
+    }
+
+    /// 一周の出発駅を変える。ゴールも同じ駅にそろえる
+    @discardableResult
+    func updateLapStart(orderNo: Int) -> Bool {
+        guard let room, room.turns.isEmpty, room.isLap,
+              let station = station(orderNo, in: room.course) else { return false }
+        room.startStation = station
+        room.goalStation = station
+        save()
+        return true
+    }
+
+    /// このコースでの到着判定の半径。路線ごとに決まっていればそれを使う
+    var arrivalRadius: Double? { room?.course?.arrivalRadius }
+
     /// 区間と最大出目を変更する。進行中は変えられない（T-06）
     func updateRule(start: Station?, goal: Station?, diceMax: Int) -> Bool {
         guard let room, room.turns.isEmpty else { return false }
@@ -677,7 +733,11 @@ final class GameSessionStore {
 
     // MARK: - 補助
 
-    func station(_ order: Int) -> Station? { station(order, in: room?.course) }
+    /// 位置の番号から駅を引く。
+    /// **環状の一周では番号が駅数を超える**ので、engine を通して実際の駅に直す
+    func station(_ order: Int) -> Station? {
+        station(engine?.stationOrder(at: order) ?? order, in: room?.course)
+    }
 
     func station(_ order: Int, in course: Course?) -> Station? {
         course?.stations.first { $0.orderNo == order }
@@ -688,7 +748,7 @@ final class GameSessionStore {
     /// 効果による移動先
     private func effectDestination(of turn: Turn) -> Int? {
         guard let engine, let effect = turn.appliedEffectType, effect.movesPiece else { return nil }
-        let landing = turn.landingStation?.orderNo ?? currentOrder
+        let landing = turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
         let destination = engine.endOrder(landing: landing,
                                           effect: effect,
                                           value: turn.selectedMission?.effectValue,
@@ -697,7 +757,9 @@ final class GameSessionStore {
     }
 
     private func visitedOrders(in turn: Turn, kinds: Set<VisitKind>) -> Set<Int> {
-        Set(turn.visits.filter { kinds.contains($0.visitKind) }.compactMap { $0.station?.orderNo })
+        Set(turn.visits
+            .filter { kinds.contains($0.visitKind) }
+            .compactMap { $0.position ?? $0.station?.orderNo })
     }
 
     private func record(visit kind: VisitKind, at order: Int, turn: Turn?) throws {
@@ -706,6 +768,7 @@ final class GameSessionStore {
         visit.missionSet = room
         visit.turn = turn
         visit.station = station
+        visit.position = order            // 一周では駅の通し番号と食い違う
         context.insert(visit)
     }
 
@@ -717,6 +780,7 @@ final class GameSessionStore {
 
     private func complete(_ turn: Turn, at order: Int) throws {
         turn.endStation = station(order)
+        turn.endPosition = order
         turn.completedAt = Date()
         pendingPassingStation = nil
         try context.save()

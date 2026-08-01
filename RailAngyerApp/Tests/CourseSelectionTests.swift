@@ -28,7 +28,7 @@ struct CourseSelectionTests {
 
     @Test("同梱コースが選べる")
     func listsBundledCourses() {
-        #expect(Set(store.courses.map(\.name)) == ["南北線", "東西線", "東豊線", "山手線"])
+        #expect(Set(store.courses.map(\.name)) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電"])
     }
 
     @Test("コースを変えると区間が新しいコースの両端になる")

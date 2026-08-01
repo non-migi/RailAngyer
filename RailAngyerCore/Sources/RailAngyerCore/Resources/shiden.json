@@ -1,0 +1,33 @@
+{
+  "name": "札幌市電",
+  "lineColorHex": "#E5352B",
+  "isLoop": true,
+  "arrivalRadius": 90,
+  "loopDirectionNames": { "forward": "外回り（西8丁目まわり）", "backward": "内回り（狸小路まわり）" },
+  "stations": [
+    { "name": "西4丁目",      "orderNo":  1, "latitude": 43.058895, "longitude": 141.351845 },
+    { "name": "西8丁目",      "orderNo":  2, "latitude": 43.058180, "longitude": 141.346720 },
+    { "name": "中央区役所前",    "orderNo":  3, "latitude": 43.057515, "longitude": 141.341975 },
+    { "name": "西15丁目",     "orderNo":  4, "latitude": 43.056240, "longitude": 141.335225 },
+    { "name": "西線6条",      "orderNo":  5, "latitude": 43.051570, "longitude": 141.335035 },
+    { "name": "西線9条旭山公園通", "orderNo":  6, "latitude": 43.048265, "longitude": 141.335460 },
+    { "name": "西線11条",     "orderNo":  7, "latitude": 43.044955, "longitude": 141.335870 },
+    { "name": "西線14条",     "orderNo":  8, "latitude": 43.040640, "longitude": 141.336435 },
+    { "name": "西線16条",     "orderNo":  9, "latitude": 43.037310, "longitude": 141.336845 },
+    { "name": "ロープウェイ入口",  "orderNo": 10, "latitude": 43.033965, "longitude": 141.337280 },
+    { "name": "電車事業所前",    "orderNo": 11, "latitude": 43.030660, "longitude": 141.337700 },
+    { "name": "中央図書館前",    "orderNo": 12, "latitude": 43.030420, "longitude": 141.340080 },
+    { "name": "石山通",       "orderNo": 13, "latitude": 43.030710, "longitude": 141.344220 },
+    { "name": "東屯田通",      "orderNo": 14, "latitude": 43.031045, "longitude": 141.348835 },
+    { "name": "幌南小学校前",    "orderNo": 15, "latitude": 43.032295, "longitude": 141.351910 },
+    { "name": "山鼻19条",     "orderNo": 16, "latitude": 43.035060, "longitude": 141.351565 },
+    { "name": "静修学園前",     "orderNo": 17, "latitude": 43.038310, "longitude": 141.351115 },
+    { "name": "行啓通",       "orderNo": 18, "latitude": 43.041670, "longitude": 141.350670 },
+    { "name": "中島公園通",     "orderNo": 19, "latitude": 43.045905, "longitude": 141.350145 },
+    { "name": "山鼻9条",      "orderNo": 20, "latitude": 43.049015, "longitude": 141.349765 },
+    { "name": "東本願寺前",     "orderNo": 21, "latitude": 43.051710, "longitude": 141.349355 },
+    { "name": "資生館小学校前",   "orderNo": 22, "latitude": 43.055115, "longitude": 141.349260 },
+    { "name": "すすきの",      "orderNo": 23, "latitude": 43.055560, "longitude": 141.352730 },
+    { "name": "狸小路",       "orderNo": 24, "latitude": 43.057269, "longitude": 141.352922 }
+  ]
+}

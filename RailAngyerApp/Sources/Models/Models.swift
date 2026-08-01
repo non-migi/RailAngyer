@@ -14,6 +14,13 @@ final class Course {
     var serverId: Int?
     var name: String = ""
     var lineColorHex: String?
+    /// 環状線か。一周して戻ってこられる
+    var isLoop: Bool = false
+    /// この路線での到着判定の半径（メートル）。駅間が短い路線だけ持つ
+    var arrivalRadius: Double?
+    /// 一周する向きの呼び名（通し番号が増える向き／減る向き）
+    var forwardDirectionName: String?
+    var backwardDirectionName: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Station.course)
     var stations: [Station] = []
@@ -74,8 +81,24 @@ final class MissionSet {
     }
 
     /// このルームのルール計算器。区間と最大出目から作る
+    /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
+    var loopDirectionRaw: Int = 1
+
+    /// 環状コースを一周する設定か（スタートとゴールが同じ駅）
+    var isLap: Bool {
+        course?.isLoop == true && startStation != nil && startStation?.orderNo == goalStation?.orderNo
+    }
+
     var engine: GameEngine? {
-        guard let s = startStation?.orderNo, let g = goalStation?.orderNo, s != g else { return nil }
+        guard let s = startStation?.orderNo else { return nil }
+
+        // 一周は「通し番号が1周ぶん伸びた直線」として扱う（GameEngine.lap）
+        if isLap, let count = course?.stations.count, count > 1 {
+            return GameEngine.lap(from: s, stationCount: count,
+                                  forward: loopDirectionRaw >= 0, diceMax: diceMax)
+        }
+
+        guard let g = goalStation?.orderNo, s != g else { return nil }
         return GameEngine(startOrder: s, goalOrder: g, diceMax: diceMax)
     }
 }
@@ -173,6 +196,13 @@ final class Turn {
     var completedAt: Date?
     var syncStateRaw: Int = SyncState.localOnly.rawValue
 
+    // 環状コースを一周するときの「位置」。駅の通し番号は一周すると元に戻ってしまうため、
+    // **周回ぶん伸びた番号**を別に持つ。直線のコースでは駅の通し番号と同じ値になる。
+    // 古い記録には無いので、無ければ駅の通し番号から読む
+    var fromPosition: Int?
+    var landingPosition: Int?
+    var endPosition: Int?
+
     var missionSet: MissionSet?
     var fromStation: Station?
     var landingStation: Station?
@@ -202,6 +232,8 @@ final class Visit {
     var id: UUID = UUID()
     var arrivedAt: Date = Date()
     var visitKindRaw: Int = VisitKind.passing.rawValue
+    /// 一周のときの位置（`Turn.fromPosition` と同じ考え方）
+    var position: Int?
     var syncStateRaw: Int = SyncState.localOnly.rawValue
 
     var missionSet: MissionSet?

@@ -64,7 +64,8 @@ struct JourneySummary {
     /// 途中でも呼べる（クリアしていなくても「いまの記録」を見せられる）
     init(room: MissionSet, engine: GameEngine?, now: Date = Date()) {
         roomName = room.name
-        stationCount = engine?.stationCount ?? (room.course?.stations.count ?? 0)
+        // 一周では、戻ってくる1駅を二重に数えない
+        stationCount = engine?.distinctStationCount ?? (room.course?.stations.count ?? 0)
 
         let visits = room.visits
         let visitedOrders = Set(visits.compactMap { $0.station?.orderNo })

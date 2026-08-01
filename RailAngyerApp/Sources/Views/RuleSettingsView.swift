@@ -50,11 +50,14 @@ struct RuleSettingsView: View {
                 } header: {
                     Text("コース")
                 } footer: {
-                    Text("コースを変えると区間は両端に戻り、**前のコースの駅に書いたお題は消えます**。"
-                         + "山手線は環状ですが、東京から順に並べた直線として扱います。")
+                    Text("コースを変えると区間は両端に戻ります。"
+                         + "前のコースに書いたお題は消えず、そのコースを選んだときに使えます。")
                 }
                 .disabled(locked)
 
+                if store.room?.course?.isLoop == true { loopSection }
+
+                if store.room?.isLap != true {
                 Section("区間") {
                     Picker("スタート", selection: $startOrder) {
                         ForEach(allStations) { Text($0.name).tag($0.orderNo) }
@@ -70,6 +73,7 @@ struct RuleSettingsView: View {
                     }
                 }
                 .disabled(locked)
+                }
 
                 Section("サイコロ") {
                     Stepper("最大出目　\(diceMax)", value: $diceMax, in: 1...9)
@@ -151,6 +155,46 @@ struct RuleSettingsView: View {
                 diceMax = store.room?.diceMax ?? 6
             }
         }
+    }
+
+    /// 環状のコースだけに出す。一周するか、どちらへまわるかを決める
+    @ViewBuilder
+    private var loopSection: some View {
+        let course = store.room?.course
+
+        Section {
+            Toggle("一周する", isOn: Binding(
+                get: { store.room?.isLap ?? false },
+                set: { on in
+                    if store.updateLap(on) {
+                        startOrder = store.room?.startStation?.orderNo ?? startOrder
+                        goalOrder = store.room?.goalStation?.orderNo ?? goalOrder
+                    }
+                }))
+
+            if store.room?.isLap == true {
+                Picker("まわる向き", selection: Binding(
+                    get: { store.room?.loopDirectionRaw ?? 1 },
+                    set: { _ = store.updateLoopDirection($0) })) {
+                        Text(course?.forwardDirectionName ?? "順まわり").tag(1)
+                        Text(course?.backwardDirectionName ?? "逆まわり").tag(-1)
+                    }
+                    .pickerStyle(.inline)
+
+                Picker("出発する駅", selection: Binding(
+                    get: { store.room?.startStation?.orderNo ?? 1 },
+                    set: { _ = store.updateLapStart(orderNo: $0) })) {
+                        ForEach(allStations) { Text($0.name).tag($0.orderNo) }
+                    }
+            }
+        } header: {
+            Text("環状線")
+        } footer: {
+            Text(store.room?.isLap == true
+                 ? "出発した駅に戻ってきたら一周です。区間の設定は使いません。"
+                 : "一周せず、区間を決めて歩くこともできます。")
+        }
+        .disabled(locked)
     }
 
     /// 未送信の状況（SC-20）。

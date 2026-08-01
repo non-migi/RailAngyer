@@ -25,6 +25,7 @@
 | [files/11_API設計.md](files/11_API設計.md) | フェーズ2のAPI。認証・エンドポイント・冪等性・Blob |
 | [files/12_migration_v3_token.sql](files/12_migration_v3_token.sql) | メンバートークン用のスキーマ移行（適用済み） |
 | [files/13_courses.sql](files/13_courses.sql) | 東西線・東豊線・山手線の投入（適用済み） |
+| [files/18_courses_v2.sql](files/18_courses_v2.sql) | 札幌市電の投入と山手線の座標更新（適用済み） |
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
 | [tools/asc-crashes.py](tools/asc-crashes.py) | TestFlightのクラッシュ報告を取り出す（鍵の作り方は `15_TestFlight準備.md` §8） |
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
@@ -55,7 +56,8 @@
 - 記録：複数の旅、実写真の地図ピン、時間、分/km、連続ペース色まで実装
 - 予定：ルールセットを先に決め、日本時間・日本のカレンダーで作成
 - 駅座標：札幌3路線を国土数値情報 N02-22（JGD2011）へ補正済み
-- コースは4本（南北線・東西線・東豊線・山手線）。設定から切り替えられる
+- コースは5本（南北線・東西線・東豊線・山手線・札幌市電）。設定から切り替えられる。
+  **山手線と市電は一周でき、内回り／外回りを選べる**
 - TestFlight v1.0.0 (1)：App Icon、起動画面、プライバシーマニフェスト、
   配布文面、Explicit App IDを用意し、ビルド1をApp Store Connectへアップロード済み。
   緑アイコンと新UIのビルド2もApp Store Connectへアップロード済み（処理中）

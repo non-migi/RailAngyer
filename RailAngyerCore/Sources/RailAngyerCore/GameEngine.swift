@@ -11,18 +11,54 @@ public struct GameEngine: Sendable, Equatable {
 
     /// 区間のスタート駅の OrderNo
     public let startOrder: Int
-    /// 区間のゴール駅の OrderNo
+    /// 区間のゴール駅の OrderNo。
+    /// **環状で一周するときは「始発駅＋1周ぶん」**という、駅には無い番号になる
     public let goalOrder: Int
     /// サイコロの最大出目（1〜9）
     public let diceMax: Int
+    /// 環状コースの1周の駅数。`nil` なら端から端までの直線区間
+    public let loopStationCount: Int?
 
     /// - Note: `diceMax` は 1〜9 に丸める。
     ///   保存されたデータから作るため、範囲外の値で落ちるより丸めて動き続けるほうがよい。
-    public init(startOrder: Int, goalOrder: Int, diceMax: Int = 6) {
+    public init(startOrder: Int, goalOrder: Int, diceMax: Int = 6,
+                loopStationCount: Int? = nil) {
         precondition(startOrder != goalOrder, "スタートとゴールが同じ駅では区間にならない")
         self.startOrder = startOrder
         self.goalOrder = goalOrder
         self.diceMax = Swift.min(Swift.max(diceMax, 1), 9)
+        self.loopStationCount = loopStationCount
+    }
+
+    /// 環状コースを一周する区間を作る。
+    ///
+    /// **一周を「駅の通し番号が1周ぶん伸びた直線」として扱う。**
+    /// こうすると、ゴールでのクランプも戻る効果も、直線区間の計算がそのまま使える。
+    /// 位置の番号は駅数を超えるので、駅に直すときは `stationOrder(at:)` を通す。
+    ///
+    /// - Parameter forward: `true` で通し番号が増える向き、`false` で減る向き
+    public static func lap(from startOrder: Int, stationCount: Int,
+                           forward: Bool, diceMax: Int = 6) -> GameEngine {
+        precondition(stationCount > 1, "1周に2駅以上必要")
+        return GameEngine(startOrder: startOrder,
+                          goalOrder: startOrder + (forward ? stationCount : -stationCount),
+                          diceMax: diceMax,
+                          loopStationCount: stationCount)
+    }
+
+    public var isLoop: Bool { loopStationCount != nil }
+
+    /// 位置の番号を、実際の駅の OrderNo に直す。
+    /// 直線区間ではそのまま返す
+    public func stationOrder(at position: Int) -> Int {
+        guard let count = loopStationCount else { return position }
+        return ((position - 1) % count + count) % count + 1
+    }
+
+    /// 訪れうる駅の数。
+    /// 一周では最後にスタート駅へ戻るため、**その1駅を二重に数えない**
+    public var distinctStationCount: Int {
+        isLoop ? stationCount - 1 : stationCount
     }
 
     // MARK: - 区間

@@ -38,6 +38,7 @@
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
 		9BE85712122915E97653D963 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9E62126FFD3D29621A8632A /* Assets.xcassets */; };
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
+		9D9146B1722AC58D18566EBE /* LapJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E2198C9E54DD1A80C0F4477 /* LapJourneyTests.swift */; };
 		A01CF141257F4AB4EBFD08E6 /* ResetJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C919B61790E7CEBDC4103AE /* ResetJourneyUITests.swift */; };
 		A2CA329F835DA83F6CF6DB30 /* WalkTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = C69B58A5D87FA9234652A451 /* WalkTiming.swift */; };
 		B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5241C4F1484E4B126481D40B /* WalkTimingTests.swift */; };
@@ -110,6 +111,7 @@
 		5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryUITests.swift; sourceTree = "<group>"; };
 		5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTests.swift; sourceTree = "<group>"; };
 		62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChange.swift; sourceTree = "<group>"; };
+		7E2198C9E54DD1A80C0F4477 /* LapJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LapJourneyTests.swift; sourceTree = "<group>"; };
 		83453CDEB12A0F76E35CBED3 /* asc-setup.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "asc-setup.sh"; sourceTree = "<group>"; };
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
@@ -320,6 +322,7 @@
 				5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */,
 				F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */,
 				525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */,
+				7E2198C9E54DD1A80C0F4477 /* LapJourneyTests.swift */,
 				8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */,
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
 				FFE244E3EF71098607B7D826 /* ResetProgressTests.swift */,
@@ -489,6 +492,7 @@
 				DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */,
 				4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */,
 				5B961AED1559EB70F013838F /* JourneySummaryTests.swift in Sources */,
+				9D9146B1722AC58D18566EBE /* LapJourneyTests.swift in Sources */,
 				E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */,
 				2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */,
 				EF2C45E0A5D3D32BC56F091E /* ResetProgressTests.swift in Sources */,
@@ -615,7 +619,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -774,7 +778,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
