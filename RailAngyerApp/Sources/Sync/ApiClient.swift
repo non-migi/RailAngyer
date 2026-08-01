@@ -71,6 +71,13 @@ final class ApiClient {
         return try decode(data)
     }
 
+    /// ルームの設定を変える。**お題の見え方はプレイ中でも変えられる**
+    /// （区間や最大出目と違い、すでにある記録の整合を壊さないため）
+    func updateRoom(roomId: UUID, _ request: UpdateRoomRequest) async throws {
+        _ = try await sendRaw(.patch, "/rooms/\(roomId.apiString)",
+                              rawBody: try encoder.encode(request), authorized: true)
+    }
+
     /// **自分のぶんだけ**返る。他人のお題はサーバーが伏せる
     func missions(roomId: UUID) async throws -> [MissionResponse] {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/missions",
@@ -110,7 +117,7 @@ final class ApiClient {
     // MARK: - 実行
 
     private enum HTTPMethod: String {
-        case get = "GET", post = "POST", put = "PUT", delete = "DELETE"
+        case get = "GET", post = "POST", put = "PUT", patch = "PATCH", delete = "DELETE"
     }
 
     private func send<Body: Encodable, Response: Decodable>(
@@ -252,6 +259,18 @@ struct RoomResponse: Codable {
     let diceMax: Int
     let inviteCode: String
     let members: [MemberResponse]
+    /// お題の見え方（0=お楽しみ / 1=いつでも見える）。
+    /// **古いサーバーは返さない**ので省略できるようにしてある
+    let missionVisibility: Int?
+}
+
+/// ルームの設定を変える（いまはお題の見え方だけ）。
+/// 送らなかった項目は変えない
+struct UpdateRoomRequest: Encodable {
+    var startStationId: Int?
+    var goalStationId: Int?
+    var diceMax: Int?
+    var missionVisibility: Int?
 }
 
 struct MemberResponse: Codable {

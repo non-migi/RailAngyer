@@ -22,9 +22,15 @@ struct CourseSectionMapView: View {
     var interactive: Bool = false
 
     @State private var camera: MapCameraPosition = .automatic
+    /// 地図の上で選ばれた施設（コンビニ・トイレ・カフェなど）。
+    /// **操作できる地図でだけ拾う**（一覧の小さな地図で反応させても邪魔になる）。
+    /// `MapSelection` は iOS 18 からなので、iOS 17 でも使える `MapFeature` で受ける
+    @State private var selection: MapFeature?
 
     var body: some View {
-        Map(position: $camera, interactionModes: interactive ? .all : []) {
+        Map(position: $camera,
+            interactionModes: interactive ? .all : [],
+            selection: interactive ? $selection : .constant(nil)) {
             if coordinates.count >= 2 {
                 MapPolyline(coordinates: coordinates)
                     .stroke(Theme.line.opacity(0.75),
@@ -40,6 +46,17 @@ struct CourseSectionMapView: View {
         }
         .onAppear(perform: fit)
         .onChange(of: stations.map(\.orderNo), fit)
+        .sheet(item: Binding(get: { selectedPlace }, set: { if $0 == nil { selection = nil } })) {
+            MapPlaceDetailView(place: $0)
+        }
+    }
+
+    /// 選ばれた施設。地図が返す `MapFeature` から名前と分類が取れる
+    private var selectedPlace: MapPlace? {
+        guard let selection else { return nil }
+        return MapPlace(name: selection.title ?? "この場所",
+                        category: selection.pointOfInterestCategory,
+                        coordinate: selection.coordinate)
     }
 
     // MARK: - 駅の印

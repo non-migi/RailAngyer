@@ -40,7 +40,8 @@ struct ScheduleListView: View {
                         .disabled(plan(for: schedule) == nil)
 
                         ShareLink(item: ScheduleShare.text(for: schedule,
-                                                           course: course(for: schedule))) {
+                                                           course: course(for: schedule),
+                                                           room: store.room)) {
                             Label("この予定を共有する", systemImage: "square.and.arrow.up")
                         }
 

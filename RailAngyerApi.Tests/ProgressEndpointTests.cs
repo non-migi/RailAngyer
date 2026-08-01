@@ -291,6 +291,77 @@ public class ProgressEndpointTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     /// <summary>新しいルームを作り、認証済みのクライアントを返す</summary>
+    // MARK: - お題の見え方（ルームの取り決め）
+
+    [Fact]
+    public async Task 既定では他人のお題は返らない()
+    {
+        var (mine, room) = await SetUpAsync("のん");
+        var theirs = await JoinAsync(room.InviteCode, "ケンタ");
+        await mine.PutAsJsonAsync($"/rooms/{room.RoomId}/missions/{Guid.NewGuid()}",
+            new SaveMissionRequest(4, "わたしのお題", 0, null, null));
+        await Authorized(theirs.Token).PutAsJsonAsync(
+            $"/rooms/{room.RoomId}/missions/{Guid.NewGuid()}",
+            new SaveMissionRequest(5, "ケンタのお題", 0, null, null));
+
+        var missions = await mine.GetFromJsonAsync<List<MissionDto>>($"/rooms/{room.RoomId}/missions");
+
+        // **当日の驚きを守る。** クライアントで隠すのでは通信を覗けば見える
+        var only = Assert.Single(missions!);
+        Assert.Equal("わたしのお題", only.Content);
+    }
+
+    [Fact]
+    public async Task いつでも見える設定にすると全員のお題が返る()
+    {
+        var (mine, room) = await SetUpAsync("のん");
+        var theirs = await JoinAsync(room.InviteCode, "ケンタ");
+        await mine.PutAsJsonAsync($"/rooms/{room.RoomId}/missions/{Guid.NewGuid()}",
+            new SaveMissionRequest(4, "わたしのお題", 0, null, null));
+        await Authorized(theirs.Token).PutAsJsonAsync(
+            $"/rooms/{room.RoomId}/missions/{Guid.NewGuid()}",
+            new SaveMissionRequest(5, "ケンタのお題", 0, null, null));
+
+        var patch = await mine.PatchAsJsonAsync($"/rooms/{room.RoomId}",
+            new UpdateRoomRequest(null, null, null, 1));
+        Assert.Equal(HttpStatusCode.NoContent, patch.StatusCode);
+
+        var missions = await mine.GetFromJsonAsync<List<MissionDto>>($"/rooms/{room.RoomId}/missions");
+
+        Assert.Equal(2, missions!.Count);
+        // 誰が書いたかも分かる。相談しながら決めるための設定なので、書き手が要る
+        Assert.Contains(missions, m => m.Content == "ケンタのお題" && m.CreatedByName == "ケンタ");
+    }
+
+    [Fact]
+    public async Task お題の見え方はプレイ中でも切り替えられる()
+    {
+        var (client, room) = await SetUpAsync("のん");
+        await client.PutAsJsonAsync($"/rooms/{room.RoomId}/turns/{Guid.NewGuid()}",
+            new SaveTurnRequest(1, 3, 4, DateTime.UtcNow, null, null, null, null, null, null));
+
+        // 区間や出目と違い、すでにある記録の整合を壊さない
+        var patch = await client.PatchAsJsonAsync($"/rooms/{room.RoomId}",
+            new UpdateRoomRequest(null, null, null, 1));
+
+        Assert.Equal(HttpStatusCode.NoContent, patch.StatusCode);
+        var room2 = await client.GetFromJsonAsync<RoomDto>($"/rooms/{room.RoomId}");
+        Assert.Equal(1, room2!.MissionVisibility);
+    }
+
+    [Fact]
+    public async Task 区間はプレイ中に変えられないままにする()
+    {
+        var (client, room) = await SetUpAsync("のん");
+        await client.PutAsJsonAsync($"/rooms/{room.RoomId}/turns/{Guid.NewGuid()}",
+            new SaveTurnRequest(1, 3, 4, DateTime.UtcNow, null, null, null, null, null, null));
+
+        var patch = await client.PatchAsJsonAsync($"/rooms/{room.RoomId}",
+            new UpdateRoomRequest(2, null, null, null));
+
+        Assert.Equal(HttpStatusCode.Conflict, patch.StatusCode);
+    }
+
     private async Task<(HttpClient Client, JoinedRoomDto Room)> SetUpAsync(string displayName)
     {
         var response = await factory.CreateClient().PostAsJsonAsync("/rooms",

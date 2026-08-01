@@ -138,7 +138,7 @@ public static class RoomEndpoints
 
             return Results.Ok(new RoomDto(room.MissionSetId, room.Name, room.CourseId,
                                           room.StartStationId, room.GoalStationId, room.DiceMax,
-                                          room.InviteCode, members));
+                                          room.InviteCode, members, room.MissionVisibility));
         });
 
         // --- 設定の変更 ---------------------------------------------------------
@@ -152,7 +152,24 @@ public static class RoomEndpoints
             var room = await db.MissionSets.FirstOrDefaultAsync(r => r.MissionSetId == roomId, ct);
             if (room is null) return Results.NotFound();
 
-            // プレイ開始後は変えられない（T-06）。区間外を指す効果や訪問記録が残って整合しなくなる
+            // お題の見え方だけは、いつでも切り替えられる。
+            // 区間や出目と違って、すでにある記録の整合を壊さないため
+            if (req.MissionVisibility is { } visibility)
+            {
+                if (visibility is < 0 or > 1)
+                {
+                    return ApiResults.BadRequest("invalid_visibility", "お題の見え方の値が不正です");
+                }
+                room.MissionVisibility = (byte)visibility;
+                await db.SaveChangesAsync(ct);
+            }
+
+            // 区間と出目はプレイ開始後は変えられない（T-06）。
+            // 区間外を指す効果や訪問記録が残って整合しなくなる
+            if (req.StartStationId is null && req.GoalStationId is null && req.DiceMax is null)
+            {
+                return Results.NoContent();
+            }
             if (await db.Turns.AnyAsync(t => t.MissionSetId == roomId, ct))
             {
                 return ApiResults.Conflict("rules_locked", "プレイ中は区間と最大出目を変更できません");
@@ -195,11 +212,13 @@ public static class RoomEndpoints
 public record CreateRoomRequest(int CourseId, string Name, int StartStationId, int GoalStationId,
                                 int DiceMax, string DisplayName);
 public record JoinRoomRequest(string InviteCode, string DisplayName);
-public record UpdateRoomRequest(int? StartStationId, int? GoalStationId, int? DiceMax);
+public record UpdateRoomRequest(int? StartStationId, int? GoalStationId, int? DiceMax,
+                                int? MissionVisibility = null);
 
 public record JoinedRoomDto(Guid RoomId, string InviteCode, Guid MemberId, string Token);
 public record MemberDto(Guid MemberId, string DisplayName, DateTime JoinedAt);
 public record RoomDto(Guid RoomId, string Name, int CourseId, int StartStationId, int GoalStationId,
-                      byte DiceMax, string InviteCode, List<MemberDto> Members);
+                      byte DiceMax, string InviteCode, List<MemberDto> Members,
+                      byte MissionVisibility = 0);
 public record CourseDto(int CourseId, string Name, string? LineColor, List<StationDto> Stations);
 public record StationDto(int StationId, string Name, int OrderNo, double Latitude, double Longitude);

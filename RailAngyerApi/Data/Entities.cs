@@ -38,6 +38,10 @@ public class MissionSet
     public int GoalStationId { get; set; }
     /// <summary>最大出目（1〜9）</summary>
     public byte DiceMax { get; set; } = 6;
+    /// <summary>お題の見え方。0=当日までのお楽しみ（既定）、1=いつでも見える。
+    /// **サーバーが他人のお題を返すかどうかを決める。** クライアントで隠すだけでは、
+    /// 通信を覗けば見えてしまうため（14_引き継ぎ.md §4）</summary>
+    public byte MissionVisibility { get; set; }
     public DateTime CreatedAt { get; set; }
     public Guid? CreatedBy { get; set; }
 

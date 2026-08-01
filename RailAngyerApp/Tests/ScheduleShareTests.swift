@@ -170,6 +170,81 @@ struct ScheduleShareTests {
         #expect(ScheduleShare.attendanceText(schedule) == "参加 1人・不参加 1人")
     }
 
+    // MARK: - お題とルームの共有
+
+    @Test("お楽しみの設定では、共有の文にお題を出さない")
+    func hidesMissionsWhenSurprise() throws {
+        let schedule = try schedule()
+        store.saveMission(nil, station: 3, content: "駅名標を撮る",
+                          effect: .none, value: nil, jumpTo: nil)
+
+        let text = ScheduleShare.text(for: schedule, course: try course("南北線"),
+                                      room: store.room)
+
+        // 共有した先で読めてしまうと、その場で設定を守った意味がなくなる
+        #expect(!text.contains("駅名標を撮る"))
+        #expect(!text.contains("📝"))
+    }
+
+    @Test("いつでも見える設定なら、共有の文にお題も載る")
+    func sharesMissionsWhenAlways() throws {
+        let schedule = try schedule()
+        store.saveMission(nil, station: 3, content: "駅名標を撮る",
+                          effect: .none, value: nil, jumpTo: nil)
+        store.updateMissionVisibility(.always)
+
+        let text = ScheduleShare.text(for: schedule, course: try course("南北線"),
+                                      room: store.room)
+
+        #expect(text.contains("駅名標を撮る"))
+        #expect(text.contains("📝 お題"))
+    }
+
+    @Test("区間の外に書いたお題は共有しない")
+    func sharesOnlyMissionsInSection() throws {
+        let schedule = try schedule(startOrder: 1, goalOrder: 4)
+        store.saveMission(nil, station: 3, content: "区間の中",
+                          effect: .none, value: nil, jumpTo: nil)
+        store.saveMission(nil, station: 12, content: "区間の外",
+                          effect: .none, value: nil, jumpTo: nil)
+        store.updateMissionVisibility(.always)
+
+        let text = ScheduleShare.text(for: schedule, course: try course("南北線"),
+                                      room: store.room)
+
+        #expect(text.contains("区間の中"))
+        #expect(!text.contains("区間の外"))
+    }
+
+    @Test("共有の文からアプリを開いてルームへ入れる")
+    func sharesRoomInvite() throws {
+        let schedule = try schedule()
+        let room = try #require(store.room)
+        room.inviteCode = "ABC123"
+        try context.save()
+
+        let text = ScheduleShare.text(for: schedule, course: try course("南北線"), room: room)
+
+        // **地図ではなくアプリへ誘う。** 見てほしいのは集合場所ではなく、参加そのもの
+        #expect(text.contains("railangyer://join?code=ABC123"))
+        // アプリを入れていない相手にはリンクが効かないので、コードも文字で残す
+        #expect(text.contains("招待コード：ABC123"))
+        #expect(!text.contains("https://maps.apple.com/"))
+    }
+
+    @Test("招待コードが無いときは、これまでどおり地図のリンクを出す")
+    func fallsBackToMapWithoutInvite() throws {
+        let schedule = try schedule()
+        store.room?.inviteCode = nil
+        try context.save()
+
+        let text = ScheduleShare.text(for: schedule, course: try course("南北線"),
+                                      room: store.room)
+
+        #expect(text.contains("https://maps.apple.com/"))
+        #expect(!text.contains("railangyer://"))
+    }
+
     @Test("県をまたぐコースは通る県をすべて書く")
     func crossingCourseShowsEveryRegion() throws {
         let hankyu = try course("阪急京都本線")

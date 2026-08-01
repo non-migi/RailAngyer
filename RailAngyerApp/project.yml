@@ -43,6 +43,13 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.games
+        # 共有したリンクからアプリを開き、そのままルームへ入れるようにする。
+        # 「railangyer://join?code=ABC123」の形（`10_アプリ設計.md`「ルームを誘う」）
+        CFBundleURLTypes:
+          - CFBundleURLName: com.non-migi.RailAngyerApp
+            CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - railangyer
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: BrandMark

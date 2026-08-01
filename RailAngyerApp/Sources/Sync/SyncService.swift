@@ -222,6 +222,27 @@ final class SyncService {
         }
     }
 
+    /// お題の見え方を変える。**端末には先に書く**（サーバーが寝ていても操作できる）。
+    ///
+    /// - Returns: サーバーへ届けられなければ理由。届かなくても端末の設定は変わっている
+    @discardableResult
+    func updateMissionVisibility(_ visibility: MissionVisibility) async -> String? {
+        guard let saved = credentials.load() else { return nil }
+        do {
+            try await client.updateRoom(roomId: saved.roomId,
+                                        UpdateRoomRequest(missionVisibility: visibility.rawValue))
+            // 見え方が変わると、返ってくるお題の顔ぶれも変わる
+            await pullMyMissions()
+            return nil
+        } catch let error as ApiError {
+            lastError = error.message
+            return error.message
+        } catch {
+            lastError = String(describing: error)
+            return "みんなに届けられませんでした。電波が戻ったら設定を開き直してください"
+        }
+    }
+
     private func applyRoom(_ remote: RoomResponse, meId: UUID) throws {
         guard let room = try localRoom() else { return }
 
@@ -231,6 +252,10 @@ final class SyncService {
         room.name = remote.name
         room.inviteCode = remote.inviteCode
         room.diceMax = remote.diceMax
+        // 古いサーバーは返さない。返らなければ端末の設定を保つ
+        if let visibility = remote.missionVisibility {
+            room.missionVisibilityRaw = visibility
+        }
         room.syncStateRaw = SyncState.synced.rawValue
 
         let stations = room.course?.stations ?? []
@@ -321,8 +346,21 @@ final class SyncService {
             mission.effectValue = nil
             mission.effectStation = nil
             mission.station = station
-            mission.member = me ?? mission.member
+            // **書き手で突き合わせる。** 「いつでも見える」設定では他人のお題も返るので、
+            // 一律に自分のものとして取り込むと、全部が自分の作ったお題になってしまう
+            mission.member = room.members.first { $0.displayName == incoming.createdByName }
+                ?? me ?? mission.member
             mission.syncStateRaw = SyncState.synced.rawValue
+        }
+
+        // **お楽しみへ戻したら、端末に残る他人のお題を消す。**
+        // 消さないと、設定を戻したのに中身が見えたままになる
+        if room.missionVisibility == .surprise, let me {
+            let arrived = Set(remote.map(\.missionId))
+            for stale in room.missions
+            where stale.member?.id != me.id && !arrived.contains(stale.id) {
+                context.delete(stale)
+            }
         }
 
         try context.save()

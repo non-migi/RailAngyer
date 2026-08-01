@@ -107,6 +107,15 @@ final class MissionSet {
     /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
     var loopDirectionRaw: Int = 1
 
+    /// お題の見え方。**既定は当日までのお楽しみ**（これまでの動き）。
+    /// 変えるとサーバーが他人のお題も返すようになるので、**ルームの取り決め**として持つ
+    var missionVisibilityRaw: Int = MissionVisibility.surprise.rawValue
+
+    var missionVisibility: MissionVisibility {
+        get { MissionVisibility(rawValue: missionVisibilityRaw) ?? .surprise }
+        set { missionVisibilityRaw = newValue.rawValue }
+    }
+
     /// 環状コースを一周する設定か（スタートとゴールが同じ駅）
     var isLap: Bool {
         course?.isLoop == true && startStation != nil && startStation?.orderNo == goalStation?.orderNo
@@ -394,6 +403,35 @@ enum AttendanceStatus: Int, CaseIterable {
         case .undecided: return "未定"
         case .going:     return "参加"
         case .notGoing:  return "不参加"
+        }
+    }
+}
+
+/// お題をいつ見せるか（ルームの取り決め）。
+///
+/// **遊び方が変わる。** 伏せれば当日の驚きが残り、見せれば
+/// 「あの駅で何をするのか」を見ながら予定を組める。どちらが良いかは集まり次第。
+enum MissionVisibility: Int, CaseIterable, Identifiable {
+    /// 当日までのお楽しみ。他人のお題は件数しか見えない（これまでの動き）
+    case surprise = 0
+    /// いつでも見える。予定の段階から全員のお題を読める
+    case always = 1
+
+    var id: Int { rawValue }
+
+    var label: String {
+        switch self {
+        case .surprise: return "当日までのお楽しみ"
+        case .always:   return "いつでも見える"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .surprise:
+            return "他の人のお題は件数だけが見えます。中身は着地して初めて分かります。"
+        case .always:
+            return "みんなのお題を予定の段階から読めます。相談しながら決めたいときに。"
         }
     }
 }

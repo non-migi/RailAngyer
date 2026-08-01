@@ -19,13 +19,25 @@ public static class MissionEndpoints
             var me = http.Member();
             if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
-            // 自分が書いたぶんだけ。他人のお題はプレイ前に見せない
-            var missions = await db.Missions.AsNoTracking()
-                .Where(m => m.MissionSetId == roomId && m.MemberId == me.MemberId)
+            // **どこまで見せるかはルームの取り決めで決まる。**
+            // クライアントで隠すだけでは通信を覗けば見えるので、ここで絞る
+            var visibility = await db.MissionSets.AsNoTracking()
+                .Where(r => r.MissionSetId == roomId)
+                .Select(r => r.MissionVisibility)
+                .FirstOrDefaultAsync(ct);
+
+            var query = db.Missions.AsNoTracking().Where(m => m.MissionSetId == roomId);
+            if (visibility == 0)
+            {
+                // 当日までのお楽しみ。自分が書いたぶんだけ返す
+                query = query.Where(m => m.MemberId == me.MemberId);
+            }
+
+            var missions = await query
                 .OrderBy(m => m.Station!.OrderNo)
                 .Select(m => new MissionDto(m.MissionId, m.StationId, m.Content,
                                             m.EffectType, m.EffectValue, m.EffectStationId,
-                                            me.DisplayName))
+                                            m.Member!.DisplayName))
                 .ToListAsync(ct);
             return Results.Ok(missions);
         });

@@ -107,6 +107,10 @@ private struct MainView: View {
     @State private var didRequestLocation = false
     @State private var selectedTab: AppTab = .home
     @State private var isInitialDatabaseLoad = false
+    /// 共有リンクから開かれた招待。出している間だけ値が入る
+    @State private var invitation: InviteLink.Invitation?
+    /// 「旅をスタート」で出す、予定から選ぶ画面
+    @State private var showingStartPicker = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
     @Environment(\.scenePhase) private var scenePhase
 
@@ -151,6 +155,18 @@ private struct MainView: View {
         }
         .sheet(isPresented: $showingMissions) {
             MissionEditorView(store: store, sync: sync)
+        }
+        .sheet(item: $invitation) { invite in
+            InviteAcceptView(invitation: invite, store: store, sync: sync)
+        }
+        .sheet(isPresented: $showingStartPicker) {
+            StartFromScheduleView(store: store) { startJourneyNow() }
+        }
+        // **リンクから開いたら、ルームへ入れるところまで案内する。**
+        // 地図を開くだけでは、誘われた側が何をすればいいか分からない
+        .onOpenURL { url in
+            guard let invite = InviteLink.invitation(from: url) else { return }
+            invitation = invite
         }
         .overlay(alignment: .top) {
             if isInitialDatabaseLoad {
@@ -219,7 +235,20 @@ private struct MainView: View {
         }
     }
 
+    /// 旅を始める。
+    ///
+    /// **これから歩く予定が立っているなら、まずそれを選ばせる。**
+    /// 予定のたびにルール設定をたどり直すのは、同じことを二度決めているのと同じ。
+    /// 予定が無ければ、これまでどおりそのまま盤面へ進む
     private func startJourney() {
+        if store.startableSchedules.isEmpty {
+            startJourneyNow()
+        } else {
+            showingStartPicker = true
+        }
+    }
+
+    private func startJourneyNow() {
         selectedTab = .journey
         prepareLocationIfNeeded()
         // ここではサイコロを振らない。盤面の「サイコロを振る」を押して初めて開始する。

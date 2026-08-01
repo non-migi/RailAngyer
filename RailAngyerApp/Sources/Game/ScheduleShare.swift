@@ -8,8 +8,12 @@ import RailAngyerCore
 /// 集合場所は地図のリンクにして、当日その場へ迷わず来られるようにする。
 enum ScheduleShare {
 
-    /// 共有する本文
-    static func text(for schedule: Schedule, course: Course?, now: Date = Date()) -> String {
+    /// 共有する本文。
+    ///
+    /// - Parameter room: 誘う相手をルームへ入れるための招待元。
+    ///   渡すと**アプリを開いて参加できるリンク**が付く
+    static func text(for schedule: Schedule, course: Course?,
+                     room: MissionSet? = nil, now: Date = Date()) -> String {
         var lines: [String] = ["【レイルアンギャー】\(schedule.title)"]
 
         lines.append("🗓 \(dateText(schedule.startAt))")
@@ -30,10 +34,55 @@ enum ScheduleShare {
             lines.append("👥 \(going)")
         }
 
-        if let url = mapURL(schedule, course: course) {
+        if let missions = missionsText(schedule, course: course, room: room) {
+            lines.append("")
+            lines.append(missions)
+        }
+
+        // **地図ではなくアプリへ誘う。** 見てほしいのは集合場所ではなく、
+        // 「入って、お題を書いて、当日いっしょに歩く」ところまで
+        if let invite = inviteText(room) {
+            lines.append("")
+            lines.append(invite)
+        } else if let url = mapURL(schedule, course: course) {
             lines.append(url.absoluteString)
         }
 
+        return lines.joined(separator: "\n")
+    }
+
+    /// お題の一覧。**「当日までのお楽しみ」のルームでは出さない**。
+    /// 共有した先で中身が読めてしまうと、その場で設定を守った意味がなくなる
+    static func missionsText(_ schedule: Schedule, course: Course?,
+                             room: MissionSet?) -> String? {
+        guard let room, room.missionVisibility == .always else { return nil }
+
+        let orders = Set(sectionStations(schedule, course: course).map(\.orderNo))
+        let missions = room.missions
+            .filter { $0.station?.course?.name == course?.name }
+            .filter { orders.isEmpty || orders.contains($0.station?.orderNo ?? -1) }
+            .sorted { ($0.station?.orderNo ?? 0) < ($1.station?.orderNo ?? 0) }
+        guard !missions.isEmpty else { return nil }
+
+        var lines = ["📝 お題　\(missions.count)個"]
+        for mission in missions {
+            let station = mission.station?.name ?? "?"
+            let author = mission.member?.displayName.nilIfEmpty
+            lines.append("・\(station)　\(mission.content)"
+                         + (author.map { "（\($0)）" } ?? ""))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// アプリを開いてルームへ入るための案内。
+    /// **コードも文字で残す**（アプリを入れていない相手にはリンクが効かないため）
+    static func inviteText(_ room: MissionSet?) -> String? {
+        guard let room, let code = room.inviteCode?.nilIfEmpty else { return nil }
+        var lines = ["🚃 アプリで開くと、そのまま参加できます"]
+        if let url = InviteLink.url(inviteCode: code, roomName: room.name) {
+            lines.append(url.absoluteString)
+        }
+        lines.append("（アプリの「みんなで遊ぶ」＞招待コード：\(code) からでも入れます）")
         return lines.joined(separator: "\n")
     }
 

@@ -683,6 +683,73 @@ final class GameSessionStore {
         return true
     }
 
+    // MARK: - 予定から始める
+
+    /// これから歩ける予定。**始めるときに選ばせるためのもの**。
+    ///
+    /// 終わった予定は出さない（当日を過ぎたら選ぶ意味がない）。
+    /// コースが端末に無い予定も出さない（選んでもルールを移せない）。
+    /// 集合が近い順に並べる
+    var startableSchedules: [Schedule] {
+        let now = Date()
+        return schedules
+            .filter { $0.startAt >= Calendar.current.startOfDay(for: now) }
+            .filter { schedule in
+                !schedule.courseName.isEmpty
+                    && courses.contains { $0.name == schedule.courseName }
+            }
+            .sorted { $0.startAt < $1.startAt }
+    }
+
+    /// 予定のルールを、いまの旅に移す。
+    ///
+    /// **すでに歩き始めていたら移さない**（T-06）。区間外を指す記録が残って整合しなくなる。
+    /// 記録をリセットしてから選び直してもらう
+    ///
+    /// - Returns: 移せなければ理由
+    @discardableResult
+    func applySchedule(_ schedule: Schedule) -> String? {
+        guard let room else { return "ルームがありません" }
+        guard room.turns.isEmpty else {
+            return "すでに歩き始めています。設定の「記録を保存して新しい旅へ」を押すと、この予定で始められます。"
+        }
+        guard let course = courses.first(where: { $0.name == schedule.courseName }) else {
+            return "この予定のコース（\(schedule.courseName)）が端末にありません"
+        }
+        guard schedule.startOrder != schedule.goalOrder else {
+            return "予定の区間が正しくありません"
+        }
+
+        // コースが違うなら先に切り替える（区間とお題の後始末はここが引き受ける）
+        if room.course?.name != course.name {
+            guard updateCourse(course) else { return "コースを切り替えられませんでした" }
+        }
+
+        let stations = course.stations
+        room.startStation = stations.first { $0.orderNo == schedule.startOrder } ?? room.startStation
+        room.goalStation = stations.first { $0.orderNo == schedule.goalOrder } ?? room.goalStation
+        room.diceMax = min(max(schedule.diceMax, 1), 9)
+        save()
+        return nil
+    }
+
+    /// お題の見え方を変える。**プレイ中でも変えられる**
+    /// （区間や出目と違い、すでにある記録の整合を壊さない）。
+    ///
+    /// お楽しみへ戻したときは、端末に残っている他人のお題を消す。
+    /// 残すと「戻したのに見えたまま」になる
+    func updateMissionVisibility(_ visibility: MissionVisibility) {
+        guard let room else { return }
+        room.missionVisibility = visibility
+
+        if visibility == .surprise, let me {
+            for mission in room.missions where mission.member?.id != me.id {
+                deleteMission(mission)       // 掴んでいるターンの参照も外してくれる
+            }
+        }
+        save()
+    }
+
     /// 一周する／しないを切り替える（環状コースだけ）。
     /// 一周のときはスタートとゴールを同じ駅にする
     @discardableResult

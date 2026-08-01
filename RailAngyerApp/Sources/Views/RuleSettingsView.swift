@@ -13,6 +13,7 @@ struct RuleSettingsView: View {
     @State private var diceMax = 6
     @State private var showResetConfirm = false
     @State private var showingRoom = false
+    @State private var visibilityError: String?
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     private var allStations: [Station] {
@@ -100,6 +101,8 @@ struct RuleSettingsView: View {
                     Text("札幌3路線は国土交通省の鉄道データ（JGD2011）に合わせた駅位置です。")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+
+                missionVisibilitySection
 
                 syncSection
 
@@ -198,6 +201,35 @@ struct RuleSettingsView: View {
     }
 
     /// 未送信の状況（SC-20）。
+    /// お題を当日まで伏せるか、いつでも見せるか。
+    ///
+    /// **遊び方そのものが変わる取り決め**なので、ルームの設定として持つ。
+    /// 区間や出目と違い、プレイ中でも切り替えられる（記録の整合を壊さない）。
+    @ViewBuilder
+    private var missionVisibilitySection: some View {
+        Section {
+            Picker("お題の見え方", selection: Binding(
+                get: { store.room?.missionVisibility ?? .surprise },
+                set: { newValue in
+                    store.updateMissionVisibility(newValue)
+                    Task { visibilityError = await sync.updateMissionVisibility(newValue) }
+                })) {
+                ForEach(MissionVisibility.allCases) { Text($0.label).tag($0) }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
+
+            if let error = visibilityError {
+                Text(error).font(.caption).foregroundStyle(.red)
+            }
+        } header: {
+            Text("お題の見え方")
+        } footer: {
+            Text((store.room?.missionVisibility ?? .surprise).detail
+                 + (sync.isJoined ? "" : "\n参加していないあいだは、この端末の中だけの設定です。"))
+        }
+    }
+
     /// 送れていなくてもプレイは続けられるので、**警告ではなく状態として見せる**
     @ViewBuilder
     private var syncSection: some View {
