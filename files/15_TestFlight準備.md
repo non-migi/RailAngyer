@@ -58,16 +58,7 @@ Explicit App ID登録後の最終アーカイブは
 
 > ⚠️ **クラッシュログはこの環境からは見えない。**
 > 端末が繋がっておらず（`~/Library/Logs/CrashReporter/MobileDevice/` が無い）、
-> App Store Connect API の鍵も置いていないため、TestFlight のクラッシュ報告を取得できない。
-> 見られるようにするには次のどちらか。
->
-> 1. **端末から共有してもらう**（すぐできる）
->    設定 ＞ プライバシーとセキュリティ ＞ 解析と改善 ＞ 解析データ →
->    `RailAngyerApp-2026-…-.ips` を選んで共有し、Macへ渡す
-> 2. **App Store Connect API の鍵を置く**（以後は自動で取れる）
->    App Store Connect ＞ ユーザーとアクセス ＞ 各種統合 ＞ App Store Connect API で
->    キーを作り、`.p8` を `~/private_keys/AuthKey_<KEYID>.p8` に保存する。
->    以後は `betaFeedbackCrashSubmissions` からクラッシュ報告を取得できる
+> App Store Connect API の鍵も置いていないため。取得の手順は §8。
 
 ## 3. App Store Connectへ入力する文面
 
@@ -154,3 +145,77 @@ Appレコードを作っておく。
 - [ ] 地下駅の手動到着
 - [ ] 4〜5時間利用時の電池残量
 - [x] 札幌3路線の全駅座標補正（国土数値情報 N02-22）
+
+---
+
+## 8. クラッシュ報告を見る
+
+落ちた原因を追うには、**端末の解析データ**か **App Store Connect API** のどちらかが要る。
+急ぐときは前者、これから何度も見るなら後者。
+
+### 8.1 端末から1件だけ渡す（すぐできる）
+
+1. iPhone の **設定 ＞ プライバシーとセキュリティ ＞ 解析と改善**
+2. **「iPhone解析を共有」をオン**にする（オフだとログ自体が残らない）
+3. **解析データ** を開き、`RailAngyerApp-2026-…-.ips` を選ぶ
+4. 右上の共有から、AirDrop などで Mac に渡す
+
+> ⚠️ **共有がオフだった場合、過去のクラッシュのログは残っていない。**
+> オンにしてから、もう一度落ちる操作を再現してもらう必要がある。
+
+### 8.2 App Store Connect API の鍵を作る（以後は自動で取れる）
+
+**鍵は作成時に一度しかダウンロードできない。** 無くしたら作り直しになる。
+
+1. https://appstoreconnect.apple.com にサインインする
+2. 上部の **ユーザーとアクセス** を開く
+3. **各種統合**（Integrations）タブ → 左の **App Store Connect API** → **チームキー**
+4. 初回のみ「名前と組織の情報」を求められるので、指示に従って有効化する
+5. **アクセスを許可されたキー** の **＋** を押す
+6. 名前は用途が分かるもの（例: `RailAngyer crash reader`）
+7. **アクセス（役割）** は **App Manager** を選ぶ
+   （TestFlight のフィードバックを読むのに足りる。Admin は不要）
+8. **生成** を押し、**「APIキーをダウンロード」** から `AuthKey_XXXXXXXXXX.p8` を保存する
+9. 同じ画面で次の2つを控える
+   - **キーID**（`AuthKey_` の後ろと同じ10桁）
+   - **Issuer ID**（ページ上部にある UUID。キーごとではなくチームで1つ）
+
+### 8.3 Mac に置く
+
+```bash
+mkdir -p ~/private_keys
+mv ~/Downloads/AuthKey_XXXXXXXXXX.p8 ~/private_keys/
+chmod 600 ~/private_keys/AuthKey_XXXXXXXXXX.p8
+
+# Issuer ID を一緒に控えておく（キーIDはファイル名から読む）
+cat > ~/private_keys/asc-config.json <<'JSON'
+{ "issuerId": "ここに Issuer ID の UUID" }
+JSON
+chmod 600 ~/private_keys/asc-config.json
+```
+
+> ⚠️ **`.p8` はリポジトリに入れない。** ホーム配下に置き、パーミッションは 600 にする。
+> この鍵はアップロードやビルド操作もできるので、漏れると配布に手を出される。
+
+### 8.4 取り出す
+
+```bash
+python3 tools/asc-crashes.py                  # 直近のクラッシュ報告を一覧
+python3 tools/asc-crashes.py --save /tmp/crash # 本体(.ips)も保存する
+```
+
+追加のインストールは要らない（JWT の署名は `openssl` に任せている）。
+
+### 8.5 うまくいかないとき
+
+| 症状 | 見るところ |
+|---|---|
+| `鍵が見つかりません` | `~/private_keys/AuthKey_*.p8` があるか。ファイル名を変えていないか |
+| `Issuer ID が分かりません` | `~/private_keys/asc-config.json` の `issuerId` |
+| `APIが 401 を返しました` | 鍵IDとIssuer IDの取り違え。`.p8` の中身が壊れていないか |
+| `APIが 403 を返しました` | キーの役割が足りない。App Manager 以上にする |
+| `Appが見つかりません` | キーの「アクセスするApp」に RailAngyer が含まれているか |
+| `クラッシュ報告はまだ届いていません` | テスターの端末で解析共有がオフ。§8.1 の2を確認してもらう |
+
+> 同じ鍵はアップロードにも使える。
+> `xcrun altool --upload-app -f app.ipa -t ios --apiKey <キーID> --apiIssuer <Issuer ID>`
