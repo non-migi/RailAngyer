@@ -182,6 +182,17 @@ Appレコードを作っておく。
 
 ### 8.3 Mac に置く
 
+> 2026-08-01 時点: 鍵 `AuthKey_BMCT4QBV35.p8` は `~/private_keys/`（600）に配置済み。
+> **残るは Issuer ID だけ。** 鍵ファイルにも Mac のどこにも入っていないため、
+> App Store Connect の画面から持ってくるしかない。手に入れたら次を実行する。
+>
+> ```bash
+> ./tools/asc-setup.sh <Issuer ID の UUID>   # 設定を書いて疎通まで確認する
+> ```
+>
+> なお、この鍵は**チームキー**だった（`sub: user` の個人用キー方式では 401 になった）。
+
+
 ```bash
 mkdir -p ~/private_keys
 mv ~/Downloads/AuthKey_XXXXXXXXXX.p8 ~/private_keys/
