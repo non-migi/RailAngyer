@@ -32,6 +32,8 @@
 | [tools/asc-whattotest.py](tools/asc-whattotest.py) | TestFlightの「テスト内容」を登録する（**Xcodeからの送信では付かない**） |
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
 | [files/16_プライバシーポリシー.md](files/16_プライバシーポリシー.md) | TestFlight／App Store向けのプライバシーポリシー |
+| [files/21_利用規約.md](files/21_利用規約.md) | 利用規約（安全・お題・写真・免責）。**アプリにも同梱**して圏外でも読める |
+| [files/20_migration_v5_mission_visibility.sql](files/20_migration_v5_mission_visibility.sql) | お題の見え方のDB移行（**未適用**） |
 | [files/17_migration_v4_schedule_rules.sql](files/17_migration_v4_schedule_rules.sql) | 予定ルールと札幌駅座標のDB移行（適用済み） |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
@@ -64,8 +66,14 @@
   都道府県をまたぐ路線（阪急京都本線）は、通るどちらの県からも見つかる
 - 予定・お題・ターン中の各画面に**区間の地図と、歩く距離・時間の目安**を出す
   （直線距離に迂回1.3倍を掛けて時速5km。経路探索はしない）
-- 予定は**アプリの外へ共有できる**。日時・集合場所・区間・目安・出欠を1つの文にし、
-  集合場所は地図のリンクにする（相手がアプリを入れていなくても伝わる）
+- 予定は**アプリの外へ共有できる**。日時・集合場所・区間・目安・出欠を1つの文にする。
+  **地図ではなくアプリへ誘う** — リンクを開くとそのままルームに参加できる
+  （アプリを入れていない相手のために、招待コードも文字で残す）
+- お題は**「当日までのお楽しみ」か「いつでも見える」かをルームごとに選べる**。
+  伏せる設定では**サーバーが他人のお題を返さない**（通信を覗いても見えない）
+- 旅を始めるときは、**立ててある予定から選べる**。予定のルールをそのまま移して始める
+- 地図の**施設アイコンを押すと情報が出る**（分類・住所・電話・マップアプリへの引き渡し）
+- **遊び方**を初回に出し、設定からいつでも読み返せる。利用規約も同梱
 - TestFlight v1.0.0 (1)：App Icon、起動画面、プライバシーマニフェスト、
   配布文面、Explicit App IDを用意し、ビルド1をApp Store Connectへアップロード済み。
   緑アイコンと新UIのビルド2もApp Store Connectへアップロード済み（処理中）
@@ -78,8 +86,8 @@
 swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース・見積もり 76件
 tools/prepare-simulator.sh "iPhone 17 Pro"   # UIテストの前に位置情報を許可する（初回・新環境）
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 127件 + UI 10件
-dotnet test RailAngyerApi.Tests               # API 54件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 153件 + UI 12件
+dotnet test RailAngyerApi.Tests               # API 58件
 ```
 
 > ⚠️ `tools/prepare-simulator.sh` を飛ばすと、位置情報の許可ダイアログが操作を塞ぎ

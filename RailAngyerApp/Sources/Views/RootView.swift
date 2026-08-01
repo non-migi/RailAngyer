@@ -111,6 +111,10 @@ private struct MainView: View {
     @State private var invitation: InviteLink.Invitation?
     /// 「旅をスタート」で出す、予定から選ぶ画面
     @State private var showingStartPicker = false
+    /// 初めて遊ぶ人に、最初の一度だけ遊び方を出す。
+    /// **このアプリは初見で分かる作りではない**（サイコロ・お題・到着判定）
+    @AppStorage("didReadHowToPlay") private var didReadHowToPlay = false
+    @State private var showingHowToPlay = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
     @Environment(\.scenePhase) private var scenePhase
 
@@ -162,6 +166,9 @@ private struct MainView: View {
         .sheet(isPresented: $showingStartPicker) {
             StartFromScheduleView(store: store) { startJourneyNow() }
         }
+        .sheet(isPresented: $showingHowToPlay) {
+            HowToPlayView()
+        }
         // **リンクから開いたら、ルームへ入れるところまで案内する。**
         // 地図を開くだけでは、誘われた側が何をすればいいか分からない
         .onOpenURL { url in
@@ -196,6 +203,11 @@ private struct MainView: View {
             location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
             syncTarget()
 
+            // 初回だけ遊び方を出す。UIテストの邪魔をしないよう、testでは出さない
+            if !didReadHowToPlay && !TestHooks.usesInMemoryStore {
+                showingHowToPlay = true
+            }
+
             // アプリもDBも寝ていることがある。**起こすのは待たずに裏で進める。**
             // 起きるまで数分かかることがあり、そのあいだ画面を止めると
             // 「立ち上がらないアプリ」に見えてしまう
@@ -229,6 +241,11 @@ private struct MainView: View {
         .onChange(of: arrivalRadius) {
             location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
             syncTarget()
+
+            // 初回だけ遊び方を出す。UIテストの邪魔をしないよう、testでは出さない
+            if !didReadHowToPlay && !TestHooks.usesInMemoryStore {
+                showingHowToPlay = true
+            }
         }
         .onChange(of: selectedTab) {
             if selectedTab == .journey { prepareLocationIfNeeded() }

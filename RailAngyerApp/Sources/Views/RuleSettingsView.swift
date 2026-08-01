@@ -14,6 +14,8 @@ struct RuleSettingsView: View {
     @State private var showResetConfirm = false
     @State private var showingRoom = false
     @State private var visibilityError: String?
+    @State private var showingHowToPlay = false
+    @State private var document: DocumentView.Kind?
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     private var allStations: [Station] {
@@ -102,6 +104,28 @@ struct RuleSettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
+                Section {
+                    Button {
+                        showingHowToPlay = true
+                    } label: {
+                        Label("遊び方", systemImage: "questionmark.circle")
+                    }
+                    Button {
+                        document = .terms
+                    } label: {
+                        Label("利用規約", systemImage: "doc.text")
+                    }
+                    Button {
+                        document = .privacy
+                    } label: {
+                        Label("プライバシーポリシー", systemImage: "hand.raised")
+                    }
+                } header: {
+                    Text("使い方とお約束")
+                } footer: {
+                    Text("実際の道を歩く遊びです。歩きながら画面を操作しないでください。")
+                }
+
                 missionVisibilitySection
 
                 syncSection
@@ -146,6 +170,10 @@ struct RuleSettingsView: View {
             .sheet(isPresented: $showingRoom) {
                 RoomJoinView(store: store, sync: sync)
             }
+            .sheet(isPresented: $showingHowToPlay) {
+                HowToPlayView()
+            }
+            .sheet(item: $document) { DocumentView(kind: $0) }
             .confirmationDialog("現在の旅を保存して、新しい旅を始めますか",
                                 isPresented: $showResetConfirm, titleVisibility: .visible) {
                 Button("保存して新しい旅へ", role: .destructive) { store.resetProgress() }
