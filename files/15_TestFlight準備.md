@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `3` |
+| ビルド | `4` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -239,22 +239,36 @@ python3 tools/asc-crashes.py --save /tmp/crash # 本体(.ips)も保存する
 
 | ビルド | 処理 | 内部テスト | 外部テスト | 期限 |
 |---|---|---|---|---|
-| `1.0.0 (3)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出（READY_FOR_BETA_SUBMISSION） | 2026-10-30 |
+| `1.0.0 (4)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出 | 2026-10-30 |
+| `1.0.0 (3)` | VALID | 配布中 | 未提出（READY_FOR_BETA_SUBMISSION） | 2026-10-30 |
 | `1.0.0 (2)` | VALID | 配布中 | 未提出 | 2026-10-29 |
 | `1.0.0 (1)` | VALID | 配布中 | 未提出 | 2026-10-26 |
 
 - テスターグループ: `テスト`（内部・全ビルド自動配布）／`外部テスト`（外部・公開リンク無効）
 - ビルド3のテスト項目（日本語）は登録済み。自動通知も有効
-- **クラッシュ報告は0件。** TestFlight のフィードバック経由では1件も届いていない
+- ビルド4のテスト項目（日本語）も登録済み（自動で作られた `ja` があったので PATCH で更新した）
+- **クラッシュ報告は1件取得できた**（2026-08-01 19:01 JST / iPhone 11 / iOS 26.6 / ビルド2）。
+  原因は「消したお題を掴んだままのターン」で、ビルド4で修正済み
 
 > **外部テスターへ配るには Beta App Review への提出が要る**（内部テスターは提出不要）。
 > 身内が App Store Connect のユーザーでないなら、`外部テスト` グループにビルド3を追加して提出する。
 
-### クラッシュ報告が0件である理由
+### 取得できたクラッシュ（2026-08-01）
 
-TestFlight のクラッシュ報告は、**テスターが「フィードバックを送信」から送った場合**か、
-**端末で「iPhone解析を共有」がオンで、TestFlight 経由のビルドが落ちた場合**にだけ集まる。
-どちらも満たしていないと、落ちても記録は残らない。
+```
+Exception Type: EXC_BREAKPOINT (SIGTRAP)
+0  libswiftCore   _assertionFailure
+1  SwiftData      _InvalidFutureBackingData.getValue(forKey:)
+4  RailAngyerApp  Mission.id.getter
+5  RailAngyerApp  closure #1 in GameSessionStore.missionCandidates(at:)  ← ここ
+8  RailAngyerApp  closure #1 in TurnFlowView.landed(_:)
+```
 
-報告のあった「記録を保存して新しい旅へ」でのクラッシュは、この経路では追えていない。
-§8.1 の手順で端末の解析データ（`.ips`）を直接もらうのが最短。
+**消したお題を `Turn.selectedMission` が掴んだまま**で、その `id` を読んで落ちていた。
+着地したターンを開くたびに落ちるので、その状態で終了すると**起動直後に落ち続ける**。
+ビルド4で、①消す前に参照を外す ②読むときは `persistentModelID` で突き合わせる
+③起動時に古い参照を掃除する、の3つを入れた。
+
+> **クラッシュ報告が集まる条件**は、テスターが「フィードバックを送信」から送るか、
+> 端末で「iPhone解析を共有」がオンで TestFlight 経由のビルドが落ちるか、のどちらか。
+> どちらも満たさないと、落ちても記録は残らない。

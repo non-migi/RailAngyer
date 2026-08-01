@@ -48,6 +48,7 @@
 		C6E478F22C510D5C793EFB7C /* ApiConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11D3C151DB16D800074F495 /* ApiConfiguration.swift */; };
 		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
 		D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */; };
+		DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */; };
 		E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156CFFC9852BBD282BE20DE /* Theme.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
@@ -105,9 +106,11 @@
 		525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryTests.swift; sourceTree = "<group>"; };
 		52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RailAngyerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleUITests.swift; sourceTree = "<group>"; };
+		5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanglingReferenceTests.swift; sourceTree = "<group>"; };
 		5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryUITests.swift; sourceTree = "<group>"; };
 		5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTests.swift; sourceTree = "<group>"; };
 		62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChange.swift; sourceTree = "<group>"; };
+		83453CDEB12A0F76E35CBED3 /* asc-setup.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "asc-setup.sh"; sourceTree = "<group>"; };
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
 		86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
@@ -124,11 +127,13 @@
 		BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		C69B58A5D87FA9234652A451 /* WalkTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkTiming.swift; sourceTree = "<group>"; };
+		CE9361C387FFA5C775A13476 /* asc-crashes.cpython-314.pyc */ = {isa = PBXFileReference; path = "asc-crashes.cpython-314.pyc"; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
 		D11D3C151DB16D800074F495 /* ApiConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiConfiguration.swift; sourceTree = "<group>"; };
 		D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Credentials.swift; sourceTree = "<group>"; };
 		D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_sapporo_nakanoshima.gpx; sourceTree = "<group>"; };
 		D80CE7F62882767E29A8AC06 /* DiceRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollView.swift; sourceTree = "<group>"; };
+		DA85937C37DFE6C5A497BC44 /* asc-crashes.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "asc-crashes.py"; sourceTree = "<group>"; };
 		DC4114A3D977E18BF4C5CD2F /* RailAngyerAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA6A195889CC18D3B9AEE608 /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
@@ -290,6 +295,14 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		B6639FC49081551AC49C9E10 /* __pycache__ */ = {
+			isa = PBXGroup;
+			children = (
+				CE9361C387FFA5C775A13476 /* asc-crashes.cpython-314.pyc */,
+			);
+			path = __pycache__;
+			sourceTree = "<group>";
+		};
 		D40DA44D129F9D1C125BBD76 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -304,6 +317,7 @@
 			children = (
 				3690BE1B4A227DE6AC162B23 /* Fixtures */,
 				37E2B5CCF0C7C821376CEA9A /* CourseSelectionTests.swift */,
+				5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */,
 				F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */,
 				525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */,
 				8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */,
@@ -319,6 +333,9 @@
 		EBB47FF49764298D16886708 /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				B6639FC49081551AC49C9E10 /* __pycache__ */,
+				DA85937C37DFE6C5A497BC44 /* asc-crashes.py */,
+				83453CDEB12A0F76E35CBED3 /* asc-setup.sh */,
 				22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */,
 				D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */,
 				17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */,
@@ -469,6 +486,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				13D49EE28BADFE00529E4BB2 /* CourseSelectionTests.swift in Sources */,
+				DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */,
 				4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */,
 				5B961AED1559EB70F013838F /* JourneySummaryTests.swift in Sources */,
 				E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */,
@@ -597,7 +615,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -756,7 +774,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;

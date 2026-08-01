@@ -20,6 +20,8 @@ final class GameSessionStore {
     private(set) var room: MissionSet?
     /// 直前の操作で起きたエラー
     var lastError: String?
+    /// 起動時に外した「消えた行への参照」の数。ふだんは0
+    private(set) var repairedReferenceCount = 0
     /// 着地駅の告知（SC-06）を出しているか
     var showingAnnouncement = false
     /// 通り道の駅に着いたところ。写真を撮る間を置くための一時状態。
@@ -40,8 +42,49 @@ final class GameSessionStore {
             if sampleMissions { try MasterSeeder.seedSampleMissionsIfNeeded(context, room: room) }
             try MasterSeeder.removeBundledSampleMissions(context, room: room)
             self.room = room
+            repairDanglingReferences()
             reloadSchedules()
             if TestHooks.resetsProgressOnLaunch { resetProgress(archive: false) }
+        } catch {
+            lastError = String(describing: error)
+        }
+    }
+
+    /// 消えた行を掴んだままの参照を外す（起動時に1回）。
+    ///
+    /// **SwiftData は、消えた行の属性を読んだ瞬間に落ちる**（`_InvalidFutureBackingData`）。
+    /// ビルド2までは、コースを変えると他コースのお題を消していた。
+    /// そのときターンの `selectedMission` が消えたお題を指したまま残り、
+    /// **次の起動でそのターンを開くと、お題のIDを読んだところで落ちていた**
+    /// （TestFlight のクラッシュ報告 2026-08-01 で判明）。
+    ///
+    /// 直すときも属性は読めないので、**`persistentModelID` だけで突き合わせる**。
+    private func repairDanglingReferences() {
+        do {
+            let missions = Set(try context.fetch(FetchDescriptor<Mission>())
+                .map(\.persistentModelID))
+            let turns = try context.fetch(FetchDescriptor<Turn>())
+            let turnIDs = Set(turns.map(\.persistentModelID))
+            var repaired = 0
+
+            for turn in turns {
+                if let id = turn.selectedMission?.persistentModelID, !missions.contains(id) {
+                    turn.selectedMission = nil          // 引いたお題が消えている
+                    repaired += 1
+                }
+            }
+
+            // ターンが消えているのに残った訪問・写真も、読まれれば同じように落ちる。
+            // 進行の記録としても意味を失っているので、行ごと消す
+            for visit in try context.fetch(FetchDescriptor<Visit>()) {
+                guard let id = visit.turn?.persistentModelID, !turnIDs.contains(id) else { continue }
+                for photo in visit.photos { context.delete(photo) }
+                context.delete(visit)
+                repaired += 1
+            }
+
+            repairedReferenceCount = repaired
+            if repaired > 0 { try context.save() }
         } catch {
             lastError = String(describing: error)
         }
@@ -197,11 +240,17 @@ final class GameSessionStore {
         pendingPassingStation = nil
     }
 
-    /// 着地駅のミッション候補（R-07 / R-14 既出は除外）
+    /// 着地駅のミッション候補（R-07 / R-14 既出は除外）。
+    ///
+    /// 引いたお題の照合には **`persistentModelID` を使う**。
+    /// 消えたお題を掴んだままのターンがあると、`id` のような**属性を読んだ瞬間に落ちる**
+    /// （SwiftData の `_InvalidFutureBackingData`）。IDだけなら属性を読まずに比べられる。
     func missionCandidates(at order: Int) -> [Mission] {
         guard let room, let station = station(order) else { return [] }
-        let used = Set(room.turns.compactMap { $0.selectedMission?.id })
-        return room.missions.filter { $0.station?.id == station.id && !used.contains($0.id) }
+        let used = Set(room.turns.compactMap { $0.selectedMission?.persistentModelID })
+        return room.missions.filter {
+            $0.station?.id == station.id && !used.contains($0.persistentModelID)
+        }
     }
 
     // MARK: - ミッションの自作（SC-12）
@@ -277,6 +326,15 @@ final class GameSessionStore {
 
     func deleteMission(_ mission: Mission) {
         let id = mission.id
+
+        // **掴んでいるターンの参照を先に外す。** 外さずに消すと、
+        // 次にそのターンを開いたときに「消えたお題」を読んで落ちる
+        let target = mission.persistentModelID
+        for turn in room?.turns ?? []
+        where turn.selectedMission?.persistentModelID == target {
+            turn.selectedMission = nil
+        }
+
         context.delete(mission)
         save()
         try? sync?.enqueueMissionDelete(missionId: id)

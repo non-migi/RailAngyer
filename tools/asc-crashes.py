@@ -152,26 +152,37 @@ def describe(entry: dict) -> str:
 
 
 def save_log(entry: dict, token: str, directory: str) -> str | None:
-    """クラッシュログ本体（.ips）を取れるだけ取る"""
-    links = entry.get("relationships", {}).get("crashLog", {}).get("links", {})
-    related = links.get("related")
+    """クラッシュログ本体を保存する。
+
+    本体は **`betaCrashLogs.logText` に文字列で入っている**（ダウンロードURLではない）。
+    """
+    related = (entry.get("relationships", {}).get("crashLog", {})
+                    .get("links", {}).get("related"))
     if not related:
         return None
 
     log = get(related, token).get("data")
-    if not log:
-        return None
-
-    url = (log.get("attributes", {}).get("downloadUrl")
-           or log.get("attributes", {}).get("url"))
-    if not url:
+    text = (log or {}).get("attributes", {}).get("logText")
+    if not text:
         return None
 
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, f"{entry['id']}.ips")
-    with urllib.request.urlopen(url, timeout=120) as response:
-        open(path, "wb").write(response.read())
+    with open(path, "w") as file:
+        file.write(text)
     return path
+
+
+def crashed_frames(path: str, limit: int = 8) -> list[str]:
+    """落ちたスレッドのうち、アプリ自身のフレームだけを抜き出す"""
+    lines = open(path).read().split("\n")
+    try:
+        start = next(i for i, line in enumerate(lines) if "Crashed:" in line)
+    except StopIteration:
+        return []
+    frames = [line.strip() for line in lines[start + 1: start + 60]
+              if "RailAngyerApp" in line]
+    return frames[:limit]
 
 
 def main() -> None:
@@ -194,7 +205,12 @@ def main() -> None:
         print(" -", describe(entry))
         if args.save:
             path = save_log(entry, token, args.save)
-            print("   ログ:", path or "（本体は取得できず。端末の解析データを共有してもらう）")
+            if not path:
+                print("   ログ: （本体は取得できず。端末の解析データを共有してもらう）")
+                continue
+            print("   ログ:", path)
+            for frame in crashed_frames(path):
+                print("     ", frame)
 
 
 if __name__ == "__main__":
