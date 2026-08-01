@@ -4,6 +4,11 @@ import SwiftUI
 ///
 /// **どこを歩くかは場所から決まる。** 路線名を平らに並べても、
 /// 増えるほど自分の街の路線を探しにくくなるため、地図と同じ順にたどらせる。
+///
+/// > ⚠️ **シートとして出し、自前の `NavigationStack` を持つ。**
+/// > 入力画面の `NavigationLink` で押し込む形にしていたときは、
+/// > 3段目で路線を選んでも入力画面へ戻れなかった（＝予定が立てられない）。
+/// > シートなら、何段たどっていても `dismiss()` ひとつで確実に閉じる。
 struct CoursePickerView: View {
 
     let courses: [Course]
@@ -13,26 +18,33 @@ struct CoursePickerView: View {
     private var directory: CourseDirectory { CourseDirectory(courses: courses) }
 
     var body: some View {
-        List {
-            Section {
-                ForEach(directory.countries) { country in
-                    NavigationLink {
-                        regionList(country)
-                    } label: {
-                        LabeledContent {
-                            Text("\(country.courseCount) 路線")
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(directory.countries) { country in
+                        NavigationLink {
+                            regionList(country)
                         } label: {
-                            Label(country.name, systemImage: "globe.asia.australia")
+                            LabeledContent {
+                                Text("\(country.courseCount) 路線")
+                            } label: {
+                                Label(country.name, systemImage: "globe.asia.australia")
+                            }
                         }
                     }
+                } footer: {
+                    Text("いまは日本だけです。国から選ぶ形にしてあるので、"
+                         + "ほかの国の路線が増えても同じ手順で選べます。")
                 }
-            } footer: {
-                Text("いまは日本だけです。国から選ぶ形にしてあるので、"
-                     + "ほかの国の路線が増えても同じ手順で選べます。")
+            }
+            .navigationTitle("コースを選ぶ")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("やめる") { dismiss() }
+                }
             }
         }
-        .navigationTitle("コースを選ぶ")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// 都道府県の段

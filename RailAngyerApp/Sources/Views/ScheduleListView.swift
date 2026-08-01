@@ -220,11 +220,17 @@ private struct ScheduleDraftView: View {
     @State private var goalOrder: Int
     @State private var diceMax: Int
     @State private var errorMessage: String?
+    @State private var showingCoursePicker = false
 
     init(store: GameSessionStore, draft: ScheduleDraft) {
         self.store = store
         self.draft = draft
-        _title = State(initialValue: draft.existing?.title ?? "")
+        // **名前を空で始めない。** 空だと保存ボタンが押せず、
+        // しかもその入力欄は下の方にあって、開いた画面には映らない。
+        // 「立てられない」ように見えるので、そのまま保存できる名前を最初から入れておく
+        let initialTitle = draft.existing?.title
+            ?? Self.defaultTitle(store.room?.course?.name)
+        _title = State(initialValue: initialTitle)
         // 既定は次の土曜の朝9時。歩くのはたいてい休日の午前から
         _startAt = State(initialValue: draft.existing?.startAt ?? Self.nextSaturdayMorning())
         _meetPlace = State(initialValue: draft.existing?.meetPlace ?? "")
@@ -252,20 +258,27 @@ private struct ScheduleDraftView: View {
         NavigationStack {
             Form {
                 Section {
-                    NavigationLink {
-                        CoursePickerView(courses: store.courses, selectedName: $courseName)
+                    Button {
+                        showingCoursePicker = true
                     } label: {
-                        LabeledContent("コース") {
+                        HStack(spacing: 6) {
+                            Text("コース").foregroundStyle(.primary)
+                            Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text(courseName.isEmpty ? "選ぶ" : courseName)
+                                    .foregroundStyle(.secondary)
                                 if let course = selectedCourse {
                                     Text("\(CourseDirectory.regionText(course))"
                                          + "　\(course.stations.count)駅")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                        .font(.caption).foregroundStyle(.tertiary)
                                 }
                             }
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold()).foregroundStyle(.tertiary)
                         }
+                        .contentShape(Rectangle())
                     }
+                    .accessibilityIdentifier("coursePicker")
                     Picker("スタート", selection: $startOrder) {
                         ForEach(stations) { Text($0.name).tag($0.orderNo) }
                     }
@@ -284,6 +297,19 @@ private struct ScheduleDraftView: View {
                          + "区間とサイコロの最大出目もここで決めます。")
                 }
 
+                // **名前は地図より先に置く。** 地図（170pt）を先に挟んだところ、
+                // 名前の入力欄が画面の外へ押し出され、
+                // 「保存が押せない理由が見えない」状態になった
+                Section {
+                    TextField("南北線を歩く", text: $title)
+                    if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("名前を入れると保存できます")
+                            .font(.caption).foregroundStyle(.red)
+                    }
+                } header: {
+                    Text("2　予定の名前")
+                }
+
                 if sectionStations.count >= 2 {
                     Section {
                         CourseSectionSummaryView(stations: sectionStations)
@@ -295,10 +321,6 @@ private struct ScheduleDraftView: View {
                         Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して"
                              + "時速5kmで歩いたときの値です。お題や休憩の時間は含みません。")
                     }
-                }
-
-                Section("2　予定の名前") {
-                    TextField("南北線を歩く", text: $title)
                 }
                 Section("3　集合日時（日本時間）") {
                     DatePicker("集合日", selection: $startAt, displayedComponents: .date)
@@ -336,6 +358,9 @@ private struct ScheduleDraftView: View {
                               || startOrder == goalOrder || selectedCourse == nil)
                 }
             }
+            .sheet(isPresented: $showingCoursePicker) {
+                CoursePickerView(courses: store.courses, selectedName: $courseName)
+            }
             .onChange(of: courseName) {
                 guard let first = stations.first, let last = stations.last else { return }
                 startOrder = first.orderNo
@@ -345,6 +370,12 @@ private struct ScheduleDraftView: View {
         .environment(\.locale, Locale(identifier: "ja_JP"))
         .environment(\.calendar, .japanStandard)
         .environment(\.timeZone, TimeZone(identifier: "Asia/Tokyo")!)
+    }
+
+    /// 既定の名前。コースが分かれば「南北線を歩く」、分からなければ「歩く予定」
+    private static func defaultTitle(_ courseName: String?) -> String {
+        guard let courseName, !courseName.isEmpty else { return "歩く予定" }
+        return "\(courseName)を歩く"
     }
 
     private static func nextSaturdayMorning() -> Date {
