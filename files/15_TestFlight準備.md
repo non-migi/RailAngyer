@@ -126,6 +126,8 @@ Appレコードを作っておく。
 - [x] ビルド `1.0.0 (1)` をApp Store Connectへアップロード
 - [x] ビルド `1.0.0 (2)` をApp Store Connectへアップロード
 - [x] ビルド `1.0.0 (3)` をApp Store Connectへアップロード（不具合報告への対処版）
+- [x] App Store Connect API のキーを設定し、ビルドとクラッシュ報告を自動で見られるようにした
+- [x] ビルド `3` のテスト項目（日本語）をAPIから登録
 - [ ] Beta Review連絡先の電話番号を入力
 - [ ] 必要なら公開用プライバシーポリシーURLを用意
 - [ ] ビルドの処理完了後、輸出コンプライアンスが「不要」になっていることを確認
@@ -182,15 +184,10 @@ Appレコードを作っておく。
 
 ### 8.3 Mac に置く
 
-> 2026-08-01 時点: 鍵 `AuthKey_BMCT4QBV35.p8` は `~/private_keys/`（600）に配置済み。
-> **残るは Issuer ID だけ。** 鍵ファイルにも Mac のどこにも入っていないため、
-> App Store Connect の画面から持ってくるしかない。手に入れたら次を実行する。
->
-> ```bash
-> ./tools/asc-setup.sh <Issuer ID の UUID>   # 設定を書いて疎通まで確認する
-> ```
->
-> なお、この鍵は**チームキー**だった（`sub: user` の個人用キー方式では 401 になった）。
+> 2026-08-01 時点: **設定は完了している。** 鍵 `AuthKey_BMCT4QBV35.p8` と
+> `asc-config.json`（Issuer ID）を `~/private_keys/`（600）に配置し、疎通を確認した。
+> この鍵は**チームキー**（`sub: user` の個人用キー方式では 401 になった）。
+> 別のMacで設定し直すときは `./tools/asc-setup.sh <Issuer ID の UUID>` を実行する。
 
 
 ```bash
@@ -209,6 +206,11 @@ chmod 600 ~/private_keys/asc-config.json
 > この鍵はアップロードやビルド操作もできるので、漏れると配布に手を出される。
 
 ### 8.4 取り出す
+
+> ⚠️ **エンドポイントの形に注意。** `/v1/betaFeedbackCrashSubmissions` を単体で叩くと
+> `403 The resource does not allow GET_COLLECTION` になる。
+> **App からの関連**（`/v1/apps/{id}/betaFeedbackCrashSubmissions`）として取りにいく。
+
 
 ```bash
 python3 tools/asc-crashes.py                  # 直近のクラッシュ報告を一覧
@@ -230,3 +232,29 @@ python3 tools/asc-crashes.py --save /tmp/crash # 本体(.ips)も保存する
 
 > 同じ鍵はアップロードにも使える。
 > `xcrun altool --upload-app -f app.ipa -t ios --apiKey <キーID> --apiIssuer <Issuer ID>`
+
+---
+
+## 9. 現在の配布状況（2026-08-01 API で確認）
+
+| ビルド | 処理 | 内部テスト | 外部テスト | 期限 |
+|---|---|---|---|---|
+| `1.0.0 (3)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出（READY_FOR_BETA_SUBMISSION） | 2026-10-30 |
+| `1.0.0 (2)` | VALID | 配布中 | 未提出 | 2026-10-29 |
+| `1.0.0 (1)` | VALID | 配布中 | 未提出 | 2026-10-26 |
+
+- テスターグループ: `テスト`（内部・全ビルド自動配布）／`外部テスト`（外部・公開リンク無効）
+- ビルド3のテスト項目（日本語）は登録済み。自動通知も有効
+- **クラッシュ報告は0件。** TestFlight のフィードバック経由では1件も届いていない
+
+> **外部テスターへ配るには Beta App Review への提出が要る**（内部テスターは提出不要）。
+> 身内が App Store Connect のユーザーでないなら、`外部テスト` グループにビルド3を追加して提出する。
+
+### クラッシュ報告が0件である理由
+
+TestFlight のクラッシュ報告は、**テスターが「フィードバックを送信」から送った場合**か、
+**端末で「iPhone解析を共有」がオンで、TestFlight 経由のビルドが落ちた場合**にだけ集まる。
+どちらも満たしていないと、落ちても記録は残らない。
+
+報告のあった「記録を保存して新しい旅へ」でのクラッシュは、この経路では追えていない。
+§8.1 の手順で端末の解析データ（`.ips`）を直接もらうのが最短。

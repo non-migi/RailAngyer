@@ -133,14 +133,10 @@ def app_id(token: str) -> str:
 
 
 def crash_submissions(token: str, app: str, limit: int) -> list[dict]:
-    query = (f"/v1/betaFeedbackCrashSubmissions?filter[app]={app}"
-             f"&sort=-createdDate&limit={limit}")
-    try:
-        return get(query, token).get("data", [])
-    except SystemExit:
-        # 古いAPIしか使えない場合の逃げ道
-        return get(f"/v1/apps/{app}/betaFeedbackCrashSubmissions?limit={limit}",
-                   token).get("data", [])
+    # `/v1/betaFeedbackCrashSubmissions` 単体は GET_COLLECTION を許していない（403）。
+    # **App からの関連として取りにいく**のが正しい形
+    return get(f"/v1/apps/{app}/betaFeedbackCrashSubmissions"
+               f"?sort=-createdDate&limit={limit}", token).get("data", [])
 
 
 def describe(entry: dict) -> str:
