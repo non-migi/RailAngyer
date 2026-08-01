@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `6` |
+| ビルド | `7` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -60,6 +60,10 @@ Explicit App ID登録後の最終アーカイブは
 2026-08-02 00:22 JSTにアップロード成功。**同 00:30 に VALID・内部テスト配布中**。
 アーカイブは `/tmp/RailAngyerApp-1.0.0-6.xcarchive`。
 テスト内容（日本語）は `tools/asc-whattotest.py 6` で登録済み。
+
+**ビルド6は配ってすぐクラッシュ報告が来た**（「阪急を選ぶとクラッシュ」/ 2026-08-02 00:33 JST）。
+原因は阪急ではなく `SyncService` のスレッド（`14_引き継ぎ.md` §5）。
+直した `1.0.0 (7)` を 2026-08-02 00:43 JSTにアップロード。
 
 > ⚠️ **クラッシュログはこの環境からは見えない。**
 > 端末が繋がっておらず（`~/Library/Logs/CrashReporter/MobileDevice/` が無い）、
