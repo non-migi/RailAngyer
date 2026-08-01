@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `2` |
+| ビルド | `3` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -40,6 +40,9 @@
 - [x] 札幌3路線の駅座標を国土数値情報 N02-22（JGD2011）へ更新
 - [x] 写真そのものを使う地図ピンと、連続的なペース配色を追加
 - [x] ビルド2候補でコア47件、アプリ81件、UI 6件、API 54件を通過
+- [x] ビルド3で、予定の即時反映・予定段階のお題・暗所の視認性・リセットの堅牢化に対処。
+      コア47件、アプリ91件、UI 8件、API 54件を通過
+      （`ArrivalUITests` の1件はビルド2の時点から失敗しており、位置シミュレーションの既存問題）
 - [x] `17_migration_v4_schedule_rules.sql` を本番DBへ適用し、対応APIをApp Serviceへ再配置
 
 Explicit App ID登録後の最終アーカイブは
@@ -48,7 +51,23 @@ Explicit App ID登録後の最終アーカイブは
 ビルド `1.0.0 (1)` の処理が開始された。
 
 今回の変更版 `1.0.0 (2)` は、2026-08-01 09:11 JSTにアップロード成功。
-App Store Connectで処理中。
+
+不具合報告（予定の即時反映・予定段階のお題・暗所の視認性・リセットのクラッシュ）に
+対処した `1.0.0 (3)` を、2026-08-01 18:29 JSTにアップロード成功。App Store Connectで処理中。
+アーカイブは `/tmp/RailAngyerApp-1.0.0-3.xcarchive`。
+
+> ⚠️ **クラッシュログはこの環境からは見えない。**
+> 端末が繋がっておらず（`~/Library/Logs/CrashReporter/MobileDevice/` が無い）、
+> App Store Connect API の鍵も置いていないため、TestFlight のクラッシュ報告を取得できない。
+> 見られるようにするには次のどちらか。
+>
+> 1. **端末から共有してもらう**（すぐできる）
+>    設定 ＞ プライバシーとセキュリティ ＞ 解析と改善 ＞ 解析データ →
+>    `RailAngyerApp-2026-…-.ips` を選んで共有し、Macへ渡す
+> 2. **App Store Connect API の鍵を置く**（以後は自動で取れる）
+>    App Store Connect ＞ ユーザーとアクセス ＞ 各種統合 ＞ App Store Connect API で
+>    キーを作り、`.p8` を `~/private_keys/AuthKey_<KEYID>.p8` に保存する。
+>    以後は `betaFeedbackCrashSubmissions` からクラッシュ報告を取得できる
 
 ## 3. App Store Connectへ入力する文面
 
@@ -115,6 +134,7 @@ Appレコードを作っておく。
       （名前、主言語、Bundle ID、SKU）
 - [x] ビルド `1.0.0 (1)` をApp Store Connectへアップロード
 - [x] ビルド `1.0.0 (2)` をApp Store Connectへアップロード
+- [x] ビルド `1.0.0 (3)` をApp Store Connectへアップロード（不具合報告への対処版）
 - [ ] Beta Review連絡先の電話番号を入力
 - [ ] 必要なら公開用プライバシーポリシーURLを用意
 - [ ] ビルドの処理完了後、輸出コンプライアンスが「不要」になっていることを確認
