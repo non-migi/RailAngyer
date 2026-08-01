@@ -29,6 +29,7 @@
 | [files/19_courses_v3.sql](files/19_courses_v3.sql) | 阪急京都本線の投入（**未適用**。アプリはJSONから読むので動作には不要） |
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
 | [tools/asc-crashes.py](tools/asc-crashes.py) | TestFlightのクラッシュ報告を取り出す（鍵の作り方は `15_TestFlight準備.md` §8） |
+| [tools/asc-whattotest.py](tools/asc-whattotest.py) | TestFlightの「テスト内容」を登録する（**Xcodeからの送信では付かない**） |
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
 | [files/16_プライバシーポリシー.md](files/16_プライバシーポリシー.md) | TestFlight／App Store向けのプライバシーポリシー |
 | [files/17_migration_v4_schedule_rules.sql](files/17_migration_v4_schedule_rules.sql) | 予定ルールと札幌駅座標のDB移行（適用済み） |
