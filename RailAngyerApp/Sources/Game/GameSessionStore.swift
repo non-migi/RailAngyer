@@ -7,7 +7,11 @@ import RailAngyerCore
 ///
 /// ルールの計算そのものは `GameEngine` が持つ（10_アプリ設計.md AD-03）。
 /// ここは「いつ何を保存するか」だけを扱う。
+///
+/// > ⚠️ **`@MainActor` を外さない。** `ModelContext` は画面と同じものを持っており、
+/// > SwiftData のコンテキストはスレッドをまたいで触れない（`SyncService` と同じ理由）。
 @Observable
+@MainActor
 final class GameSessionStore {
 
     private let context: ModelContext

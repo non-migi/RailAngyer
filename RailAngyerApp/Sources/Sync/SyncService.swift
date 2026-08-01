@@ -6,7 +6,15 @@ import RailAngyerCore
 ///
 /// <para>方針は「**ローカルが正、サーバーは共有の場**」。
 /// 送れていなくてもプレイは最後まで続けられる。</para>
+///
+/// > ⚠️ **`@MainActor` を外さない。**
+/// > ここが持つ `ModelContext` は画面と同じもので、SwiftData のコンテキストは
+/// > スレッドをまたいで触れない。付けていないと `await` のたびに別スレッドへ移り、
+/// > 取り込みの `save()` が画面の読み出しと衝突して `EXC_BAD_ACCESS` で落ちる
+/// > （ビルド6で実際に起きた。`14_引き継ぎ.md` §5）。
+/// > 通信そのものは `URLSession` が別スレッドで行うので、待っている間に画面は止まらない。
 @Observable
+@MainActor
 final class SyncService {
 
     /// 画面に出す未送信件数（SC-20）

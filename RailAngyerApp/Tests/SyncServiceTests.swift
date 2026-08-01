@@ -392,6 +392,99 @@ struct SyncServiceTests {
         #expect(service.pendingCount == 0)
         #expect(!service.isJoined)
     }
+
+    // MARK: - 予定の取り込み
+    //
+    // **ビルド6がここで落ちた。** 取り込みが画面と別のスレッドで走り、
+    // SwiftData の保存が画面の読み出しと衝突していた（`EXC_BAD_ACCESS`）。
+    // 直したうえで、そもそも中身が正しいことを押さえていなかったので足す。
+
+    private func scheduleJSON(id: UUID, title: String = "南北線を歩く",
+                              attendees: String = "[]") -> String {
+        """
+        [{"scheduleId":"\(id.uuidString)","title":"\(title)",
+          "startAt":"2026-08-09T00:00:00Z","meetPlace":"麻生駅 改札前",
+          "courseId":1,"courseName":"南北線","startOrder":1,"goalOrder":16,
+          "diceMax":4,"createdBy":null,"attendees":\(attendees)}]
+        """
+    }
+
+    @Test("サーバーの予定を取り込む")
+    func pullSchedulesTakesRemote() async throws {
+        let id = UUID()
+        let service = makeService(.json(scheduleJSON(id: id)))
+
+        #expect(await service.pullSchedules())
+
+        let saved = try #require(try context.fetch(FetchDescriptor<Schedule>())
+            .first { $0.id == id })
+        #expect(saved.title == "南北線を歩く")
+        #expect(saved.meetPlace == "麻生駅 改札前")
+        #expect(saved.courseName == "南北線")
+        #expect(saved.goalOrder == 16)
+        #expect(saved.diceMax == 4)
+        // 取り込んだものは送信済みとして扱う（送り返すと自分の更新で上書きしてしまう）
+        #expect(saved.syncStateRaw == SyncState.synced.rawValue)
+    }
+
+    @Test("同じ予定を二度取り込んでも増えない")
+    func pullSchedulesIsIdempotent() async throws {
+        let id = UUID()
+        let service = makeService(.json(scheduleJSON(id: id)))
+
+        _ = await service.pullSchedules()
+        StubURLProtocol.behavior = .json(scheduleJSON(id: id, title: "予定を直した"))
+        _ = await service.pullSchedules()
+
+        let all = try context.fetch(FetchDescriptor<Schedule>()).filter { $0.id == id }
+        #expect(all.count == 1)
+        #expect(all.first?.title == "予定を直した")
+    }
+
+    @Test("出欠も取り込み、二度目は重ならない")
+    func pullSchedulesTakesAttendees() async throws {
+        let id = UUID()
+        let member = UUID()
+        let attendees = """
+        [{"memberId":"\(member.uuidString)","displayName":"ケンタ","status":1}]
+        """
+        let service = makeService(.json(scheduleJSON(id: id, attendees: attendees)))
+
+        _ = await service.pullSchedules()
+        _ = await service.pullSchedules()
+
+        let saved = try #require(try context.fetch(FetchDescriptor<Schedule>())
+            .first { $0.id == id })
+        #expect(saved.attendees.count == 1)
+        #expect(saved.attendees.first?.displayName == "ケンタ")
+    }
+
+    @Test("サーバーから消えた予定は端末からも消える")
+    func pullSchedulesRemovesDeleted() async throws {
+        let id = UUID()
+        let service = makeService(.json(scheduleJSON(id: id)))
+        _ = await service.pullSchedules()
+
+        StubURLProtocol.behavior = .json("[]")
+        _ = await service.pullSchedules()
+
+        // 消えた予定が端末に残ると、集合場所を取り違える
+        #expect(try context.fetch(FetchDescriptor<Schedule>()).isEmpty)
+    }
+
+    @Test("まだ送っていない予定は、取り込みで消さない")
+    func pullSchedulesKeepsUnsent() async throws {
+        let service = makeService(.json("[]"))
+        let mine = Schedule(title: "まだ送っていない予定", startAt: Date())
+        mine.missionSet = room
+        context.insert(mine)
+        try context.save()
+
+        _ = await service.pullSchedules()
+
+        // 立てた直後に取り込みが走る（`syncAfterEdit`）。ここで消えると予定が作れない
+        #expect(try context.fetch(FetchDescriptor<Schedule>()).contains { $0.id == mine.id })
+    }
 }
 
 /// 通信の差し替え。実際のHTTPは出さない

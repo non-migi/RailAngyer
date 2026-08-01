@@ -139,6 +139,7 @@
 		AE5039F9F643E1AE9C8791DE /* prepare-simulator.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "prepare-simulator.sh"; sourceTree = "<group>"; };
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B9E62126FFD3D29621A8632A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BABB6E7340F1BBE52D155055 /* asc-whattotest.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "asc-whattotest.py"; sourceTree = "<group>"; };
 		BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryView.swift; sourceTree = "<group>"; };
 		BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
@@ -261,6 +262,7 @@
 				5929FDCB88E5F61769D457AF /* __pycache__ */,
 				3B085D3B5A85606ACF5463F6 /* asc-crashes.py */,
 				6A7C46209573C400F462A79D /* asc-setup.sh */,
+				BABB6E7340F1BBE52D155055 /* asc-whattotest.py */,
 				9FC6BF703DF01516AA593C6F /* nanboku_full.gpx */,
 				2D3535DFBE7236B28F8391E7 /* nanboku_sapporo_nakanoshima.gpx */,
 				FFE660C528B0D59D98F27617 /* nanboku_slow_asabu.gpx */,
