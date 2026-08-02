@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `9` |
+| ビルド | `11` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -127,6 +127,24 @@ xcodebuild \
 `ExportOptions-TestFlight.plist` は `destination=upload` なので、最後のコマンドは
 App Store Connectへの送信まで行う。送信前にApp Store Connectで同じBundle IDの
 Appレコードを作っておく。
+
+> ⚠️ **`error: exportArchive Failed to Use Accounts` が出たら、APIキーで送る。**
+> Xcode に入れた Apple ID のセッションが切れると出る。
+> サインインし直さなくても、**クラッシュ報告に使っているのと同じ鍵**で送れる。
+>
+> ```bash
+> ISSUER=$(python3 -c "import json;print(json.load(open('$HOME/private_keys/asc-config.json'))['issuerId'])")
+> xcodebuild -exportArchive \
+>   -archivePath /tmp/RailAngyerApp-1.0.0-11.xcarchive \
+>   -exportOptionsPlist RailAngyerApp/ExportOptions-TestFlight.plist \
+>   -exportPath /tmp/RailAngyerApp-TestFlight-11 \
+>   -allowProvisioningUpdates \
+>   -authenticationKeyPath "$HOME/private_keys/AuthKey_BMCT4QBV35.p8" \
+>   -authenticationKeyID BMCT4QBV35 \
+>   -authenticationKeyIssuerID "$ISSUER"
+> ```
+>
+> **アーカイブ（`archive`）は鍵が無くても通る。** 詰まるのは送信の段だけ。
 
 ## 6. Appleアカウント側で必要な項目
 
