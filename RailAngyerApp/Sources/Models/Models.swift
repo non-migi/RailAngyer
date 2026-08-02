@@ -320,6 +320,12 @@ final class Schedule {
     var startOrder: Int = 0
     var goalOrder: Int = 0
     var diceMax: Int = 6
+    /// 一周する予定か。**環状線ではスタートとゴールが同じ駅になる**
+    /// （山手線を東京から出て東京へ戻る）。この印が無いと、
+    /// 同じ駅を指す区間は「間違い」として弾かれてしまう
+    var isLap: Bool = false
+    /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
+    var loopDirectionRaw: Int = 1
     /// 立てた人。この人だけが直せる（サーバー側でも同じ判定をしている）
     var createdById: UUID?
     var syncStateRaw: Int = SyncState.localOnly.rawValue

@@ -92,6 +92,70 @@ struct StartFromScheduleTests {
         #expect(store.room?.course?.name == "南北線")
     }
 
+    // MARK: - 一周する予定
+    //
+    // **山手線を東京から出て東京へ戻る。** 予定では同じ駅を指す区間を
+    // 「間違い」として弾いていたので、一周の予定が立てられなかった
+
+    @Test("環状線なら、同じ駅を出て同じ駅へ戻る予定を立てられる")
+    func canPlanALap() throws {
+        let yamanote = try course("山手線")
+        let tokyo = try #require(yamanote.stationsInOrder.first)
+
+        let error = store.saveSchedule(nil, title: "山手線を一周", startAt: startAt,
+                                       meetPlace: nil, course: yamanote,
+                                       startOrder: tokyo.orderNo, goalOrder: tokyo.orderNo,
+                                       diceMax: 6, isLap: true)
+
+        #expect(error == nil)
+        let schedule = try #require(store.schedules.first { $0.title == "山手線を一周" })
+        #expect(schedule.isLap)
+        #expect(schedule.startOrder == tokyo.orderNo)
+        // 一周ではゴールも出発した駅にそろえる
+        #expect(schedule.goalOrder == tokyo.orderNo)
+    }
+
+    @Test("環状でないコースは一周にできない")
+    func rejectsLapOnStraightCourse() throws {
+        let nanboku = try course("南北線")
+
+        let error = store.saveSchedule(nil, title: "南北線を一周", startAt: startAt,
+                                       meetPlace: nil, course: nanboku,
+                                       startOrder: 1, goalOrder: 1, diceMax: 6, isLap: true)
+
+        #expect(error == "このコースは一周できません")
+    }
+
+    @Test("一周でなければ、同じ駅の区間はこれまでどおり弾く")
+    func stillRejectsSameStationWhenNotLap() throws {
+        let error = store.saveSchedule(nil, title: "おかしな区間", startAt: startAt,
+                                       meetPlace: nil, course: try course("山手線"),
+                                       startOrder: 3, goalOrder: 3, diceMax: 6)
+
+        #expect(error == "スタートとゴールは別の駅にしてください")
+    }
+
+    @Test("一周の予定を選ぶと、一周する設定で始まる")
+    func appliesLap() throws {
+        let yamanote = try course("山手線")
+        let tokyo = try #require(yamanote.stationsInOrder.first)
+        store.saveSchedule(nil, title: "山手線を一周", startAt: startAt, meetPlace: nil,
+                           course: yamanote, startOrder: tokyo.orderNo,
+                           goalOrder: tokyo.orderNo, diceMax: 6,
+                           isLap: true, loopDirection: -1)
+        let schedule = try #require(store.schedules.first { $0.title == "山手線を一周" })
+
+        #expect(store.applySchedule(schedule) == nil)
+
+        #expect(store.room?.isLap == true)
+        #expect(store.room?.startStation?.orderNo == tokyo.orderNo)
+        #expect(store.room?.goalStation?.orderNo == tokyo.orderNo)
+        // まわる向きも予定に書いたものに合わせる
+        #expect(store.room?.loopDirectionRaw == -1)
+        // 一周ぶんの盤面になっていること
+        #expect(store.stationsInOrder.count == yamanote.stations.count)
+    }
+
     @Test("サイコロの最大出目は1〜9に収める")
     func clampsDiceMax() throws {
         let schedule = try schedule("おかしな出目")

@@ -274,6 +274,20 @@ final class GameSessionStore {
             .sorted { ($0.member?.displayName ?? "") < ($1.member?.displayName ?? "") }
     }
 
+    /// 地図に添える、その駅のお題の短い見出し。
+    ///
+    /// **旗のピンだけでは「何かある」までしか分からない。**
+    /// 一目で中身が読めるよう、1件目を短く切って出す（続きは駅を押せば読める）。
+    /// 伏せる設定のルームでは、そもそも他人のお題が端末に無いので自分のぶんだけ出る
+    func missionLabel(at order: Int, limit: Int = 12) -> String? {
+        let missions = missions(at: order)
+        guard let first = missions.first else { return nil }
+
+        let text = first.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let head = text.count > limit ? text.prefix(limit) + "…" : text[...]
+        return missions.count > 1 ? "\(head)　ほか\(missions.count - 1)件" : String(head)
+    }
+
     /// お題が書かれている駅の番号（地図にピンを立てるため）
     var missionOrders: Set<Int> {
         guard let room else { return [] }
@@ -448,7 +462,8 @@ final class GameSessionStore {
     func saveSchedule(_ existing: Schedule?, title: String,
                       startAt: Date, meetPlace: String?,
                       course: Course? = nil, startOrder: Int? = nil,
-                      goalOrder: Int? = nil, diceMax: Int? = nil) -> String? {
+                      goalOrder: Int? = nil, diceMax: Int? = nil,
+                      isLap: Bool = false, loopDirection: Int = 1) -> String? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "予定の名前を入力してください" }
         if trimmed.count > 100 { return "予定の名前は100文字までです" }
@@ -462,18 +477,30 @@ final class GameSessionStore {
         let selectedCourse = course ?? room?.course
         let selectedStart = startOrder ?? room?.startStation?.orderNo ?? 0
         let selectedGoal = goalOrder ?? room?.goalStation?.orderNo ?? 0
-        guard selectedCourse != nil else { return "コースを選んでください" }
-        if selectedStart == selectedGoal { return "スタートとゴールは別の駅にしてください" }
+        guard let selectedCourse else { return "コースを選んでください" }
+
+        // **一周は同じ駅で始まって同じ駅で終わる。** 山手線を東京から出て東京へ戻る形。
+        // 一周でないときだけ「別の駅」を求める
+        let lap = isLap && selectedCourse.isLoop
+        if isLap && !selectedCourse.isLoop {
+            return "このコースは一周できません"
+        }
+        if !lap && selectedStart == selectedGoal {
+            return "スタートとゴールは別の駅にしてください"
+        }
 
         let schedule = existing ?? Schedule(title: trimmed, startAt: startAt)
         schedule.title = trimmed
         schedule.startAt = startAt
         schedule.meetPlace = meetPlace?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
-        schedule.courseServerId = selectedCourse?.serverId
-        schedule.courseName = selectedCourse?.name ?? ""
+        schedule.courseServerId = selectedCourse.serverId
+        schedule.courseName = selectedCourse.name
         schedule.startOrder = selectedStart
-        schedule.goalOrder = selectedGoal
+        // 一周では出発した駅へ戻る。ゴールはスタートと同じ駅にそろえる
+        schedule.goalOrder = lap ? selectedStart : selectedGoal
         schedule.diceMax = min(max(diceMax ?? room?.diceMax ?? 6, 1), 9)
+        schedule.isLap = lap
+        schedule.loopDirectionRaw = loopDirection >= 0 ? 1 : -1
 
         if existing == nil {
             schedule.missionSet = room
@@ -795,7 +822,7 @@ final class GameSessionStore {
         guard let course = courses.first(where: { $0.name == schedule.courseName }) else {
             return "この予定のコース（\(schedule.courseName)）が端末にありません"
         }
-        guard schedule.startOrder != schedule.goalOrder else {
+        guard schedule.isLap || schedule.startOrder != schedule.goalOrder else {
             return "予定の区間が正しくありません"
         }
 
@@ -806,7 +833,13 @@ final class GameSessionStore {
 
         let stations = course.stations
         room.startStation = stations.first { $0.orderNo == schedule.startOrder } ?? room.startStation
-        room.goalStation = stations.first { $0.orderNo == schedule.goalOrder } ?? room.goalStation
+        if schedule.isLap && course.isLoop {
+            // 一周は出発した駅へ戻る。向きも予定に書いたものに合わせる
+            room.goalStation = room.startStation
+            room.loopDirectionRaw = schedule.loopDirectionRaw
+        } else {
+            room.goalStation = stations.first { $0.orderNo == schedule.goalOrder } ?? room.goalStation
+        }
         room.diceMax = min(max(schedule.diceMax, 1), 9)
         // **選んだ予定の名前を旅の名前にする。** 盤面の見出しがルーム名のままだと、
         // どの予定で歩いているのかが画面から分からない

@@ -220,6 +220,8 @@ private struct ScheduleDraftView: View {
     @State private var startOrder: Int
     @State private var goalOrder: Int
     @State private var diceMax: Int
+    @State private var isLap: Bool
+    @State private var loopDirection: Int
     @State private var errorMessage: String?
     @State private var showingCoursePicker = false
 
@@ -242,6 +244,8 @@ private struct ScheduleDraftView: View {
         _goalOrder = State(initialValue: (draft.existing?.goalOrder ?? 0) > 0
                            ? draft.existing!.goalOrder : store.room?.goalStation?.orderNo ?? 1)
         _diceMax = State(initialValue: draft.existing?.diceMax ?? store.room?.diceMax ?? 6)
+        _isLap = State(initialValue: draft.existing?.isLap ?? false)
+        _loopDirection = State(initialValue: draft.existing?.loopDirectionRaw ?? 1)
     }
 
     private var selectedCourse: Course? { store.courses.first { $0.name == courseName } }
@@ -249,8 +253,15 @@ private struct ScheduleDraftView: View {
         (selectedCourse?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
     }
 
-    /// いま選んでいる区間の駅。地図と目安に渡す
+    /// 選んだコースの駅名。**いま遊んでいるコースとは限らない**ので、選んだほうから引く
+    private func stationName(_ order: Int) -> String {
+        stations.first { $0.orderNo == order }?.name ?? "-"
+    }
+
+    /// いま選んでいる区間の駅。地図と目安に渡す。
+    /// 一周ではコース全体を通るので、全駅が対象になる
     private var sectionStations: [Station] {
+        if isLap { return stations }
         let range = min(startOrder, goalOrder)...max(startOrder, goalOrder)
         return stations.filter { range.contains($0.orderNo) }
     }
@@ -280,14 +291,32 @@ private struct ScheduleDraftView: View {
                         .contentShape(Rectangle())
                     }
                     .accessibilityIdentifier("coursePicker")
-                    Picker("スタート", selection: $startOrder) {
+                    // **環状線は一周できる。** 山手線を東京から出て東京へ戻る形。
+                    // 一周のときは「別の駅にしてください」を出してはいけない
+                    if selectedCourse?.isLoop == true {
+                        Toggle("一周する", isOn: $isLap)
+                        if isLap {
+                            Picker("まわる向き", selection: $loopDirection) {
+                                Text(selectedCourse?.forwardDirectionName ?? "順まわり").tag(1)
+                                Text(selectedCourse?.backwardDirectionName ?? "逆まわり").tag(-1)
+                            }
+                        }
+                    }
+
+                    Picker(isLap ? "出発する駅" : "スタート", selection: $startOrder) {
                         ForEach(stations) { Text($0.name).tag($0.orderNo) }
                     }
-                    Picker("ゴール", selection: $goalOrder) {
-                        ForEach(stations) { Text($0.name).tag($0.orderNo) }
+                    if !isLap {
+                        Picker("ゴール", selection: $goalOrder) {
+                            ForEach(stations) { Text($0.name).tag($0.orderNo) }
+                        }
                     }
                     Stepper("サイコロ　1〜\(diceMax)", value: $diceMax, in: 1...9)
-                    if startOrder == goalOrder {
+                    if isLap {
+                        Text("\(stationName(startOrder)) を出て、"
+                             + "\(stationName(startOrder)) へ戻ってきたら終わりです")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else if startOrder == goalOrder {
                         Text("スタートとゴールは別の駅にしてください")
                             .font(.caption).foregroundStyle(.red)
                     }
@@ -313,7 +342,7 @@ private struct ScheduleDraftView: View {
 
                 if sectionStations.count >= 2 {
                     Section {
-                        CourseSectionSummaryView(stations: sectionStations)
+                        CourseSectionSummaryView(stations: sectionStations, isLoop: isLap)
                             .listRowInsets(EdgeInsets(top: 10, leading: 16,
                                                       bottom: 12, trailing: 16))
                     } header: {
@@ -352,17 +381,22 @@ private struct ScheduleDraftView: View {
                                                           course: selectedCourse,
                                                           startOrder: startOrder,
                                                           goalOrder: goalOrder,
-                                                          diceMax: diceMax)
+                                                          diceMax: diceMax,
+                                                          isLap: isLap,
+                                                          loopDirection: loopDirection)
                         if errorMessage == nil { dismiss() }
                     }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                              || startOrder == goalOrder || selectedCourse == nil)
+                              || (!isLap && startOrder == goalOrder)
+                              || selectedCourse == nil)
                 }
             }
             .sheet(isPresented: $showingCoursePicker) {
                 CoursePickerView(courses: store.courses, selectedName: $courseName)
             }
             .onChange(of: courseName) {
+                // 環状でないコースへ変えたら、一周の設定は残さない
+                if selectedCourse?.isLoop != true { isLap = false }
                 guard let first = stations.first, let last = stations.last else { return }
                 startOrder = first.orderNo
                 goalOrder = last.orderNo

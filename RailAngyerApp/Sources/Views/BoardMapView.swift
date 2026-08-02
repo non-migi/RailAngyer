@@ -50,8 +50,22 @@ struct BoardMapView: View {
 
             ForEach(stations) { station in
                 Annotation(station.name, coordinate: coordinate(station)) {
-                    marker(for: station)
-                        .onTapGesture { selectedStation = StationSelection(id: station.orderNo) }
+                    VStack(spacing: 2) {
+                        marker(for: station)
+                        // **お題を文字で読ませる。** 旗だけでは「何かある」までしか分からない
+                        if let label = store.missionLabel(at: station.orderNo),
+                           !store.landedOrders.contains(station.orderNo) {
+                            Text(label)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(Theme.onLine)
+                                .lineLimit(1)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Theme.mission, in: Capsule())
+                                .overlay(Capsule().strokeBorder(.white.opacity(0.85), lineWidth: 1))
+                                .fixedSize()
+                        }
+                    }
+                    .onTapGesture { selectedStation = StationSelection(id: station.orderNo) }
                 }
             }
         }

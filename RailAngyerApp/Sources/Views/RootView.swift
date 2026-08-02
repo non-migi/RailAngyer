@@ -104,6 +104,8 @@ private struct MainView: View {
     @State private var showingSchedules = false
     @State private var showingMissions = false
     @State private var showingPhotos = false
+    /// ターンの画面をしまって盤面を見ているか。**次のターンが始まれば戻す**
+    @State private var isTurnMinimized = false
     @State private var didAskForNotifications = false
     @State private var didRequestLocation = false
     @State private var selectedTab: AppTab = .home
@@ -150,8 +152,15 @@ private struct MainView: View {
             .tabItem { Label("記録", systemImage: "chart.bar.xaxis") }
         }
         .tint(Theme.line)
-        .fullScreenCover(isPresented: .constant(store.phase.isInTurn || store.showingAnnouncement)) {
-            TurnFlowView(store: store, location: location)
+        // **プレイ中でも盤面へ抜けられるようにする。**
+        // 覆いっぱなしだと、歩いている間ずっと全体マップが見られない
+        .fullScreenCover(isPresented: Binding(
+            get: { (store.phase.isInTurn || store.showingAnnouncement) && !isTurnMinimized },
+            set: { if !$0 { isTurnMinimized = true } })) {
+            TurnFlowView(store: store, location: location) {
+                isTurnMinimized = true
+                selectedTab = .journey
+            }
         }
         .sheet(isPresented: $showingSettings) {
             RuleSettingsView(store: store, sync: sync)
@@ -179,6 +188,22 @@ private struct MainView: View {
         .onOpenURL { url in
             guard let invite = InviteLink.invitation(from: url) else { return }
             invitation = invite
+        }
+        .overlay(alignment: .bottom) {
+            if isTurnMinimized && (store.phase.isInTurn || store.showingAnnouncement) {
+                Button {
+                    isTurnMinimized = false
+                } label: {
+                    Label(resumeLabel, systemImage: "figure.walk.motion")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 18).padding(.vertical, 12)
+                        .background(Theme.line, in: Capsule())
+                        .foregroundStyle(Theme.onLine)
+                        .shadow(color: .black.opacity(0.2), radius: 8, y: 3)
+                }
+                .padding(.bottom, 62)
+                .accessibilityIdentifier("resumeTurn")
+            }
         }
         .overlay(alignment: .top) {
             if isInitialDatabaseLoad {
@@ -239,7 +264,13 @@ private struct MainView: View {
             guard scenePhase == .active else { return }
             Task { await exchange() }
         }
+        .onChange(of: store.showingAnnouncement) {
+            // 新しくサイコロを振ったら、しまっていても前に出す
+            if store.showingAnnouncement { isTurnMinimized = false }
+        }
         .onChange(of: store.phase) {
+            // ターンが終わったら、次に振るときのためにしまいを解く
+            if !store.phase.isInTurn { isTurnMinimized = false }
             syncTarget()
             askForNotificationsIfNeeded()
             // 溜めっぱなしにせず、局面が動いたら送っておく。失敗しても続行できる
@@ -269,6 +300,18 @@ private struct MainView: View {
             startJourneyNow()
         } else {
             showingStartPicker = true
+        }
+    }
+
+    /// しまっているときに出す、戻る口の文言
+    private var resumeLabel: String {
+        switch store.phase {
+        case .walking(let next, _):        "\(store.stationName(next)) へ歩く"
+        case .effectWalking(let next, _):  "\(store.stationName(next)) へ歩く"
+        case .landed:                      "お題を引く"
+        case .mission:                     "お題を続ける"
+        case .arrivedPassing:              "次の駅へ"
+        default:                           "旅を続ける"
         }
     }
 
