@@ -49,6 +49,8 @@
 	<string>駅に到着したことを判定するために現在地を使います。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>撮影できない端末では、駅の記録に写真を追加するためライブラリから選びます。</string>
+	<key>TelemetryDeckAppID</key>
+	<string>$(TELEMETRYDECK_APP_ID)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

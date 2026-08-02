@@ -44,6 +44,7 @@ struct ScheduleListView: View {
                                                            room: store.room)) {
                             Label("この予定を共有する", systemImage: "square.and.arrow.up")
                         }
+                        .simultaneousGesture(TapGesture().onEnded { Telemetry.scheduleShared() })
 
                         if isMine(schedule) {
                             Button("この予定を消す", role: .destructive) {

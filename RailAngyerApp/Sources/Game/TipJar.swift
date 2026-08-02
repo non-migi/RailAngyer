@@ -103,6 +103,7 @@ final class TipJar {
                 // **何も解放しないので、確かめたらすぐ閉じる**
                 await transaction.finish()
                 countUp()
+                Telemetry.supported(tier: tier.product.id)
                 lastError = nil
                 isThanking = true
 

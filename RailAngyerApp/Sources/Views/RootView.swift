@@ -24,6 +24,8 @@ struct RootView: View {
             let client = ApiClient(baseURL: ApiConfiguration.baseURL, credentials: credentials)
             let syncService = SyncService(context: context, client: client, credentials: credentials)
 
+            Telemetry.start()
+
             let s = GameSessionStore(context: context)
             s.prepare(sampleMissions: TestHooks.seedsSampleMissions)
             s.sync = syncService
@@ -189,6 +191,7 @@ private struct MainView: View {
         // 地図を開くだけでは、誘われた側が何をすればいいか分からない
         .onOpenURL { url in
             guard let invite = InviteLink.invitation(from: url) else { return }
+            Telemetry.inviteOpened()
             invitation = invite
         }
         .overlay(alignment: .top) {
@@ -290,6 +293,9 @@ private struct MainView: View {
     }
 
     private func startJourneyNow() {
+        Telemetry.journeyStarted(course: store.room?.course?.name,
+                                 isLap: store.room?.isLap == true,
+                                 stationCount: store.stationsInOrder.count)
         selectedTab = .journey
         prepareLocationIfNeeded()
         // ここではサイコロを振らない。盤面の「サイコロを振る」を押して初めて開始する。

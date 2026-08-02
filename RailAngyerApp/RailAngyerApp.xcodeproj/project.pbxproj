@@ -31,6 +31,7 @@
 		389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */; };
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
 		3F36FCD791FD8107A058AF4B /* SupportUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB09B4A51801DDC52446EDA9 /* SupportUITests.swift */; };
+		462B244869A041D213278872 /* TelemetryDeck in Frameworks */ = {isa = PBXBuildFile; productRef = 91FE2E0A08D63D744015264E /* TelemetryDeck */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
 		4BA80320271A109545402F7F /* JourneySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */; };
 		518D2299AA99EBE7576AE457 /* room.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CB81EAFFC74827CB26EBF /* room.json */; };
@@ -47,6 +48,7 @@
 		7D886AEF8E95DCBEA72FC697 /* CourseDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B812383D18940B50805E027 /* CourseDirectory.swift */; };
 		7F846552B332E52C174977BA /* StationMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3904705B0EEBD442E11E0313 /* StationMapView.swift */; };
 		80D9ADEC6F9651FB6954AD08 /* CourseSectionMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8A148FD068DA4157D095BB5 /* CourseSectionMapView.swift */; };
+		8AF626896AF776EA99D9630E /* Telemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B18FADA78E8F0DDB3A236 /* Telemetry.swift */; };
 		8CA055CE0AFB658E4042B6D5 /* InviteLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CDEEE260865EBF8455D4E6 /* InviteLink.swift */; };
 		966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */; };
 		9BE85712122915E97653D963 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9E62126FFD3D29621A8632A /* Assets.xcassets */; };
@@ -118,6 +120,7 @@
 		160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncServiceTests.swift; sourceTree = "<group>"; };
 		16793C854280C0258AE421C5 /* TimingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingUITests.swift; sourceTree = "<group>"; };
 		17E8C15DCE6423AA6C330097 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		1A2B18FADA78E8F0DDB3A236 /* Telemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Telemetry.swift; sourceTree = "<group>"; };
 		1B812383D18940B50805E027 /* CourseDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDirectory.swift; sourceTree = "<group>"; };
 		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
 		1E0CB81EAFFC74827CB26EBF /* room.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = room.json; sourceTree = "<group>"; };
@@ -206,6 +209,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */,
+				462B244869A041D213278872 /* TelemetryDeck in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -273,6 +277,7 @@
 				FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */,
 				F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */,
 				2A2BE1CAF504AF4F28A4BEDF /* ScheduleShare.swift */,
+				1A2B18FADA78E8F0DDB3A236 /* Telemetry.swift */,
 				836563870DB4BE41BCFBBCCE /* TestHooks.swift */,
 				DCBB233E437C10B275AC8E9A /* TipJar.swift */,
 				C69B58A5D87FA9234652A451 /* WalkTiming.swift */,
@@ -467,6 +472,7 @@
 			name = RailAngyerApp;
 			packageProductDependencies = (
 				02DE3152D31178D49884EE7D /* RailAngyerCore */,
+				91FE2E0A08D63D744015264E /* TelemetryDeck */,
 			);
 			productName = RailAngyerApp;
 			productReference = 52B71D4CDFE3DB6C27819831 /* RailAngyerApp.app */;
@@ -518,6 +524,7 @@
 			mainGroup = 8F8CCFFA211A98B9DBB92DC7;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				F9974C647F383F3E3A02BF35 /* XCRemoteSwiftPackageReference "SwiftSDK" */,
 				1EC6849C981ECED2284BF938 /* XCLocalSwiftPackageReference "../RailAngyerCore" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -642,6 +649,7 @@
 				7F846552B332E52C174977BA /* StationMapView.swift in Sources */,
 				B66E84D5AE63D8214CC84A30 /* SupportDeveloperView.swift in Sources */,
 				C4662713B87E70F0BFB73B47 /* SyncService.swift in Sources */,
+				8AF626896AF776EA99D9630E /* Telemetry.swift in Sources */,
 				3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */,
 				E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */,
 				DCAA3DB7A6144DA9A3307E8F /* TipJar.swift in Sources */,
@@ -744,6 +752,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				TELEMETRYDECK_APP_ID = "";
 			};
 			name = Debug;
 		};
@@ -904,6 +913,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				TELEMETRYDECK_APP_ID = "";
 			};
 			name = Release;
 		};
@@ -955,10 +965,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		F9974C647F383F3E3A02BF35 /* XCRemoteSwiftPackageReference "SwiftSDK" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TelemetryDeck/SwiftSDK";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		02DE3152D31178D49884EE7D /* RailAngyerCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RailAngyerCore;
+		};
+		91FE2E0A08D63D744015264E /* TelemetryDeck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F9974C647F383F3E3A02BF35 /* XCRemoteSwiftPackageReference "SwiftSDK" */;
+			productName = TelemetryDeck;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

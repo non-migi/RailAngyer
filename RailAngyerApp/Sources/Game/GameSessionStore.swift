@@ -208,6 +208,7 @@ final class GameSessionStore {
             context.insert(turn)
             try context.save()
             enqueueForSync()
+            Telemetry.diceRolled(value: dice)
 
             showingAnnouncement = true
         } catch {
@@ -397,6 +398,7 @@ final class GameSessionStore {
         guard let turn = activeTurn,
               let landing = turn.landingPosition ?? turn.landingStation?.orderNo else { return }
         let candidates = missionCandidates(at: landing)
+        Telemetry.missionDrawn(hadCandidates: !candidates.isEmpty)
         guard let picked = candidates.randomElement() else {
             finishMission(done: false)   // 候補0件。効果なしとして扱う
             return
@@ -501,6 +503,9 @@ final class GameSessionStore {
         schedule.diceMax = min(max(diceMax ?? room?.diceMax ?? 6, 1), 9)
         schedule.isLap = lap
         schedule.loopDirectionRaw = loopDirection >= 0 ? 1 : -1
+        if existing == nil {
+            Telemetry.scheduleCreated(course: selectedCourse.name, isLap: lap)
+        }
 
         if existing == nil {
             schedule.missionSet = room
@@ -555,6 +560,7 @@ final class GameSessionStore {
         guard let visit = currentVisit, let room else { return }
         do {
             let fileName = try PhotoStore.save(image)
+            Telemetry.photoTaken()
             let photo = Photo(localFileName: fileName)
             photo.visit = visit
             photo.member = room.members.first { $0.isMe } ?? room.members.first
@@ -879,6 +885,7 @@ final class GameSessionStore {
     /// 残すと「戻したのに見えたまま」になる
     func updateMissionVisibility(_ visibility: MissionVisibility) {
         guard let room else { return }
+        Telemetry.missionVisibilityChanged(to: visibility)
         room.missionVisibility = visibility
 
         if visibility == .surprise, let me {

@@ -96,6 +96,7 @@ struct InviteAcceptView: View {
             try await sync.join(inviteCode: invitation.inviteCode,
                                 displayName: displayName.trimmingCharacters(
                                     in: .whitespacesAndNewlines))
+            Telemetry.roomJoined()
             store.reloadSchedules()
             dismiss()
         } catch let error as ApiError {

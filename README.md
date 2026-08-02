@@ -30,6 +30,7 @@
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
 | [tools/asc-crashes.py](tools/asc-crashes.py) | TestFlightのクラッシュ報告を取り出す（鍵の作り方は `15_TestFlight準備.md` §8） |
 | [tools/asc-whattotest.py](tools/asc-whattotest.py) | TestFlightの「テスト内容」を登録する（**Xcodeからの送信では付かない**） |
+| [tools/asc-release.py](tools/asc-release.py) | App Storeの説明・キーワード・URL・ビルド紐づけをAPIから流し込む |
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
 | [files/16_プライバシーポリシー.md](files/16_プライバシーポリシー.md) | TestFlight／App Store向けのプライバシーポリシー |
 | [files/21_利用規約.md](files/21_利用規約.md) | 利用規約（安全・お題・写真・免責）。**アプリにも同梱**して圏外でも読める |
