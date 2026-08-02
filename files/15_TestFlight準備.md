@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `7` |
+| ビルド | `9` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |

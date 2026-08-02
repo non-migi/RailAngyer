@@ -33,7 +33,7 @@
 | [files/15_TestFlight準備.md](files/15_TestFlight準備.md) | v1.0の署名・メタデータ・プライバシー・配布手順 |
 | [files/16_プライバシーポリシー.md](files/16_プライバシーポリシー.md) | TestFlight／App Store向けのプライバシーポリシー |
 | [files/21_利用規約.md](files/21_利用規約.md) | 利用規約（安全・お題・写真・免責）。**アプリにも同梱**して圏外でも読める |
-| [files/20_migration_v5_mission_visibility.sql](files/20_migration_v5_mission_visibility.sql) | お題の見え方のDB移行（**未適用**） |
+| [files/20_migration_v5_mission_visibility.sql](files/20_migration_v5_mission_visibility.sql) | お題の見え方のDB移行（適用済み） |
 | [files/17_migration_v4_schedule_rules.sql](files/17_migration_v4_schedule_rules.sql) | 予定ルールと札幌駅座標のDB移行（適用済み） |
 | [RailAngyerCore/](RailAngyerCore/) | ルール計算と駅マスタ（GPS・DB非依存。`swift test` で検証） |
 | [RailAngyerApp/](RailAngyerApp/) | iOSアプリ（XcodeGen。`xcodegen generate --spec RailAngyerApp/project.yml`） |
