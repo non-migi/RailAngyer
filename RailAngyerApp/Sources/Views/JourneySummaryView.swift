@@ -10,6 +10,7 @@ struct JourneySummaryView: View {
     @Bindable var store: GameSessionStore
     @Environment(\.dismiss) private var dismiss
     @State private var sharedImage: ShareableImage?
+    @State private var showingPhotos = false
 
     private var summary: JourneySummary? {
         guard let room = store.room else { return nil }
@@ -45,6 +46,9 @@ struct JourneySummaryView: View {
             .sheet(item: $sharedImage) { shared in
                 ShareSheet(items: [shared.image])
             }
+            .sheet(isPresented: $showingPhotos) {
+                PhotoGalleryView(items: store.photoItems)
+            }
         }
     }
 
@@ -55,10 +59,38 @@ struct JourneySummaryView: View {
                     .listRowInsets(EdgeInsets())
             }
 
+            // **歩いた形をここでも見せる。** 数字だけでは、その日の道のりを思い出せない
+            if store.stationsInOrder.count >= 2 {
+                Section {
+                    JourneyTrackMapView(store: store)
+                        .frame(height: 240)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .listRowInsets(EdgeInsets(top: 10, leading: 16,
+                                                  bottom: 12, trailing: 16))
+                } header: {
+                    Text("歩いた道のり")
+                } footer: {
+                    Text(summary.isDistanceMeasured
+                         ? "実際に歩いた跡から出した距離です。200mごとに速さで色を分けています。"
+                         : "跡が残っていないため、通った駅を結んだ距離です。")
+                }
+            }
+
             if !summary.missionResults.isEmpty {
                 Section("こなしたお題") {
                     ForEach(summary.missionResults) { result in
                         missionRow(result)
+                    }
+                }
+            }
+
+            if !store.photoItems.isEmpty {
+                Section {
+                    Button {
+                        showingPhotos = true
+                    } label: {
+                        Label("撮った写真をまとめて見る　\(store.photoItems.count)枚",
+                              systemImage: "photo.on.rectangle.angled")
                     }
                 }
             }
@@ -83,6 +115,13 @@ struct JourneySummaryView: View {
             Text(result.content)
             Text("\(result.authorName)のお題")
                 .font(.caption2).foregroundStyle(.secondary)
+
+            // **やったことの証拠。** お題と写真が離れていると、
+            // どの写真がどのお題のものか後から分からなくなる
+            if !result.photoFileNames.isEmpty {
+                PhotoStrip(fileNames: result.photoFileNames)
+                    .padding(.top, 2)
+            }
         }
         .padding(.vertical, 2)
     }
@@ -145,6 +184,10 @@ private struct SummaryCard: View {
             HStack(spacing: 0) {
                 stat("踏破", "\(summary.visitedCount) / \(summary.stationCount)")
                 stat("着地", "\(summary.landedCount) 駅")
+                // **歩いた距離は、その日いちばん語られる数字。**
+                // 跡が残っていれば実測、無ければ駅を結んだ長さ
+                stat(summary.isDistanceMeasured ? "歩いた距離" : "距離（目安）",
+                     summary.distanceText)
                 stat("ターン", "\(summary.turnCount)")
                 stat("写真", "\(summary.photoCount) 枚")
             }

@@ -97,6 +97,8 @@ final class MissionSet {
     var turns: [Turn] = []
     @Relationship(deleteRule: .cascade, inverse: \Visit.missionSet)
     var visits: [Visit] = []
+    @Relationship(deleteRule: .cascade, inverse: \TrackPoint.missionSet)
+    var trackPoints: [TrackPoint] = []
 
     init(name: String, diceMax: Int = 6) {
         self.name = name
@@ -407,6 +409,34 @@ enum AttendanceStatus: Int, CaseIterable {
     }
 }
 
+/// 実際に歩いた跡（10_アプリ設計.md「歩いた跡」）。
+///
+/// **駅と駅を直線で結ぶと、実際に歩いた道と違う線になる。**
+/// 曲がった川沿いを歩いても地図上はまっすぐで、あとから見返す楽しみが減る。
+/// 歩いている間の位置を間引いて残し、通った形そのものを描く。
+///
+/// > ⚠️ **サーバーへは送らない。** 生のGPS座標を端末の外へ出さないのは
+/// > プライバシーポリシーで約束していること（`16_プライバシーポリシー.md` §1）。
+/// > 共有するのは「到着した駅と時刻」だけ。
+@Model
+final class TrackPoint {
+    var id: UUID = UUID()
+    var latitude: Double = 0
+    var longitude: Double = 0
+    var recordedAt: Date = Date()
+    /// 記録した時点の水平精度（m）。粗い点は線から外すために持つ
+    var accuracy: Double = 0
+
+    var missionSet: MissionSet?
+
+    init(latitude: Double, longitude: Double, accuracy: Double, recordedAt: Date = Date()) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.accuracy = accuracy
+        self.recordedAt = recordedAt
+    }
+}
+
 /// お題をいつ見せるか（ルームの取り決め）。
 ///
 /// **遊び方が変わる。** 伏せれば当日の驚きが残り、見せれば
@@ -441,7 +471,7 @@ enum MissionVisibility: Int, CaseIterable, Identifiable {
 enum AppSchema {
     static let all: [any PersistentModel.Type] = [
         Course.self, Station.self, MissionSet.self, Member.self,
-        Mission.self, Turn.self, Visit.self, Photo.self,
+        Mission.self, Turn.self, Visit.self, Photo.self, TrackPoint.self,
         Schedule.self, Attendance.self, JourneyArchive.self,
         // 送信キュー。記録そのものではないが、圏外で落としても残す必要がある
         PendingChange.self

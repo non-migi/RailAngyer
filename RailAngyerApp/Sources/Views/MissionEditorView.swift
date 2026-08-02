@@ -20,12 +20,21 @@ struct MissionEditorView: View {
 
     private var course: Course? { plan?.course ?? store.room?.course }
 
-    /// 対象の駅。予定から開いたときは、その予定の区間だけに絞る
+    /// 対象の駅。**必ず区間の中だけに絞る。**
+    ///
+    /// 予定から開いたときはその予定の区間、
+    /// ホームから開いたときは**いま遊んでいる区間**（コースの全駅ではない）。
+    /// 区間の外の駅を出すと、絶対に着地しない駅にお題を書けてしまう
     private var stations: [Station] {
         let all = (course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
-        guard let plan else { return all }
-        let range = min(plan.startOrder, plan.goalOrder)...max(plan.startOrder, plan.goalOrder)
-        return all.filter { range.contains($0.orderNo) }
+
+        if let plan {
+            let range = min(plan.startOrder, plan.goalOrder)...max(plan.startOrder, plan.goalOrder)
+            return all.filter { range.contains($0.orderNo) }
+        }
+        // 一周では区間＝コース全体になる。`stationsInOrder` がその判断まで持っている
+        let inSection = store.stationsInOrder
+        return inSection.isEmpty ? all : inSection
     }
 
     private var missions: [Mission] {

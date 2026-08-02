@@ -27,7 +27,11 @@ final class ScheduleUITests: XCTestCase {
         let titleField = app.textFields.firstMatch
         XCTAssertTrue(titleField.waitForExistence(timeout: 5))
         titleField.tap()
-        titleField.typeKey("a", modifierFlags: .command)      // 既定の名前を選んで置き換える
+        // 既定の名前が入っているので、消してから打ち直す。
+        // `typeKey(.command)` はソフトキーボード相手には効かないことがある
+        let current = (titleField.value as? String) ?? ""
+        titleField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue,
+                                   count: current.count))
         titleField.typeText("土曜に歩く")
         app.buttons["保存"].tap()
 

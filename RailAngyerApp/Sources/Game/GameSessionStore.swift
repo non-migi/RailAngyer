@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import UIKit
+import CoreLocation
 import RailAngyerCore
 
 /// ゲームの進行を担う。SwiftData への読み書きと、局面の導出を引き受ける。
@@ -262,6 +263,26 @@ final class GameSessionStore {
     /// 引いたお題の照合には **`persistentModelID` を使う**。
     /// 消えたお題を掴んだままのターンがあると、`id` のような**属性を読んだ瞬間に落ちる**
     /// （SwiftData の `_InvalidFutureBackingData`）。IDだけなら属性を読まずに比べられる。
+    /// その駅に書かれているお題。**まだ引かれていないものも含めて全部**。
+    ///
+    /// 「当日までのお楽しみ」のルームでは、他人のお題は端末に届いていないので
+    /// 自分のぶんしか並ばない。伏せるかどうかの判断は取り込みの側が済ませている
+    func missions(at order: Int) -> [Mission] {
+        guard let room else { return [] }
+        return room.missions
+            .filter { $0.station?.orderNo == order && $0.station?.course?.name == room.course?.name }
+            .sorted { ($0.member?.displayName ?? "") < ($1.member?.displayName ?? "") }
+    }
+
+    /// お題が書かれている駅の番号（地図にピンを立てるため）
+    var missionOrders: Set<Int> {
+        guard let room else { return [] }
+        let course = room.course?.name
+        return Set(room.missions
+            .filter { $0.station?.course?.name == course }
+            .compactMap { $0.station?.orderNo })
+    }
+
     func missionCandidates(at order: Int) -> [Mission] {
         guard let room, let station = station(order) else { return [] }
         let used = Set(room.turns.compactMap { $0.selectedMission?.persistentModelID })
@@ -612,6 +633,11 @@ final class GameSessionStore {
                 turn.missionSet = nil
                 context.delete(turn)
             }
+            // 歩いた跡も前の旅のもの。残すと次の旅の地図に他人の線が出る
+            for point in Array(room.trackPoints) {
+                point.missionSet = nil
+                context.delete(point)
+            }
             try context.save()
 
             // 記録として残すなら実体は消さない。破棄するときだけ消す
@@ -683,6 +709,59 @@ final class GameSessionStore {
         return true
     }
 
+    /// この旅で撮った写真を、撮った順に。**どこからでも見られるようにするため**
+    var photoItems: [PhotoGalleryView.Item] {
+        (room?.visits ?? [])
+            .flatMap { visit in
+                visit.photos.map { photo in
+                    PhotoGalleryView.Item(fileName: photo.localFileName,
+                                          stationName: visit.station?.name ?? "-",
+                                          takenAt: photo.takenAt)
+                }
+            }
+            .sorted { $0.takenAt < $1.takenAt }
+    }
+
+    // MARK: - 歩いた跡
+
+    /// 跡を残す間隔。これより近い点は捨てる（電池と保存量のため）
+    private static let trackMinimumDistance: CLLocationDistance = 15
+    /// これより粗い点は跡に混ぜない。地下や高層ビルの谷間では大きく飛ぶ
+    private static let trackWorstAccuracy: CLLocationDistance = 60
+
+    /// 実際に歩いた位置を残す。
+    ///
+    /// **歩いている間だけ残す。** 待っている間の点まで拾うと、
+    /// 駅で立ち止まっているところが団子になって線が汚れる。
+    /// サーバーへは送らない（生のGPS座標は端末の外へ出さない約束）
+    func recordTrackPoint(_ location: CLLocation) {
+        guard let room else { return }
+        switch phase {
+        case .walking, .effectWalking: break
+        default: return
+        }
+        guard location.horizontalAccuracy > 0,
+              location.horizontalAccuracy <= Self.trackWorstAccuracy else { return }
+
+        if let last = room.trackPoints.max(by: { $0.recordedAt < $1.recordedAt }) {
+            let previous = CLLocation(latitude: last.latitude, longitude: last.longitude)
+            guard location.distance(from: previous) >= Self.trackMinimumDistance else { return }
+        }
+
+        let point = TrackPoint(latitude: location.coordinate.latitude,
+                               longitude: location.coordinate.longitude,
+                               accuracy: location.horizontalAccuracy,
+                               recordedAt: location.timestamp)
+        point.missionSet = room
+        context.insert(point)
+        save()
+    }
+
+    /// 歩いた跡（古い順）
+    var trackPoints: [TrackPoint] {
+        (room?.trackPoints ?? []).sorted { $0.recordedAt < $1.recordedAt }
+    }
+
     // MARK: - 予定から始める
 
     /// これから歩ける予定。**始めるときに選ばせるためのもの**。
@@ -729,6 +808,9 @@ final class GameSessionStore {
         room.startStation = stations.first { $0.orderNo == schedule.startOrder } ?? room.startStation
         room.goalStation = stations.first { $0.orderNo == schedule.goalOrder } ?? room.goalStation
         room.diceMax = min(max(schedule.diceMax, 1), 9)
+        // **選んだ予定の名前を旅の名前にする。** 盤面の見出しがルーム名のままだと、
+        // どの予定で歩いているのかが画面から分からない
+        room.name = schedule.title
         save()
         return nil
     }

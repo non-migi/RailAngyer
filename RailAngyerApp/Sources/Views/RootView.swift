@@ -103,6 +103,7 @@ private struct MainView: View {
     @State private var showingSettings = false
     @State private var showingSchedules = false
     @State private var showingMissions = false
+    @State private var showingPhotos = false
     @State private var didAskForNotifications = false
     @State private var didRequestLocation = false
     @State private var selectedTab: AppTab = .home
@@ -129,6 +130,7 @@ private struct MainView: View {
                     startJourney: startJourney,
                     showSchedules: { showingSchedules = true },
                     showMissions: { showingMissions = true },
+                    showPhotos: { showingPhotos = true },
                     showRecords: { selectedTab = .records },
                     showSettings: { showingSettings = true })
             }
@@ -159,6 +161,9 @@ private struct MainView: View {
         }
         .sheet(isPresented: $showingMissions) {
             MissionEditorView(store: store, sync: sync)
+        }
+        .sheet(isPresented: $showingPhotos) {
+            PhotoGalleryView(items: store.photoItems)
         }
         .sheet(item: $invitation) { invite in
             InviteAcceptView(invitation: invite, store: store, sync: sync)
@@ -200,6 +205,8 @@ private struct MainView: View {
                 store.arriveAtNextStop(expected: order)
                 notifyArrival(at: order)
             }
+            // 実際に歩いた跡を残す。**歩いている間だけ**（判断は store 側）
+            location.onMove = { store.recordTrackPoint($0) }
             location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
             syncTarget()
 
@@ -334,6 +341,7 @@ private struct HomeDashboardView: View {
     let startJourney: () -> Void
     let showSchedules: () -> Void
     let showMissions: () -> Void
+    let showPhotos: () -> Void
     let showRecords: () -> Void
     let showSettings: () -> Void
 
@@ -479,6 +487,9 @@ private struct HomeDashboardView: View {
         HStack(spacing: 10) {
             actionButton("予定", "calendar.badge.plus", showSchedules)
             actionButton("お題", "square.and.pencil", showMissions)
+            // **写真はどこからでも開けるようにする。**
+            // 駅の詳細をたどらないと見られないのでは、後から探せない
+            actionButton("写真", "photo.on.rectangle.angled", showPhotos)
             actionButton("記録", "clock.arrow.circlepath", showRecords)
         }
     }

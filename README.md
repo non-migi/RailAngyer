@@ -73,6 +73,10 @@
   伏せる設定では**サーバーが他人のお題を返さない**（通信を覗いても見えない）
 - 旅を始めるときは、**立ててある予定から選べる**。予定のルールをそのまま移して始める
 - 地図の**施設アイコンを押すと情報が出る**（分類・住所・電話・マップアプリへの引き渡し）
+- 地図は**実際に歩いた跡**を描き、**200mごとに速さで色を分ける**。
+  これから行く線は**道路沿い**に引く（取れなければ直線）。お題のある駅にはピンが立つ
+- **写真はどこからでも見られる**（ホーム＞写真）。地図のピンにも写真がそのまま出る
+- ふりかえりに**全体の地図・歩いた距離・お題ごとの写真**を出す
 - **遊び方**を初回に出し、設定からいつでも読み返せる。利用規約も同梱
 - TestFlight v1.0.0 (1)：App Icon、起動画面、プライバシーマニフェスト、
   配布文面、Explicit App IDを用意し、ビルド1をApp Store Connectへアップロード済み。
@@ -83,10 +87,10 @@
 ## テスト
 
 ```bash
-swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース・見積もり 76件
+swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース・見積もり・跡 85件
 tools/prepare-simulator.sh "iPhone 17 Pro"   # UIテストの前に位置情報を許可する（初回・新環境）
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 153件 + UI 12件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 160件 + UI 12件
 dotnet test RailAngyerApi.Tests               # API 58件
 ```
 

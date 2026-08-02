@@ -15,6 +15,8 @@ struct JourneySummary {
         let authorName: String
         let done: Bool
         let effect: EffectType
+        /// その駅で撮った写真。**やったことの証拠**なので、お題と並べて出す
+        let photoFileNames: [String]
     }
 
     struct StationRecord: Identifiable {
@@ -41,6 +43,10 @@ struct JourneySummary {
     let isCleared: Bool
     let missionResults: [MissionResult]
     let stations: [StationRecord]
+    /// 実際に歩いた跡（古い順）。地図と距離に使う
+    let track: [TrackSegments.Fix]
+    /// 駅と駅を直線でつないだときの道のり。跡が無いときの代わり
+    let straightMeters: Double
 
     var visitedRate: Double {
         stationCount > 0 ? Double(visitedCount) / Double(stationCount) : 0
@@ -57,6 +63,23 @@ struct JourneySummary {
     }
 
     var achievedMissionCount: Int { missionResults.filter(\.done).count }
+
+    /// 実際に歩いた距離（m）。**跡が残っていればその長さ、無ければ駅間の直線の合計**
+    var walkedMeters: Double {
+        let tracked = TrackSegments.totalMeters(track)
+        return tracked >= 100 ? tracked : straightMeters
+    }
+
+    /// 跡から出した距離か（＝実測か目安か）
+    var isDistanceMeasured: Bool { TrackSegments.totalMeters(track) >= 100 }
+
+    var distanceText: String {
+        let meters = walkedMeters
+        guard meters >= 1 else { return "—" }
+        return meters >= 1000
+            ? String(format: "%.1f km", meters / 1000)
+            : String(format: "%.0f m", meters)
+    }
 
     // MARK: - 組み立て
 
@@ -88,19 +111,38 @@ struct JourneySummary {
             .sorted { $0.turnNo < $1.turnNo }
             .map { turn in
                 let mission = turn.selectedMission
+                // 着地した訪問に紐づく写真。**そのお題をやったときに撮ったもの**
+                let photos = room.visits
+                    .filter { $0.turn?.id == turn.id && $0.visitKind == .landing }
+                    .flatMap(\.photos)
+                    .sorted { $0.takenAt < $1.takenAt }
+                    .map(\.localFileName)
+
                 return MissionResult(id: turn.id,
                                      turnNo: turn.turnNo,
                                      stationName: turn.landingStation?.name ?? "-",
                                      content: mission?.content ?? "",
                                      authorName: mission?.member?.displayName ?? "-",
                                      done: turn.missionDone,
-                                     effect: turn.appliedEffectType ?? .none)
+                                     effect: turn.appliedEffectType ?? .none,
+                                     photoFileNames: photos)
             }
 
         let landedOrders = Set(visits.filter { $0.visitKind == .landing }
                                      .compactMap { $0.station?.orderNo })
         let orders = engine?.orderedRange ?? Array(visitedOrders).sorted()
         let allStations = room.course?.stations ?? []
+
+        track = room.trackPoints
+            .sorted { $0.recordedAt < $1.recordedAt }
+            .map { TrackSegments.Fix(latitude: $0.latitude, longitude: $0.longitude,
+                                     time: $0.recordedAt) }
+
+        // 跡が無いときのために、通った駅を順につないだ長さも出しておく
+        let visitedInOrder = visits
+            .sorted { $0.arrivedAt < $1.arrivedAt }
+            .compactMap { $0.station }
+        straightMeters = WalkEstimator.estimate(points: visitedInOrder).straightMeters
 
         stations = orders.compactMap { order in
             guard let station = allStations.first(where: { $0.orderNo == order }) else { return nil }
