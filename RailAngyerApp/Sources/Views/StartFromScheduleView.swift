@@ -80,6 +80,9 @@ struct StartFromScheduleView: View {
     private func ruleText(_ schedule: Schedule) -> String {
         let course = store.courses.first { $0.name == schedule.courseName }
         let start = course?.stations.first { $0.orderNo == schedule.startOrder }?.name ?? "—"
+        if schedule.isLap {
+            return "\(schedule.courseName)　\(start) から一周　サイコロ1〜\(schedule.diceMax)"
+        }
         let goal = course?.stations.first { $0.orderNo == schedule.goalOrder }?.name ?? "—"
         return "\(schedule.courseName)　\(start) → \(goal)　サイコロ1〜\(schedule.diceMax)"
     }

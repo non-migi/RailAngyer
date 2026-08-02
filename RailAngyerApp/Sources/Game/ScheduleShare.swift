@@ -102,7 +102,10 @@ enum ScheduleShare {
             text += "（\(CourseDirectory.regionText(course))）"
         }
         let stations = sectionStations(schedule, course: course)
-        if let start = stations.first, let goal = stations.last, start.orderNo != goal.orderNo {
+        if schedule.isLap, let start = stations.first {
+            text += "　\(start.name) から一周　\(stations.count)駅"
+        } else if let start = stations.first, let goal = stations.last,
+                  start.orderNo != goal.orderNo {
             text += "　\(start.name) → \(goal.name)　\(stations.count)駅"
         }
         return text
@@ -111,6 +114,11 @@ enum ScheduleShare {
     /// 区間の駅（通し番号の順）
     static func sectionStations(_ schedule: Schedule, course: Course?) -> [Station] {
         guard let course else { return [] }
+
+        // **一周はスタートとゴールが同じ駅。** そのまま範囲にすると1駅しか取れず、
+        // 地図も目安も出なくなる（札幌市電の予定で実際に起きた）。一周ならコース全体を通る
+        if schedule.isLap { return course.stationsInOrder }
+
         let range = min(schedule.startOrder, schedule.goalOrder)...max(schedule.startOrder,
                                                                       schedule.goalOrder)
         return course.stationsInOrder.filter { range.contains($0.orderNo) }
@@ -120,7 +128,9 @@ enum ScheduleShare {
     static func estimate(_ schedule: Schedule, course: Course?) -> WalkEstimate? {
         let stations = sectionStations(schedule, course: course)
         guard stations.count >= 2 else { return nil }
-        return WalkEstimator.estimate(points: stations)
+        // 一周では出発した駅へ戻るぶんまで数える
+        let points = schedule.isLap ? stations + [stations[0]] : stations
+        return WalkEstimator.estimate(points: points)
     }
 
     /// 「参加 2人・不参加 1人」。誰も答えていなければ出さない

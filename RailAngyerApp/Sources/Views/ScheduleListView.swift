@@ -93,9 +93,13 @@ struct ScheduleListView: View {
     private func sectionMap(_ schedule: Schedule) -> some View {
         let stations = ScheduleShare.sectionStations(schedule, course: course(for: schedule))
         if stations.count >= 2 {
-            CourseSectionSummaryView(stations: stations,
-                                     caption: "\(schedule.courseName)　"
-                                     + "\(stations.first?.name ?? "") → \(stations.last?.name ?? "")")
+            CourseSectionSummaryView(
+                stations: stations,
+                isLoop: schedule.isLap,
+                caption: schedule.isLap
+                    ? "\(schedule.courseName)　\(stations.first?.name ?? "") から一周"
+                    : "\(schedule.courseName)　"
+                      + "\(stations.first?.name ?? "") → \(stations.last?.name ?? "")")
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 10, trailing: 16))
         }
     }
@@ -111,7 +115,8 @@ struct ScheduleListView: View {
         return MissionPlan(course: course,
                            startOrder: schedule.startOrder,
                            goalOrder: schedule.goalOrder,
-                           title: schedule.title)
+                           title: schedule.title,
+                           isLap: schedule.isLap)
     }
 
     private func isMine(_ schedule: Schedule) -> Bool {
@@ -147,10 +152,12 @@ struct ScheduleListView: View {
     }
 
     private func ruleText(_ schedule: Schedule) -> String {
-        let start = store.courses.first { $0.name == schedule.courseName }?
-            .stations.first { $0.orderNo == schedule.startOrder }?.name ?? "—"
-        let goal = store.courses.first { $0.name == schedule.courseName }?
-            .stations.first { $0.orderNo == schedule.goalOrder }?.name ?? "—"
+        let course = store.courses.first { $0.name == schedule.courseName }
+        let start = course?.stations.first { $0.orderNo == schedule.startOrder }?.name ?? "—"
+        if schedule.isLap {
+            return "\(schedule.courseName)　\(start) から一周　サイコロ1〜\(schedule.diceMax)"
+        }
+        let goal = course?.stations.first { $0.orderNo == schedule.goalOrder }?.name ?? "—"
         return "\(schedule.courseName)　\(start) → \(goal)　サイコロ1〜\(schedule.diceMax)"
     }
 

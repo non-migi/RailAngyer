@@ -29,6 +29,8 @@ struct MissionEditorView: View {
         let all = (course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
 
         if let plan {
+            // 一周はコース全体を通る。区間として絞ると1駅になってしまう
+            if plan.isLap { return all }
             let range = min(plan.startOrder, plan.goalOrder)...max(plan.startOrder, plan.goalOrder)
             return all.filter { range.contains($0.orderNo) }
         }
@@ -84,6 +86,7 @@ struct MissionEditorView: View {
         if stations.count >= 2 {
             Section {
                 CourseSectionSummaryView(stations: stations,
+                                         isLoop: isLap,
                                          markedOrders: writtenOrders,
                                          caption: sectionCaption)
                     .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 12, trailing: 16))
@@ -97,10 +100,16 @@ struct MissionEditorView: View {
         Set(missions.compactMap { $0.station?.orderNo })
     }
 
+    /// 一周の対象か。予定から開いたときは予定に従い、
+    /// ホームから開いたときはいま遊んでいる設定に従う
+    private var isLap: Bool {
+        plan.map(\.isLap) ?? (store.room?.isLap == true)
+    }
+
     private var sectionCaption: String {
         let name = course?.name ?? ""
         guard let start = stations.first, let goal = stations.last else { return name }
-        return "\(name)　\(start.name) → \(goal.name)"
+        return isLap ? "\(name)　\(start.name) から一周" : "\(name)　\(start.name) → \(goal.name)"
     }
 
     // MARK: - 自分のお題
@@ -195,6 +204,9 @@ struct MissionPlan: Identifiable {
     let startOrder: Int
     let goalOrder: Int
     let title: String
+    /// 一周する予定か。**スタートとゴールが同じ駅**になるので、
+    /// 区間として扱うと1駅しか取れない
+    var isLap: Bool = false
 }
 
 /// 編集中のお題。新規と書き換えを同じ画面で扱う

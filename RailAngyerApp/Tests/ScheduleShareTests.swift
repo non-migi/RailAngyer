@@ -245,6 +245,53 @@ struct ScheduleShareTests {
         #expect(!text.contains("railangyer://"))
     }
 
+    // MARK: - 一周の予定
+    //
+    // **一周はスタートとゴールが同じ駅。** そのまま範囲として扱うと1駅しか取れず、
+    // 地図も歩く目安も出なくなる（札幌市電の予定で実際に起きた）
+
+    private func lapSchedule(courseName: String = "札幌市電") throws -> (Schedule, Course) {
+        let course = try course(courseName)
+        let first = try #require(course.stationsInOrder.first)
+        let error = store.saveSchedule(nil, title: "市電を一周", startAt: startAt, meetPlace: nil,
+                                       course: course, startOrder: first.orderNo,
+                                       goalOrder: first.orderNo, diceMax: 4, isLap: true)
+        #expect(error == nil)
+        return (try #require(store.schedules.first { $0.title == "市電を一周" }), course)
+    }
+
+    @Test("一周の予定では、コース全体の駅が対象になる")
+    func lapCoversWholeCourse() throws {
+        let (schedule, course) = try lapSchedule()
+
+        let stations = ScheduleShare.sectionStations(schedule, course: course)
+
+        // 1駅しか返らないと、地図（2駅以上で出る）が消える
+        #expect(stations.count == course.stations.count)
+        #expect(stations.count > 2)
+    }
+
+    @Test("一周の予定にも歩く目安が出る")
+    func lapHasEstimate() throws {
+        let (schedule, course) = try lapSchedule()
+
+        let estimate = try #require(ScheduleShare.estimate(schedule, course: course))
+
+        // 出発した駅へ戻るぶんまで数える。片道より長い
+        let oneWay = WalkEstimator.estimate(points: course.stationsInOrder)
+        #expect(estimate.meters > oneWay.meters)
+    }
+
+    @Test("一周の予定は「◯◯から一周」と書く")
+    func lapCourseText() throws {
+        let (schedule, course) = try lapSchedule()
+
+        let text = ScheduleShare.courseText(schedule, course: course)
+
+        #expect(text.contains("から一周"))
+        #expect(!text.contains("→"))
+    }
+
     @Test("県をまたぐコースは通る県をすべて書く")
     func crossingCourseShowsEveryRegion() throws {
         let hankyu = try course("阪急京都本線")
