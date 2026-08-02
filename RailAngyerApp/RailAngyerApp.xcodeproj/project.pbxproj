@@ -20,6 +20,7 @@
 		172A96FBBF9EF7A12C8A95D5 /* MissionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */; };
 		18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16793C854280C0258AE421C5 /* TimingUITests.swift */; };
 		19031EB674080BA5E093E220 /* TrackRecordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEC6D332774134FE7C1C143 /* TrackRecordingTests.swift */; };
+		1C0CF5689192F11B6FA3CB2E /* PhotoStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84770443BF190B8FFC9D7511 /* PhotoStoreTests.swift */; };
 		1D35FAFF3B2971A9C6558F74 /* PhotoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBD5F08B6D38E6F8547EF08 /* PhotoStore.swift */; };
 		2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E8A6CD54AD50C8860C443 /* ModelsTests.swift */; };
 		22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 02DE3152D31178D49884EE7D /* RailAngyerCore */; };
@@ -150,6 +151,7 @@
 		7E2198C9E54DD1A80C0F4477 /* LapJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LapJourneyTests.swift; sourceTree = "<group>"; };
 		836563870DB4BE41BCFBBCCE /* TestHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHooks.swift; sourceTree = "<group>"; };
 		83B5B044FA4688B323E2DFAA /* RailAngyerCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RailAngyerCore; path = ../RailAngyerCore; sourceTree = SOURCE_ROOT; };
+		84770443BF190B8FFC9D7511 /* PhotoStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoStoreTests.swift; sourceTree = "<group>"; };
 		86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
 		8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionAuthoringTests.swift; sourceTree = "<group>"; };
 		8C919B61790E7CEBDC4103AE /* ResetJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetJourneyUITests.swift; sourceTree = "<group>"; };
@@ -401,6 +403,7 @@
 				7E2198C9E54DD1A80C0F4477 /* LapJourneyTests.swift */,
 				8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */,
 				902E8A6CD54AD50C8860C443 /* ModelsTests.swift */,
+				84770443BF190B8FFC9D7511 /* PhotoStoreTests.swift */,
 				FFE244E3EF71098607B7D826 /* ResetProgressTests.swift */,
 				5EDE56F5B494ED7D2F503BE1 /* ScheduleShareTests.swift */,
 				5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */,
@@ -565,6 +568,7 @@
 				9D9146B1722AC58D18566EBE /* LapJourneyTests.swift in Sources */,
 				E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */,
 				2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */,
+				1C0CF5689192F11B6FA3CB2E /* PhotoStoreTests.swift in Sources */,
 				EF2C45E0A5D3D32BC56F091E /* ResetProgressTests.swift in Sources */,
 				72A2A0BB8838200538AD7AD1 /* ScheduleShareTests.swift in Sources */,
 				F045E39BD922B1C6A3A942D0 /* ScheduleTests.swift in Sources */,

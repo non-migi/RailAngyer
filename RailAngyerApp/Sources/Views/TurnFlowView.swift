@@ -121,9 +121,10 @@ struct TurnFlowView: View {
 
     /// SC-06 着地駅の告知。「途中の駅も歩いて訪れる」ことを必ず伝える
     private func announcement(_ turn: Turn) -> some View {
-        let landing = turn.landingStation?.orderNo ?? store.currentOrder
-        let from = turn.fromStation?.orderNo ?? store.currentOrder
-        let passing = (store.engine?.path(from: from, to: landing) ?? []).dropLast()
+        // 進行の計算は store が持つ（一周では番号ではなく「位置」で数える必要がある）
+        let landing = store.landingPosition(of: turn)
+        let from = turn.fromPosition ?? turn.fromStation?.orderNo ?? store.currentOrder
+        let passing = store.passingPositions(of: turn)
 
         return VStack(alignment: .leading, spacing: 20) {
             Text("\(store.stationName(from)) から").foregroundStyle(.secondary)

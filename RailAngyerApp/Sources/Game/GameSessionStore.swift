@@ -749,6 +749,25 @@ final class GameSessionStore {
             .sorted { $0.takenAt < $1.takenAt }
     }
 
+    /// このターンで通る駅（着地は含まない）。
+    ///
+    /// **駅の通し番号ではなく「位置」で数える。** 一周では番号が一巡して元に戻るため、
+    /// 番号のまま経路を出すと逆向きに路線をほぼ一周ぶん並べてしまう
+    /// （札幌市電で「途中の◯◯も1駅ずつ歩いて訪れます」が大量に出た原因）。
+    ///
+    /// - Returns: 位置の並び。名前は `stationName(_:)` で引ける
+    func passingPositions(of turn: Turn) -> [Int] {
+        guard let engine else { return [] }
+        let from = turn.fromPosition ?? turn.fromStation?.orderNo ?? currentOrder
+        let landing = turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
+        return Array(engine.path(from: from, to: landing).dropLast())
+    }
+
+    /// このターンの着地位置
+    func landingPosition(of turn: Turn) -> Int {
+        turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
+    }
+
     // MARK: - 歩いた跡
 
     /// 跡を残す間隔。これより近い点は捨てる。
