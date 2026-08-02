@@ -1,0 +1,56 @@
+{
+  "identifier" : "RailAngyerTips",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "300",
+      "familyShareable" : false,
+      "internalID" : "TIP300",
+      "localizations" : [
+        {
+          "description" : "コーヒー1杯ぶんの応援です。機能は増えません。",
+          "displayName" : "応援する（コーヒー1杯ぶん）",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "com.non-migi.RailAngyerApp.tip300",
+      "referenceName" : "Tip 300",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "600",
+      "familyShareable" : false,
+      "internalID" : "TIP600",
+      "localizations" : [
+        {
+          "description" : "ランチ1回ぶんの応援です。機能は増えません。",
+          "displayName" : "応援する（ランチ1回ぶん）",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "com.non-migi.RailAngyerApp.tip600",
+      "referenceName" : "Tip 600",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "1000",
+      "familyShareable" : false,
+      "internalID" : "TIP1000",
+      "localizations" : [
+        {
+          "description" : "しっかり応援です。機能は増えません。",
+          "displayName" : "応援する（しっかり）",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "com.non-migi.RailAngyerApp.tip1000",
+      "referenceName" : "Tip 1000",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : { "major" : 4, "minor" : 0 }
+}

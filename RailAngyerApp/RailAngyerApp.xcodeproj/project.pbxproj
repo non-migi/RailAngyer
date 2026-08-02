@@ -30,6 +30,7 @@
 		3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836563870DB4BE41BCFBBCCE /* TestHooks.swift */; };
 		389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */; };
 		39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A195889CC18D3B9AEE608 /* AppMain.swift */; };
+		3F36FCD791FD8107A058AF4B /* SupportUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB09B4A51801DDC52446EDA9 /* SupportUITests.swift */; };
 		4709BDB2B2425BDFE948D576 /* GameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */; };
 		4BA80320271A109545402F7F /* JourneySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */; };
 		518D2299AA99EBE7576AE457 /* room.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CB81EAFFC74827CB26EBF /* room.json */; };
@@ -60,6 +61,8 @@
 		A8A561ED8884C4D34C683285 /* Terms.md in Resources */ = {isa = PBXBuildFile; fileRef = 0E4DAEE06CECDA5997CE30E7 /* Terms.md */; };
 		B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5241C4F1484E4B126481D40B /* WalkTimingTests.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
+		B66E84D5AE63D8214CC84A30 /* SupportDeveloperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F20D423F434E767B13723EB /* SupportDeveloperView.swift */; };
+		BBD2809164BE4F364C793021 /* AttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91340569C4EC1AD41A62A06F /* AttributionView.swift */; };
 		C4662713B87E70F0BFB73B47 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B470BF27494F68A94DA16FA /* SyncService.swift */; };
 		C645F4276FC93A61AC1DCC61 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */; };
 		C658DAEC97EEFB98332BC3AA /* ScheduleListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C6FD8CFBE707DD0130903A /* ScheduleListView.swift */; };
@@ -72,6 +75,7 @@
 		D96CB8A376C418A4182CAF8C /* CourseDirectoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7601E3978780FCBEA0C739CB /* CourseDirectoryTests.swift */; };
 		DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */; };
 		DACFE2A82A073E7669EB0136 /* PhotoVisibleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60704DCD90679AFAEBB91412 /* PhotoVisibleUITests.swift */; };
+		DCAA3DB7A6144DA9A3307E8F /* TipJar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBB233E437C10B275AC8E9A /* TipJar.swift */; };
 		E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156CFFC9852BBD282BE20DE /* Theme.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
@@ -117,6 +121,7 @@
 		1B812383D18940B50805E027 /* CourseDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDirectory.swift; sourceTree = "<group>"; };
 		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
 		1E0CB81EAFFC74827CB26EBF /* room.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = room.json; sourceTree = "<group>"; };
+		1F20D423F434E767B13723EB /* SupportDeveloperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportDeveloperView.swift; sourceTree = "<group>"; };
 		221879CB631B13ABDD16A06A /* RoomJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomJoinView.swift; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		24DB20F127C691EA3532D1D7 /* asc-crashes.cpython-314.pyc */ = {isa = PBXFileReference; path = "asc-crashes.cpython-314.pyc"; sourceTree = "<group>"; };
@@ -158,6 +163,7 @@
 		8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionAuthoringTests.swift; sourceTree = "<group>"; };
 		8C919B61790E7CEBDC4103AE /* ResetJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetJourneyUITests.swift; sourceTree = "<group>"; };
 		902E8A6CD54AD50C8860C443 /* ModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsTests.swift; sourceTree = "<group>"; };
+		91340569C4EC1AD41A62A06F /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
 		91CDEEE260865EBF8455D4E6 /* InviteLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteLink.swift; sourceTree = "<group>"; };
 		9577A67BEAAF07D613F921B7 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		98F5289A8DF49229292880FD /* MasterSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterSeeder.swift; sourceTree = "<group>"; };
@@ -174,6 +180,7 @@
 		BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		C36DD89E35D1609C0821E07B /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		C69B58A5D87FA9234652A451 /* WalkTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkTiming.swift; sourceTree = "<group>"; };
+		CB09B4A51801DDC52446EDA9 /* SupportUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportUITests.swift; sourceTree = "<group>"; };
 		CE87431E8C664179BE6DC00C /* StartFromScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartFromScheduleTests.swift; sourceTree = "<group>"; };
 		CF3A114F4D1B965E9CACF242 /* RuleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleSettingsView.swift; sourceTree = "<group>"; };
 		D11D3C151DB16D800074F495 /* ApiConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiConfiguration.swift; sourceTree = "<group>"; };
@@ -181,6 +188,7 @@
 		D80CE7F62882767E29A8AC06 /* DiceRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollView.swift; sourceTree = "<group>"; };
 		D8A148FD068DA4157D095BB5 /* CourseSectionMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSectionMapView.swift; sourceTree = "<group>"; };
 		DC4114A3D977E18BF4C5CD2F /* RailAngyerAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCBB233E437C10B275AC8E9A /* TipJar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJar.swift; sourceTree = "<group>"; };
 		E87BBBAE4AF5160E731DC77C /* StartFromScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartFromScheduleView.swift; sourceTree = "<group>"; };
 		EA6A195889CC18D3B9AEE608 /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		EBEC6D332774134FE7C1C143 /* TrackRecordingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingTests.swift; sourceTree = "<group>"; };
@@ -266,6 +274,7 @@
 				F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */,
 				2A2BE1CAF504AF4F28A4BEDF /* ScheduleShare.swift */,
 				836563870DB4BE41BCFBBCCE /* TestHooks.swift */,
+				DCBB233E437C10B275AC8E9A /* TipJar.swift */,
 				C69B58A5D87FA9234652A451 /* WalkTiming.swift */,
 			);
 			path = Game;
@@ -347,6 +356,7 @@
 				2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */,
 				56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */,
 				5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */,
+				CB09B4A51801DDC52446EDA9 /* SupportUITests.swift */,
 				16793C854280C0258AE421C5 /* TimingUITests.swift */,
 			);
 			path = UITests;
@@ -355,6 +365,7 @@
 		A5BFFB878130A1D100436850 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				91340569C4EC1AD41A62A06F /* AttributionView.swift */,
 				1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */,
 				22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */,
 				9577A67BEAAF07D613F921B7 /* CameraPicker.swift */,
@@ -376,6 +387,7 @@
 				E87BBBAE4AF5160E731DC77C /* StartFromScheduleView.swift */,
 				3C804299584BFF82C68B12EA /* StationDetailView.swift */,
 				3904705B0EEBD442E11E0313 /* StationMapView.swift */,
+				1F20D423F434E767B13723EB /* SupportDeveloperView.swift */,
 				1156CFFC9852BBD282BE20DE /* Theme.swift */,
 				3A20C935B2EE85D434D111CF /* TurnFlowView.swift */,
 			);
@@ -555,6 +567,7 @@
 				EF0CAB5579043DEC0609F9B6 /* ResumeButtonUITests.swift in Sources */,
 				5D317FF6A05655153C649C2C /* ScheduleUITests.swift in Sources */,
 				D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */,
+				3F36FCD791FD8107A058AF4B /* SupportUITests.swift in Sources */,
 				18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -590,6 +603,7 @@
 				6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */,
 				C6E478F22C510D5C793EFB7C /* ApiConfiguration.swift in Sources */,
 				39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */,
+				BBD2809164BE4F364C793021 /* AttributionView.swift in Sources */,
 				CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */,
 				966F47B6C8E340A3AB9A6243 /* BoardView.swift in Sources */,
 				128DFB62618F00A15A292B2C /* CameraPicker.swift in Sources */,
@@ -626,9 +640,11 @@
 				67054CAA369FC781E67852A7 /* StartFromScheduleView.swift in Sources */,
 				E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */,
 				7F846552B332E52C174977BA /* StationMapView.swift in Sources */,
+				B66E84D5AE63D8214CC84A30 /* SupportDeveloperView.swift in Sources */,
 				C4662713B87E70F0BFB73B47 /* SyncService.swift in Sources */,
 				3886453DD60AFC30114F1E53 /* TestHooks.swift in Sources */,
 				E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */,
+				DCAA3DB7A6144DA9A3307E8F /* TipJar.swift in Sources */,
 				9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */,
 				A2CA329F835DA83F6CF6DB30 /* WalkTiming.swift in Sources */,
 			);

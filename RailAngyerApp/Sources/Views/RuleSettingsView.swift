@@ -16,6 +16,9 @@ struct RuleSettingsView: View {
     @State private var visibilityError: String?
     @State private var showingHowToPlay = false
     @State private var document: DocumentView.Kind?
+    @State private var showingSupport = false
+    @State private var showingAttribution = false
+    @State private var tipJar = TipJar()
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     private var allStations: [Station] {
@@ -104,6 +107,37 @@ struct RuleSettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
+                // **応援の導線はここに置く。** 一番下のアプリ情報に埋めると誰も見つけない。
+                // ただし遊びの流れには一切割り込ませない（設定の中だけ）
+                Section {
+                    Button {
+                        showingSupport = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "heart.fill")
+                                .font(.title3)
+                                .foregroundStyle(Theme.mission)
+                                .frame(width: 28)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("開発者を応援する")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                Text("1人で作っています。¥300から")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold()).foregroundStyle(.tertiary)
+                        }
+                        .contentShape(Rectangle())
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("supportDeveloper")
+                } footer: {
+                    Text("応援しても機能は増えません。気持ちだけを受け取る仕組みです。")
+                }
+
                 Section {
                     Button {
                         showingHowToPlay = true
@@ -119,6 +153,11 @@ struct RuleSettingsView: View {
                         document = .privacy
                     } label: {
                         Label("プライバシーポリシー", systemImage: "hand.raised")
+                    }
+                    Button {
+                        showingAttribution = true
+                    } label: {
+                        Label("データの出典", systemImage: "map")
                     }
                 } header: {
                     Text("使い方とお約束")
@@ -174,6 +213,10 @@ struct RuleSettingsView: View {
                 HowToPlayView()
             }
             .sheet(item: $document) { DocumentView(kind: $0) }
+            .sheet(isPresented: $showingSupport) {
+                SupportDeveloperView(tipJar: tipJar)
+            }
+            .sheet(isPresented: $showingAttribution) { AttributionView() }
             .confirmationDialog("現在の旅を保存して、新しい旅を始めますか",
                                 isPresented: $showResetConfirm, titleVisibility: .visible) {
                 Button("保存して新しい旅へ", role: .destructive) { store.resetProgress() }
