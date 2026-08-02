@@ -751,8 +751,13 @@ final class GameSessionStore {
 
     // MARK: - 歩いた跡
 
-    /// 跡を残す間隔。これより近い点は捨てる（電池と保存量のため）
-    private static let trackMinimumDistance: CLLocationDistance = 15
+    /// 跡を残す間隔。これより近い点は捨てる。
+    ///
+    /// **色を50mごとに変えるので、点はそれより細かく要る。**
+    /// 20mおきだと1区切りに2点しか入らず、GPSの誤差がそのまま色に出る。
+    /// 測位そのものは動きっぱなしなので、ここを詰めても電池はほとんど変わらない
+    /// （増えるのは保存の回数）
+    private static let trackMinimumDistance: CLLocationDistance = 10
     /// これより粗い点は跡に混ぜない。地下や高層ビルの谷間では大きく飛ぶ
     private static let trackWorstAccuracy: CLLocationDistance = 60
 

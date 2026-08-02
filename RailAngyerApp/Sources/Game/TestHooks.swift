@@ -20,6 +20,12 @@ enum TestHooks {
         ProcessInfo.processInfo.environment["RAILANGYER_IN_MEMORY"] == "1"
     }
 
+    /// お題の見本を入れて起動する（例: `RAILANGYER_SAMPLE_MISSIONS=1`）。
+    /// **地図の見え方を確かめるため**。お題が1つも無いと、ピンも文字も出ない
+    static var seedsSampleMissions: Bool {
+        ProcessInfo.processInfo.environment["RAILANGYER_SAMPLE_MISSIONS"] == "1"
+    }
+
     /// 通知の許可を求めない（例: `RAILANGYER_NO_NOTIF_PROMPT=1`）。
     /// UIテストでは許可ダイアログが操作を塞ぐため、検証対象でないときは出さない
     static var suppressesNotificationPrompt: Bool {

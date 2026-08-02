@@ -95,6 +95,25 @@ struct TrackSegmentsTests {
         #expect(abs(total - 1000) < 30, "\(total)")
     }
 
+    @Test("既定の刻み幅は50m")
+    func defaultIntervalIsFineGrained() {
+        #expect(TrackSegments.defaultInterval == 50)
+
+        // 10mおきに300m歩いた跡を、指定なしで刻むと6本になる
+        let segments = TrackSegments.split(line(count: 31, meters: 10))
+
+        #expect(segments.count == 6)
+    }
+
+    @Test("50m刻みでも、区切りごとの分/kmが出る")
+    func computesPaceAtFineInterval() throws {
+        // 10m を 7.2秒 = 時速5km = 12分/km
+        let segments = TrackSegments.split(line(count: 31, meters: 10, secondsPerStep: 7.2))
+
+        let pace = try #require(segments.first?.minutesPerKilometer)
+        #expect(abs(pace - 12) < 1.0, "\(pace)")
+    }
+
     @Test("刻み幅が0以下なら刻まない")
     func rejectsZeroInterval() {
         #expect(TrackSegments.split(line(count: 10, meters: 50), interval: 0).isEmpty)

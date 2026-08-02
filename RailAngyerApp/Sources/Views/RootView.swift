@@ -25,7 +25,7 @@ struct RootView: View {
             let syncService = SyncService(context: context, client: client, credentials: credentials)
 
             let s = GameSessionStore(context: context)
-            s.prepare()
+            s.prepare(sampleMissions: TestHooks.seedsSampleMissions)
             s.sync = syncService
 
             // 初期化が速い端末でも起動画面が一瞬ちらつかないよう、短い一拍だけ保つ。
@@ -140,7 +140,9 @@ private struct MainView: View {
             .tabItem { Label("ホーム", systemImage: "house.fill") }
 
             NavigationStack {
-                BoardView(store: store, sync: sync, showingSettings: $showingSettings)
+                BoardView(store: store, sync: sync, showingSettings: $showingSettings) {
+                    isTurnMinimized = false
+                }
             }
             .tag(AppTab.journey)
             .tabItem { Label("旅", systemImage: "map.fill") }
@@ -188,22 +190,6 @@ private struct MainView: View {
         .onOpenURL { url in
             guard let invite = InviteLink.invitation(from: url) else { return }
             invitation = invite
-        }
-        .overlay(alignment: .bottom) {
-            if isTurnMinimized && (store.phase.isInTurn || store.showingAnnouncement) {
-                Button {
-                    isTurnMinimized = false
-                } label: {
-                    Label(resumeLabel, systemImage: "figure.walk.motion")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 18).padding(.vertical, 12)
-                        .background(Theme.line, in: Capsule())
-                        .foregroundStyle(Theme.onLine)
-                        .shadow(color: .black.opacity(0.2), radius: 8, y: 3)
-                }
-                .padding(.bottom, 62)
-                .accessibilityIdentifier("resumeTurn")
-            }
         }
         .overlay(alignment: .top) {
             if isInitialDatabaseLoad {
@@ -300,18 +286,6 @@ private struct MainView: View {
             startJourneyNow()
         } else {
             showingStartPicker = true
-        }
-    }
-
-    /// しまっているときに出す、戻る口の文言
-    private var resumeLabel: String {
-        switch store.phase {
-        case .walking(let next, _):        "\(store.stationName(next)) へ歩く"
-        case .effectWalking(let next, _):  "\(store.stationName(next)) へ歩く"
-        case .landed:                      "お題を引く"
-        case .mission:                     "お題を続ける"
-        case .arrivedPassing:              "次の駅へ"
-        default:                           "旅を続ける"
         }
     }
 

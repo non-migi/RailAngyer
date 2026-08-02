@@ -41,7 +41,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-        manager.distanceFilter = 20                 // 20m動くまで更新しない（電池対策）
+        // 10m動くまで更新しない。**歩いた跡を50mごとに色分けするため**、
+        // 1区切りに数点は入るようにしておく（測位自体は動きっぱなしなので電池は変わらない）
+        manager.distanceFilter = 10
         manager.pausesLocationUpdatesAutomatically = false
         authorizationStatus = manager.authorizationStatus
     }

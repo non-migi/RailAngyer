@@ -71,7 +71,7 @@ struct JourneySummaryView: View {
                     Text("歩いた道のり")
                 } footer: {
                     Text(summary.isDistanceMeasured
-                         ? "実際に歩いた跡から出した距離です。200mごとに速さで色を分けています。"
+                         ? "実際に歩いた跡から出した距離です。50mごとに速さで色を分けています。"
                          : "跡が残っていないため、通った駅を結んだ距離です。")
                 }
             }

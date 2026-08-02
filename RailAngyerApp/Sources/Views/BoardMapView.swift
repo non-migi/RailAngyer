@@ -10,7 +10,7 @@ import RailAngyerCore
 /// 線の引き分け:
 /// - **これから行くところ**は点線。**道路に沿った形**で引く（取れるまでは直線）
 /// - **実際に歩いた跡**は実線。GPSで残した跡そのものを描き、
-///   **200mごとに刻んでその区切りの速さで色を変える**
+///   **50mごとに刻んでその区切りの速さで色を変える**（信号ひとつぶんの粒度）
 ///   （分/kmに応じて、速い青 → 標準の緑 → ゆっくりの赤へ連続変化）
 /// - 跡がまだ無いところは、駅と駅を結んだ線を区間の速さで描く（従来どおり）
 ///
@@ -21,6 +21,12 @@ struct BoardMapView: View {
 
     @State private var camera: MapCameraPosition = .automatic
     @State private var routes = CourseRouteProvider()
+    /// お題の文字を出せるくらい寄っているか
+    @State private var isZoomedIn = false
+
+    /// これより狭い範囲を映していれば文字を出す。
+    /// 緯度0.02度 ≒ 2.2km で、駅が数個入るくらい。市街地なら文字が重ならない
+    private static let labelZoomThreshold: Double = 0.02
 
     private var stations: [Station] { store.stationsInOrder }
 
@@ -41,7 +47,7 @@ struct BoardMapView: View {
                             style: walkedStyle)
             }
 
-            // 実際に歩いた跡。200mごとに、その区切りの速さで色を変える
+            // 実際に歩いた跡。50mごとに、その区切りの速さで色を変える
             ForEach(trackSegments) { segment in
                 MapPolyline(coordinates: segment.points)
                     .stroke(PacePalette.color(minutesPerKilometer: segment.minutesPerKilometer),
@@ -52,18 +58,7 @@ struct BoardMapView: View {
                 Annotation(station.name, coordinate: coordinate(station)) {
                     VStack(spacing: 2) {
                         marker(for: station)
-                        // **お題を文字で読ませる。** 旗だけでは「何かある」までしか分からない
-                        if let label = store.missionLabel(at: station.orderNo),
-                           !store.landedOrders.contains(station.orderNo) {
-                            Text(label)
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(Theme.onLine)
-                                .lineLimit(1)
-                                .padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(Theme.mission, in: Capsule())
-                                .overlay(Capsule().strokeBorder(.white.opacity(0.85), lineWidth: 1))
-                                .fixedSize()
-                        }
+                        missionLabel(for: station)
                     }
                     .onTapGesture { selectedStation = StationSelection(id: station.orderNo) }
                 }
@@ -73,9 +68,35 @@ struct BoardMapView: View {
         .safeAreaInset(edge: .bottom) { legend }
         .onAppear(perform: fitToSection)
         .onChange(of: stations.count, fitToSection)
+        .onMapCameraChange(frequency: .onEnd) { context in
+            // **寄ったときだけ文字を出す。** 路線全体が入る縮尺で全駅に出すと、
+            // 吹き出しどうしと駅名が重なって、かえって何も読めなくなる
+            withAnimation(.easeOut(duration: 0.15)) {
+                isZoomedIn = context.region.span.latitudeDelta < Self.labelZoomThreshold
+            }
+        }
         .task(id: stations.map(\.orderNo)) {
             // 道路沿いの形を、手前の区間から少しずつ取る。取れなくても直線で描ける
             await routes.load(stations: stations)
+        }
+    }
+
+    /// お題を文字で読ませる。**寄ったときだけ**（引いた地図では旗だけ）
+    @ViewBuilder
+    private func missionLabel(for station: Station) -> some View {
+        if isZoomedIn,
+           let label = store.missionLabel(at: station.orderNo),
+           !store.landedOrders.contains(station.orderNo) {
+            Text(label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.mission)
+                .lineLimit(1)
+                .padding(.horizontal, 6).padding(.vertical, 3)
+                // 線や地図の上でも読めるように、色で塗らず下地を透かす
+                .background(.thinMaterial, in: Capsule())
+                .overlay(Capsule().strokeBorder(Theme.mission.opacity(0.35), lineWidth: 1))
+                .fixedSize()
+                .transition(.opacity)
         }
     }
 
@@ -182,7 +203,7 @@ struct BoardMapView: View {
         let minutesPerKilometer: Double?
     }
 
-    /// 実際に歩いた跡を200mごとに刻んだもの。
+    /// 実際に歩いた跡を50mごとに刻んだもの。
     /// 刻む計算は `RailAngyerCore` にあり、テストで固定してある
     private var trackSegments: [TrackLeg] {
         let fixes = store.trackPoints.map {
@@ -236,7 +257,11 @@ struct BoardMapView: View {
                 }
                 HStack(spacing: 4) {
                     Capsule().fill(Theme.ink.opacity(0.6)).frame(width: 14, height: 5)
-                    Text("歩いた跡は200mごとに色分け")
+                    Text("跡は50mごとに色分け")
+                }
+                HStack(spacing: 4) {
+                    Image(systemName: "flag.fill").foregroundStyle(Theme.mission)
+                    Text(isZoomedIn ? "お題" : "お題（寄ると読める）")
                 }
             }
         }

@@ -77,6 +77,7 @@
 		E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */; };
 		EAEEBA59ABAC4657C7A1758F /* JourneySummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4120077374AB985D7AD2EE89 /* JourneySummary.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
+		EF0CAB5579043DEC0609F9B6 /* ResumeButtonUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */; };
 		EF2C45E0A5D3D32BC56F091E /* ResetProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE244E3EF71098607B7D826 /* ResetProgressTests.swift */; };
 		F045E39BD922B1C6A3A942D0 /* ScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */; };
 		F12263DF0DE9E67292F6AB06 /* courses.json in Resources */ = {isa = PBXBuildFile; fileRef = 2FB2C01086C5A7121DE5417D /* courses.json */; };
@@ -119,6 +120,7 @@
 		24DB20F127C691EA3532D1D7 /* asc-crashes.cpython-314.pyc */ = {isa = PBXFileReference; path = "asc-crashes.cpython-314.pyc"; sourceTree = "<group>"; };
 		257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreUITests.swift; sourceTree = "<group>"; };
 		2A2BE1CAF504AF4F28A4BEDF /* ScheduleShare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleShare.swift; sourceTree = "<group>"; };
+		2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeButtonUITests.swift; sourceTree = "<group>"; };
 		2D3535DFBE7236B28F8391E7 /* nanboku_sapporo_nakanoshima.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_sapporo_nakanoshima.gpx; sourceTree = "<group>"; };
 		2FB2C01086C5A7121DE5417D /* courses.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = courses.json; sourceTree = "<group>"; };
 		37E2B5CCF0C7C821376CEA9A /* CourseSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSelectionTests.swift; sourceTree = "<group>"; };
@@ -337,6 +339,7 @@
 				04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */,
 				8C919B61790E7CEBDC4103AE /* ResetJourneyUITests.swift */,
 				257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */,
+				2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */,
 				56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */,
 				5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */,
 				16793C854280C0258AE421C5 /* TimingUITests.swift */,
@@ -542,6 +545,7 @@
 				389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */,
 				A01CF141257F4AB4EBFD08E6 /* ResetJourneyUITests.swift in Sources */,
 				6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */,
+				EF0CAB5579043DEC0609F9B6 /* ResumeButtonUITests.swift in Sources */,
 				5D317FF6A05655153C649C2C /* ScheduleUITests.swift in Sources */,
 				D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */,
 				18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */,
