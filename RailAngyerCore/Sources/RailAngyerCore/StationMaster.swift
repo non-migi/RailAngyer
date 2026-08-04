@@ -147,10 +147,31 @@ public enum StationMaster {
         try load(resource: "london_circle")
     }
 
+    /// モスクワ 環状線（12駅・環状）。
+    ///
+    /// **いちばん手頃な一周**。直線18.4kmで、公称19.4kmとよく合う。
+    /// 1950〜54年にできた古い環状線で、駅そのものが見どころになっている
+    public static func moscowKoltsevaya() throws -> CourseRef {
+        try load(resource: "moscow_koltsevaya")
+    }
+
+    /// モスクワ 大環状線（29駅・環状）。世界最長級の地下鉄環状。
+    /// 直線54.0km（公称57.5km）。**1日で歩き切るのは山手線より重い**
+    public static func moscowBolshaya() throws -> CourseRef {
+        try load(resource: "moscow_bolshaya")
+    }
+
+    /// 北京地下鉄10号線（45駅・環状）。直線54.7km（公称57.0km）。
+    /// 内環／外環という呼び分けが実在する
+    public static func beijingLine10() throws -> CourseRef {
+        try load(resource: "beijing_line10")
+    }
+
     /// 同梱しているコースすべて
     public static func all() throws -> [CourseRef] {
         [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden(),
-         try hankyuKyoto(), try berlinRingbahn(), try londonCircle()]
+         try hankyuKyoto(), try berlinRingbahn(), try londonCircle(),
+         try moscowKoltsevaya(), try moscowBolshaya(), try beijingLine10()]
     }
 
     static func load(resource: String) throws -> CourseRef {
