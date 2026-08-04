@@ -27,6 +27,7 @@
 | [files/13_courses.sql](files/13_courses.sql) | 東西線・東豊線・山手線の投入（適用済み） |
 | [files/18_courses_v2.sql](files/18_courses_v2.sql) | 札幌市電の投入と山手線の座標更新（適用済み） |
 | [files/19_courses_v3.sql](files/19_courses_v3.sql) | 阪急京都本線の投入（**未適用**。アプリはJSONから読むので動作には不要） |
+| [files/22_courses_v4.sql](files/22_courses_v4.sql) | ベルリンRingbahn・ロンドンサークル線の投入（**未適用**） |
 | [files/14_引き継ぎ.md](files/14_引き継ぎ.md) | **引き継ぎ資料**。環境・コマンド・落とし穴・途中の作業 |
 | [tools/asc-crashes.py](tools/asc-crashes.py) | TestFlightのクラッシュ報告を取り出す（鍵の作り方は `15_TestFlight準備.md` §8） |
 | [tools/asc-whattotest.py](tools/asc-whattotest.py) | TestFlightの「テスト内容」を登録する（**Xcodeからの送信では付かない**） |
@@ -61,9 +62,10 @@
 - 記録：複数の旅、実写真の地図ピン、時間、分/km、連続ペース色まで実装
 - 予定：ルールセットを先に決め、日本時間・日本のカレンダーで作成
 - 駅座標：札幌3路線を国土数値情報 N02-22（JGD2011）へ補正済み
-- コースは6本（南北線・東西線・東豊線・山手線・札幌市電・阪急京都本線）。設定から切り替えられる。
+- コースは8本（南北線・東西線・東豊線・山手線・札幌市電・阪急京都本線・
+  **ベルリン Ringbahn**・**ロンドン サークル線**）。設定から切り替えられる。
   **山手線と市電は一周でき、内回り／外回りを選べる**（予定でも一周を決められる）
-- コースは **国 → 都道府県 → 路線** の順にたどって選ぶ。
+- コースは **国 → 都道府県 → 路線** の順にたどって選ぶ。**日本の外も入っている**（ドイツ・イギリス）。
   都道府県をまたぐ路線（阪急京都本線）は、通るどちらの県からも見つかる
 - 予定・お題・ターン中の各画面に**区間の地図と、歩く距離・時間の目安**を出す
   （直線距離に迂回1.3倍を掛けて時速5km。経路探索はしない）
@@ -93,10 +95,10 @@
 ## テスト
 
 ```bash
-swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース・見積もり・跡 85件
+swift test --package-path RailAngyerCore     # ルール計算・駅マスタ・ペース・見積もり・跡 93件
 tools/prepare-simulator.sh "iPhone 17 Pro"   # UIテストの前に位置情報を許可する（初回・新環境）
 xcodebuild -project RailAngyerApp/RailAngyerApp.xcodeproj -scheme RailAngyerApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 164件 + UI 12件
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test   # 176件 + UI 15件
 dotnet test RailAngyerApi.Tests               # API 58件
 ```
 

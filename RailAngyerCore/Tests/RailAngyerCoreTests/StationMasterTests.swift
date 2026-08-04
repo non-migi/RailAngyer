@@ -81,19 +81,93 @@ struct AdditionalCourseTests {
         ("阪急京都本線", 28, ("大阪梅田", "京都河原町"))
     ]
 
-    @Test("同梱しているコースは6本")
+    @Test("同梱しているコースは8本")
     func loadsAllCourses() throws {
         let all = try StationMaster.all()
         #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電",
-                                    "阪急京都本線"])
+                                    "阪急京都本線", "ベルリン Ringbahn", "ロンドン サークル線"])
     }
 
-    @Test("どのコースも国と都道府県を持っている")
-    func everyCourseHasRegions() throws {
+    @Test("どのコースも国と地方を持っている")
+    func everyCourseHasRegion() throws {
         for course in try StationMaster.all() {
+            #expect(!course.country.isEmpty, "\(course.name) に国が無い")
+            // ISO 3166-1 alpha-2。**日本とは限らない**（ベルリン=DE、ロンドン=GB）
+            #expect(course.countryCode.count == 2, "\(course.name) の国コードが変")
+            #expect(!course.regions.isEmpty, "\(course.name) に地方が無い")
+        }
+    }
+
+    // MARK: - 日本の外のコース
+    //
+    // **一周できる遊び方はどこでも成り立つ。** 山手線でやっていることが
+    // ベルリンとロンドンにもある（内回り／外回りにあたる呼び分けまで実在する）
+
+    @Test("ベルリン Ringbahn が一周として読める")
+    func berlinRingbahn() throws {
+        let course = try StationMaster.berlinRingbahn()
+
+        #expect(course.stations.count == 27)
+        #expect(course.isLoop)
+        #expect(course.countryCode == "DE")
+        #expect(course.stations.first?.name == "Gesundbrunnen")
+        // S41/S42 が内回り・外回りにあたる。**実在の呼び分けをそのまま使う**
+        #expect(course.directionName(forward: true).contains("S41"))
+        #expect(course.directionName(forward: false).contains("S42"))
+    }
+
+    @Test("ベルリン Ringbahn の長さが営業キロと合う")
+    func berlinRingbahnLength() throws {
+        let course = try StationMaster.berlinRingbahn()
+
+        // 営業キロ37.5km。直線で結ぶので少し短く出る
+        let meters = WalkEstimator.estimateLap(course: course).straightMeters
+        #expect(meters > 33_000 && meters < 39_000, "\(meters)")
+    }
+
+    @Test("ロンドン サークル線が一周として読める")
+    func londonCircle() throws {
+        let course = try StationMaster.londonCircle()
+
+        // 2009年からの運行は「らせん」だが、環になっている元のInner Circleだけを扱う
+        #expect(course.stations.count == 27)
+        #expect(course.isLoop)
+        #expect(course.countryCode == "GB")
+        // 駅間が短いので半径を詰めてある
+        #expect(course.arrivalRadius == 110)
+    }
+
+    @Test("ロンドン サークル線の長さが Inner Circle と合う")
+    func londonCircleLength() throws {
+        let course = try StationMaster.londonCircle()
+
+        // Inner Circle は約21km
+        let meters = WalkEstimator.estimateLap(course: course).straightMeters
+        #expect(meters > 18_000 && meters < 23_000, "\(meters)")
+    }
+
+    @Test("日本の外のコースも駅の並びが飛ばない")
+    func overseasCoursesAreSmooth() throws {
+        for course in [try StationMaster.berlinRingbahn(), try StationMaster.londonCircle()] {
+            let sorted = course.stations.sorted { $0.orderNo < $1.orderNo }
+            #expect(sorted.map(\.orderNo) == Array(1...sorted.count))
+
+            for (a, b) in zip(sorted, sorted.dropFirst()) {
+                let d = Geo.distanceMeters(lat1: a.latitude, lon1: a.longitude,
+                                           lat2: b.latitude, lon2: b.longitude)
+                // 並び順が狂うと、離れた駅どうしが隣になって一目で分かる
+                #expect(d < 4000, "\(course.name) \(a.name)〜\(b.name) が \(Int(d))m")
+                #expect(d > 100, "\(course.name) \(a.name)〜\(b.name) が近すぎる")
+            }
+        }
+    }
+
+    @Test("日本のコースは国コードがJP")
+    func japaneseCoursesAreJP() throws {
+        let japanese = ["南北線", "東西線", "東豊線", "山手線", "札幌市電", "阪急京都本線"]
+        for course in try StationMaster.all() where japanese.contains(course.name) {
             #expect(course.country == "日本")
             #expect(course.countryCode == "JP")
-            #expect(course.regions.isEmpty == false, "\(course.name) に都道府県が無い")
         }
     }
 
@@ -128,7 +202,8 @@ struct AdditionalCourseTests {
     @Test("環状線は山手線と札幌市電")
     func loopCourses() throws {
         let loops = try StationMaster.all().filter(\.isLoop).map(\.name)
-        #expect(loops == ["山手線", "札幌市電"])
+        // 環状は日本の外にもある。**一周できる遊び方はどこでも成り立つ**
+        #expect(loops == ["山手線", "札幌市電", "ベルリン Ringbahn", "ロンドン サークル線"])
     }
 
     @Test("環状線には、まわる向きの呼び名がある")

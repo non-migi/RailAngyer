@@ -168,6 +168,7 @@
 		902E8A6CD54AD50C8860C443 /* ModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsTests.swift; sourceTree = "<group>"; };
 		91340569C4EC1AD41A62A06F /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
 		91CDEEE260865EBF8455D4E6 /* InviteLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteLink.swift; sourceTree = "<group>"; };
+		92BB1B0553B65D8A2C03101B /* asc-release.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "asc-release.py"; sourceTree = "<group>"; };
 		9577A67BEAAF07D613F921B7 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		98F5289A8DF49229292880FD /* MasterSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterSeeder.swift; sourceTree = "<group>"; };
 		991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionEditorView.swift; sourceTree = "<group>"; };
@@ -311,6 +312,7 @@
 			children = (
 				5929FDCB88E5F61769D457AF /* __pycache__ */,
 				3B085D3B5A85606ACF5463F6 /* asc-crashes.py */,
+				92BB1B0553B65D8A2C03101B /* asc-release.py */,
 				6A7C46209573C400F462A79D /* asc-setup.sh */,
 				BABB6E7340F1BBE52D155055 /* asc-whattotest.py */,
 				9FC6BF703DF01516AA593C6F /* nanboku_full.gpx */,

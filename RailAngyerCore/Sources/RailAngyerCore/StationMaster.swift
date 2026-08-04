@@ -127,10 +127,30 @@ public enum StationMaster {
         try load(resource: "hankyu_kyoto")
     }
 
+    /// ベルリン Ringbahn（27駅・環状）。**日本の外に出る最初のコース**。
+    ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション S41
+    /// （© OpenStreetMap contributors / ODbL）。
+    /// 直線距離の合計は約35.4kmで、営業キロ37.5kmとよく合う。
+    /// 内回り／外回りにあたるものが S41／S42 として実在する
+    public static func berlinRingbahn() throws -> CourseRef {
+        try load(resource: "berlin_ringbahn")
+    }
+
+    /// ロンドン サークル線（27駅・環状）。
+    ///
+    /// 2009年から実際の運行は「らせん」（ハマースミス発着）だが、
+    /// **環になっている元の Inner Circle だけを扱う**。
+    /// 直線距離の合計は約20.0kmで、Inner Circle の約21kmとよく合う。
+    /// 駅間が短いので到着判定の半径を110mにしてある
+    public static func londonCircle() throws -> CourseRef {
+        try load(resource: "london_circle")
+    }
+
     /// 同梱しているコースすべて
     public static func all() throws -> [CourseRef] {
         [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden(),
-         try hankyuKyoto()]
+         try hankyuKyoto(), try berlinRingbahn(), try londonCircle()]
     }
 
     static func load(resource: String) throws -> CourseRef {

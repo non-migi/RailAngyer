@@ -32,19 +32,41 @@ struct CourseDirectoryTests {
         return region.courses.map(\.name)
     }
 
-    @Test("同梱コースはすべて日本の下に入る")
-    func everyCourseIsUnderJapan() throws {
-        #expect(directory.countries.map(\.id) == ["JP"])
+    @Test("国は日本を先頭に、あとは名前の順で並ぶ")
+    func japanComesFirst() throws {
+        // **日本を先に出す。** 作った人の地元であり、コースもいちばん多い。
+        // 以降は名前の順（イギリス → ドイツ）
+        #expect(directory.countries.map(\.id) == ["JP", "GB", "DE"])
 
         let japan = try #require(directory.countries.first)
         #expect(japan.name == "日本")
+    }
+
+    @Test("国ごとのコース数が合う")
+    func courseCountPerCountry() throws {
+        let japan = try #require(directory.countries.first { $0.id == "JP" })
+        let germany = try #require(directory.countries.first { $0.id == "DE" })
+
         // 県をまたぐ路線も1本として数える
-        #expect(japan.courseCount == store.courses.count)
+        #expect(japan.courseCount == 6)
+        #expect(germany.courseCount == 1)
+        #expect(directory.countries.reduce(0) { $0 + $1.courseCount } == store.courses.count)
+    }
+
+    @Test("日本の外のコースも、その国の下からたどれる")
+    func overseasCoursesAreReachable() throws {
+        let germany = try #require(directory.countries.first { $0.id == "DE" })
+        let berlin = try #require(germany.regions.first { $0.name == "ベルリン" })
+
+        #expect(berlin.courses.map(\.name) == ["ベルリン Ringbahn"])
+
+        let uk = try #require(directory.countries.first { $0.id == "GB" })
+        #expect(uk.regions.first?.courses.map(\.name) == ["ロンドン サークル線"])
     }
 
     @Test("都道府県は北から南の順に並ぶ")
     func regionsAreOrderedNorthToSouth() throws {
-        let japan = try #require(directory.countries.first)
+        let japan = try #require(directory.countries.first { $0.id == "JP" })
 
         // 全国地方公共団体コードと同じ順（北海道 → 東京都 → 京都府 → 大阪府）
         #expect(japan.regions.map(\.name) == ["北海道", "東京都", "京都府", "大阪府"])
@@ -109,8 +131,9 @@ struct CourseDirectoryTests {
         _ = try MasterSeeder.seedIfNeeded(context)
 
         for course in store.courses {
-            #expect(course.countryCode == "JP")
-            #expect(course.regionNames.isEmpty == false, "\(course.name) に都道府県が無い")
+            // **日本とは限らない。** ベルリン=DE、ロンドン=GB
+            #expect(course.countryCode.count == 2, "\(course.name) の国コードが変")
+            #expect(course.regionNames.isEmpty == false, "\(course.name) に地方が無い")
         }
     }
 }
