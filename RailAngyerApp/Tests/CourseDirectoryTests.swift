@@ -35,8 +35,8 @@ struct CourseDirectoryTests {
     @Test("国は日本を先頭に、あとは名前の順で並ぶ")
     func japanComesFirst() throws {
         // **日本を先に出す。** 作った人の地元であり、コースもいちばん多い。
-        // 以降は国名の順（イギリス → ドイツ → ロシア → 中国）
-        #expect(directory.countries.map(\.id) == ["JP", "GB", "DE", "RU", "CN"])
+        // 以降は国名の順（アメリカ合衆国 → イギリス → ドイツ → ロシア → 中国）
+        #expect(directory.countries.map(\.id) == ["JP", "US", "GB", "DE", "RU", "CN"])
 
         let japan = try #require(directory.countries.first)
         #expect(japan.name == "日本")
@@ -48,11 +48,14 @@ struct CourseDirectoryTests {
         let germany = try #require(directory.countries.first { $0.id == "DE" })
 
         // 県をまたぐ路線も1本として数える
-        #expect(japan.courseCount == 6)
+        #expect(japan.courseCount == 7)
         #expect(germany.courseCount == 1)
         // モスクワは2本（環状線と大環状線）
         let russia = try #require(directory.countries.first { $0.id == "RU" })
         #expect(russia.courseCount == 2)
+        // アメリカは2本（ニューヨークとロサンゼルス）
+        let usa = try #require(directory.countries.first { $0.id == "US" })
+        #expect(usa.courseCount == 2)
         #expect(directory.countries.reduce(0) { $0 + $1.courseCount } == store.courses.count)
     }
 

@@ -167,11 +167,35 @@ public enum StationMaster {
         try load(resource: "beijing_line10")
     }
 
+    /// 大阪環状線（19駅・環状）。**山手線の次に歩かれている環状線**。
+    /// 直線20.7km（営業キロ21.7km）。実際に歩くと35km前後になる
+    public static func osakaLoop() throws -> CourseRef {
+        try load(resource: "osaka_loop")
+    }
+
+    /// ニューヨーク地下鉄7号線（22駅・直線）。
+    ///
+    /// クイーンズ側は高架で、**線路沿いをそのまま歩ける**。
+    /// 移民の街を貫くことから "International Express" とも呼ばれる。
+    /// 直線15.9km。ハドソンヤードからフラッシングまで
+    public static func nycFlushing() throws -> CourseRef {
+        try load(resource: "nyc_flushing")
+    }
+
+    /// ロサンゼルス Eライン（29駅・直線）。
+    ///
+    /// ダウンタウンから**サンタモニカの海まで**。直線34.7km。
+    /// 終点が浜辺なので、歩き切った先に分かりやすいご褒美がある
+    public static func laEline() throws -> CourseRef {
+        try load(resource: "la_eline")
+    }
+
     /// 同梱しているコースすべて
     public static func all() throws -> [CourseRef] {
         [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden(),
          try hankyuKyoto(), try berlinRingbahn(), try londonCircle(),
-         try moscowKoltsevaya(), try moscowBolshaya(), try beijingLine10()]
+         try moscowKoltsevaya(), try moscowBolshaya(), try beijingLine10(),
+         try osakaLoop(), try nycFlushing(), try laEline()]
     }
 
     static func load(resource: String) throws -> CourseRef {

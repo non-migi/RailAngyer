@@ -1,0 +1,30 @@
+{
+  "name": "大阪環状線",
+  "lineColorHex": "#F8B500",
+  "country": "日本",
+  "countryCode": "JP",
+  "regions": ["大阪府"],
+  "isLoop": true,
+  "loopDirectionNames": { "forward": "外回り", "backward": "内回り" },
+  "stations": [
+    { "name": "天王寺",     "orderNo":  1, "latitude": 34.647129, "longitude": 135.514313 },
+    { "name": "新今宮",     "orderNo":  2, "latitude": 34.649743, "longitude": 135.502168 },
+    { "name": "今宮",       "orderNo":  3, "latitude": 34.653957, "longitude": 135.492893 },
+    { "name": "芦原橋",     "orderNo":  4, "latitude": 34.658685, "longitude": 135.489147 },
+    { "name": "大正",       "orderNo":  5, "latitude": 34.665424, "longitude": 135.480328 },
+    { "name": "弁天町",     "orderNo":  6, "latitude": 34.670276, "longitude": 135.461809 },
+    { "name": "西九条",     "orderNo":  7, "latitude": 34.682874, "longitude": 135.466799 },
+    { "name": "野田",       "orderNo":  8, "latitude": 34.689128, "longitude": 135.474957 },
+    { "name": "福島",       "orderNo":  9, "latitude": 34.697310, "longitude": 135.486806 },
+    { "name": "大阪",       "orderNo": 10, "latitude": 34.701999, "longitude": 135.495750 },
+    { "name": "天満",       "orderNo": 11, "latitude": 34.704960, "longitude": 135.512349 },
+    { "name": "桜ノ宮",     "orderNo": 12, "latitude": 34.704857, "longitude": 135.520284 },
+    { "name": "京橋",       "orderNo": 13, "latitude": 34.696735, "longitude": 135.534016 },
+    { "name": "大阪城公園", "orderNo": 14, "latitude": 34.687754, "longitude": 135.534426 },
+    { "name": "森ノ宮",     "orderNo": 15, "latitude": 34.680450, "longitude": 135.534025 },
+    { "name": "玉造",       "orderNo": 16, "latitude": 34.673204, "longitude": 135.532882 },
+    { "name": "鶴橋",       "orderNo": 17, "latitude": 34.665403, "longitude": 135.530232 },
+    { "name": "桃谷",       "orderNo": 18, "latitude": 34.658749, "longitude": 135.528081 },
+    { "name": "寺田町",     "orderNo": 19, "latitude": 34.647753, "longitude": 135.523335 }
+  ]
+}

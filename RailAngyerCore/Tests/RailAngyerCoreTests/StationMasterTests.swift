@@ -81,12 +81,13 @@ struct AdditionalCourseTests {
         ("阪急京都本線", 28, ("大阪梅田", "京都河原町"))
     ]
 
-    @Test("同梱しているコースは11本")
+    @Test("同梱しているコースは14本")
     func loadsAllCourses() throws {
         let all = try StationMaster.all()
         #expect(all.map(\.name) == ["南北線", "東西線", "東豊線", "山手線", "札幌市電",
                                     "阪急京都本線", "ベルリン Ringbahn", "ロンドン サークル線",
-                                    "モスクワ 環状線", "モスクワ 大環状線", "北京地下鉄10号線"])
+                                    "モスクワ 環状線", "モスクワ 大環状線", "北京地下鉄10号線",
+                                    "大阪環状線", "ニューヨーク 7号線", "ロサンゼルス Eライン"])
     }
 
     @Test("どのコースも国と地方を持っている")
@@ -151,7 +152,8 @@ struct AdditionalCourseTests {
     func overseasCoursesAreSmooth() throws {
         for course in [try StationMaster.berlinRingbahn(), try StationMaster.londonCircle(),
                        try StationMaster.moscowKoltsevaya(), try StationMaster.moscowBolshaya(),
-                       try StationMaster.beijingLine10()] {
+                       try StationMaster.beijingLine10(), try StationMaster.nycFlushing(),
+                       try StationMaster.laEline()] {
             let sorted = course.stations.sorted { $0.orderNo < $1.orderNo }
             #expect(sorted.map(\.orderNo) == Array(1...sorted.count))
 
@@ -167,7 +169,8 @@ struct AdditionalCourseTests {
 
     @Test("日本のコースは国コードがJP")
     func japaneseCoursesAreJP() throws {
-        let japanese = ["南北線", "東西線", "東豊線", "山手線", "札幌市電", "阪急京都本線"]
+        let japanese = ["南北線", "東西線", "東豊線", "山手線", "札幌市電", "阪急京都本線",
+                        "大阪環状線"]
         for course in try StationMaster.all() where japanese.contains(course.name) {
             #expect(course.country == "日本")
             #expect(course.countryCode == "JP")
@@ -207,7 +210,8 @@ struct AdditionalCourseTests {
         let loops = try StationMaster.all().filter(\.isLoop).map(\.name)
         // 環状は日本の外にもある。**一周できる遊び方はどこでも成り立つ**
         #expect(loops == ["山手線", "札幌市電", "ベルリン Ringbahn", "ロンドン サークル線",
-                          "モスクワ 環状線", "モスクワ 大環状線", "北京地下鉄10号線"])
+                          "モスクワ 環状線", "モスクワ 大環状線", "北京地下鉄10号線",
+                          "大阪環状線"])
     }
 
     @Test("環状線には、まわる向きの呼び名がある")
