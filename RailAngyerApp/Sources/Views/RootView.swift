@@ -6,11 +6,13 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
     @State private var store: GameSessionStore?
     @State private var sync: SyncService?
+    /// アプリの中で選んだ言語。**選んだその場で画面が切り替わる**
+    @State private var language = LanguageSetting()
 
     var body: some View {
         Group {
             if let store, let sync {
-                MainView(store: store, sync: sync)
+                MainView(store: store, sync: sync, language: language)
                     .transition(.opacity)
             } else {
                 LaunchLoadingView()
@@ -18,6 +20,8 @@ struct RootView: View {
             }
         }
         .tint(Theme.line)
+        // **いちばん外側で流す。** ここに置けば、下のシートまで一度に切り替わる
+        .environment(\.locale, language.locale)
         .task {
             guard store == nil else { return }
             let credentials = KeychainCredentialStore()
@@ -101,6 +105,7 @@ private struct LaunchLoadingView: View {
 private struct MainView: View {
     @Bindable var store: GameSessionStore
     let sync: SyncService
+    @Bindable var language: LanguageSetting
     @State private var location = LocationService()
     @State private var showingSettings = false
     @State private var showingSchedules = false
@@ -167,7 +172,7 @@ private struct MainView: View {
             }
         }
         .sheet(isPresented: $showingSettings) {
-            RuleSettingsView(store: store, sync: sync)
+            RuleSettingsView(store: store, sync: sync, language: language)
         }
         .sheet(isPresented: $showingSchedules) {
             ScheduleListView(store: store, sync: sync)

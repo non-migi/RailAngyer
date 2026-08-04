@@ -79,6 +79,7 @@
 		DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */; };
 		DACFE2A82A073E7669EB0136 /* PhotoVisibleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60704DCD90679AFAEBB91412 /* PhotoVisibleUITests.swift */; };
 		DCAA3DB7A6144DA9A3307E8F /* TipJar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBB233E437C10B275AC8E9A /* TipJar.swift */; };
+		DF42F0FCD510AD1789BB1B4D /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5395CE6694D7536FA9F8ECB /* AppLanguage.swift */; };
 		E27F9C000C9A3626C3330A3A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156CFFC9852BBD282BE20DE /* Theme.swift */; };
 		E36E935AA4775E010D471D82 /* StationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C804299584BFF82C68B12EA /* StationDetailView.swift */; };
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
@@ -180,6 +181,7 @@
 		A918CF5987848EB98F173073 /* CourseRouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRouteProvider.swift; sourceTree = "<group>"; };
 		AE5039F9F643E1AE9C8791DE /* prepare-simulator.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "prepare-simulator.sh"; sourceTree = "<group>"; };
 		B0A9DC1AF76F6A2EB0AA7331 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B5395CE6694D7536FA9F8ECB /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 		B709382C671CEECC060BB237 /* HowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlayView.swift; sourceTree = "<group>"; };
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B9E62126FFD3D29621A8632A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -271,6 +273,7 @@
 		5C621E7524853A340511638A /* Game */ = {
 			isa = PBXGroup;
 			children = (
+				B5395CE6694D7536FA9F8ECB /* AppLanguage.swift */,
 				1B812383D18940B50805E027 /* CourseDirectory.swift */,
 				A918CF5987848EB98F173073 /* CourseRouteProvider.swift */,
 				C36DD89E35D1609C0821E07B /* GamePhase.swift */,
@@ -626,6 +629,7 @@
 			files = (
 				6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */,
 				C6E478F22C510D5C793EFB7C /* ApiConfiguration.swift in Sources */,
+				DF42F0FCD510AD1789BB1B4D /* AppLanguage.swift in Sources */,
 				39C8D61D33C7AAE834005CE2 /* AppMain.swift in Sources */,
 				BBD2809164BE4F364C793021 /* AttributionView.swift in Sources */,
 				CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */,

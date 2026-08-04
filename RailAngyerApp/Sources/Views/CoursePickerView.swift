@@ -33,8 +33,7 @@ struct CoursePickerView: View {
                         }
                     }
                 } footer: {
-                    Text("いまは日本だけです。国から選ぶ形にしてあるので、"
-                         + "ほかの国の路線が増えても同じ手順で選べます。")
+                    Text("歩きたい国から選んでください。")
                 }
             }
             .navigationTitle("コースを選ぶ")

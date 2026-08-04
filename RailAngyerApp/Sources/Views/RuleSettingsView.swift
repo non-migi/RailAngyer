@@ -6,6 +6,7 @@ import RailAngyerCore
 struct RuleSettingsView: View {
     @Bindable var store: GameSessionStore
     let sync: SyncService
+    @Bindable var language: LanguageSetting
     @Environment(\.dismiss) private var dismiss
 
     @State private var startOrder = 1
@@ -109,6 +110,16 @@ struct RuleSettingsView: View {
 
                 // **応援の導線はここに置く。** 一番下のアプリ情報に埋めると誰も見つけない。
                 // ただし遊びの流れには一切割り込ませない（設定の中だけ）
+                Section {
+                    Picker("言語", selection: $language.selected) {
+                        ForEach(AppLanguage.allCases) { Text($0.label).tag($0) }
+                    }
+                } header: {
+                    Text("言語")
+                } footer: {
+                    Text("選ぶとすぐに切り替わります。訳が入っていないところは日本語のまま出ます。")
+                }
+
                 Section {
                     Button {
                         showingSupport = true
