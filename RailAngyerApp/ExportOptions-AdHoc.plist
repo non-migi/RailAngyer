@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Firebase App Distribution へ渡すための Ad Hoc 書き出し。
+
+  ⚠️ Ad Hoc は「動かしてよい端末の一覧」をアプリに埋め込んで署名する。
+     一覧に無い端末では、入れられても起動した瞬間に弾かれる。
+     **相手が増えるたびに、UDIDを登録し直して作り直す必要がある。**
+
+  TestFlight 向けは ExportOptions-TestFlight.plist（destination=upload）。
+  こちらは端末に配るだけなので upload しない。
+-->
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>release-testing</string>
+	<key>destination</key>
+	<string>export</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>teamID</key>
+	<string>949FXAWTYZ</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>compileBitcode</key>
+	<false/>
+	<!-- 端末に直接入れるので、シンボルはアップロードしない -->
+	<key>uploadSymbols</key>
+	<false/>
+	<!-- 一覧に無い端末でも入れられるようにはしない（Ad Hoc の意味が無くなる） -->
+	<key>thinning</key>
+	<string>&lt;none&gt;</string>
+</dict>
+</plist>

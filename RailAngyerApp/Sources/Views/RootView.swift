@@ -53,8 +53,10 @@ private struct LaunchLoadingView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.02, green: 0.50, blue: 0.25),
-                                    Color(red: 0.01, green: 0.24, blue: 0.14)],
+            // アイコンの地色に合わせる（#4CAB72 → #357F55）。
+            // **アイコンと起動画面がつながって見えるようにする**
+            LinearGradient(colors: [Color(red: 0.298, green: 0.671, blue: 0.447),
+                                    Color(red: 0.208, green: 0.498, blue: 0.333)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
 
