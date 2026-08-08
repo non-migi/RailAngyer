@@ -85,6 +85,7 @@
 		E575A53038C1F1C67FB303D5 /* PendingChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */; };
 		E686C96515C035CA38FB915A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72B7C5332DE0B303385DB2B /* Models.swift */; };
 		E8603608EFD0FA690EAE2E9E /* MissionAuthoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A107F783F5AF89D260EEF38 /* MissionAuthoringTests.swift */; };
+		E9237B45FD57B871BC7F21EC /* ShareUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62CF08BEF1DD2CC0B7D36EB1 /* ShareUITests.swift */; };
 		EAEEBA59ABAC4657C7A1758F /* JourneySummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4120077374AB985D7AD2EE89 /* JourneySummary.swift */; };
 		ED81731AA79EFE4B1D746136 /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CE7F62882767E29A8AC06 /* DiceRollView.swift */; };
 		EF0CAB5579043DEC0609F9B6 /* ResumeButtonUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */; };
@@ -154,6 +155,7 @@
 		5EDE56F5B494ED7D2F503BE1 /* ScheduleShareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleShareTests.swift; sourceTree = "<group>"; };
 		60704DCD90679AFAEBB91412 /* PhotoVisibleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoVisibleUITests.swift; sourceTree = "<group>"; };
 		62BEE5D3660CDE8F624EAC7C /* PendingChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChange.swift; sourceTree = "<group>"; };
+		62CF08BEF1DD2CC0B7D36EB1 /* ShareUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareUITests.swift; sourceTree = "<group>"; };
 		632603B8FE75E4C744FBC451 /* PhotoGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGalleryView.swift; sourceTree = "<group>"; };
 		6A7C46209573C400F462A79D /* asc-setup.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "asc-setup.sh"; sourceTree = "<group>"; };
 		6EAF894752848EB4D03CA860 /* MapPlaceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPlaceDetailView.swift; sourceTree = "<group>"; };
@@ -370,6 +372,7 @@
 				257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */,
 				2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */,
 				56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */,
+				62CF08BEF1DD2CC0B7D36EB1 /* ShareUITests.swift */,
 				5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */,
 				CB09B4A51801DDC52446EDA9 /* SupportUITests.swift */,
 				16793C854280C0258AE421C5 /* TimingUITests.swift */,
@@ -593,6 +596,7 @@
 				6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */,
 				EF0CAB5579043DEC0609F9B6 /* ResumeButtonUITests.swift in Sources */,
 				5D317FF6A05655153C649C2C /* ScheduleUITests.swift in Sources */,
+				E9237B45FD57B871BC7F21EC /* ShareUITests.swift in Sources */,
 				D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */,
 				3F36FCD791FD8107A058AF4B /* SupportUITests.swift in Sources */,
 				18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */,
@@ -758,7 +762,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 22;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -919,7 +923,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 22;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;

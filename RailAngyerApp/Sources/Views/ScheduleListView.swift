@@ -14,6 +14,7 @@ struct ScheduleListView: View {
     @State private var missionPlan: MissionPlan?
     @State private var isLoading = false
     @State private var loadingMessage = "予定を読み込み中…"
+    @State private var sharing: SharingText?
 
     var body: some View {
         NavigationStack {
@@ -39,12 +40,16 @@ struct ScheduleListView: View {
                         }
                         .disabled(plan(for: schedule) == nil)
 
-                        ShareLink(item: ScheduleShare.text(for: schedule,
-                                                           course: course(for: schedule),
-                                                           room: store.room)) {
+                        // **`ShareLink` に `.simultaneousGesture` を足したら、
+                        // 押しても何も起きなくなった。** 記録を取りたいので、
+                        // ボタンから共有シートを出す形にしてある
+                        Button {
+                            Telemetry.scheduleShared()
+                            sharing = SharingText(text: ScheduleShare.text(
+                                for: schedule, course: course(for: schedule), room: store.room))
+                        } label: {
                             Label("この予定を共有する", systemImage: "square.and.arrow.up")
                         }
-                        .simultaneousGesture(TapGesture().onEnded { Telemetry.scheduleShared() })
 
                         if isMine(schedule) {
                             Button("この予定を消す", role: .destructive) {
@@ -74,6 +79,7 @@ struct ScheduleListView: View {
             .sheet(item: $missionPlan) { plan in
                 MissionEditorView(store: store, sync: sync, plan: plan)
             }
+            .sheet(item: $sharing) { ShareSheet(items: [$0.text]) }
             .overlay {
                 if isLoading {
                     ProgressView(loadingMessage)
@@ -206,6 +212,12 @@ struct ScheduleListView: View {
         await sync.pullSchedules()
         store.reloadSchedules()
     }
+}
+
+/// 共有する本文を `sheet(item:)` へ渡すための包み
+private struct SharingText: Identifiable {
+    let id = UUID()
+    let text: String
 }
 
 struct ScheduleDraft: Identifiable {

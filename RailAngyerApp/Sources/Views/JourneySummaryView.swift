@@ -270,7 +270,12 @@ private struct ShareableImage: Identifiable {
 }
 
 /// 共有シート。ShareLink は UIImage を直接扱えないため UIKit のものを包む
-private struct ShareSheet: UIViewControllerRepresentable {
+/// 共有シート（`UIActivityViewController`）。
+///
+/// **`ShareLink` に `.simultaneousGesture` を足すと反応しなくなる。**
+/// 押した瞬間に何かしたい（記録を取るなど）ときは、
+/// `ShareLink` ではなくボタン＋これを使う。
+struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
