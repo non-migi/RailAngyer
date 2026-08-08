@@ -99,8 +99,7 @@ struct ScheduleListView: View {
                 isLoop: schedule.isLap,
                 caption: schedule.isLap
                     ? "\(schedule.courseName)　\(stations.first?.name ?? "") から一周"
-                    : "\(schedule.courseName)　"
-                      + "\(stations.first?.name ?? "") → \(stations.last?.name ?? "")")
+                    : "\(schedule.courseName)　\(stations.first?.name ?? "") → \(stations.last?.name ?? "")")
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 10, trailing: 16))
         }
     }
@@ -288,8 +287,7 @@ private struct ScheduleDraftView: View {
                                 Text(courseName.isEmpty ? "選ぶ" : courseName)
                                     .foregroundStyle(.secondary)
                                 if let course = selectedCourse {
-                                    Text("\(CourseDirectory.regionText(course))"
-                                         + "　\(course.stations.count)駅")
+                                    Text("\(CourseDirectory.regionText(course))　\(course.stations.count)駅")
                                         .font(.caption).foregroundStyle(.tertiary)
                                 }
                             }
@@ -321,8 +319,7 @@ private struct ScheduleDraftView: View {
                     }
                     Stepper("サイコロ　1〜\(diceMax)", value: $diceMax, in: 1...9)
                     if isLap {
-                        Text("\(stationName(startOrder)) を出て、"
-                             + "\(stationName(startOrder)) へ戻ってきたら終わりです")
+                        Text("\(stationName(startOrder)) を出て、\(stationName(startOrder)) へ戻ってきたら終わりです")
                             .font(.caption).foregroundStyle(.secondary)
                     } else if startOrder == goalOrder {
                         Text("スタートとゴールは別の駅にしてください")
@@ -331,8 +328,7 @@ private struct ScheduleDraftView: View {
                 } header: {
                     Text("1　ルールセット")
                 } footer: {
-                    Text("歩く場所は国と都道府県からたどって選びます。"
-                         + "区間とサイコロの最大出目もここで決めます。")
+                    Text("歩く場所は国と都道府県からたどって選びます。区間とサイコロの最大出目もここで決めます。")
                 }
 
                 // **名前は地図より先に置く。** 地図（170pt）を先に挟んだところ、
@@ -356,8 +352,7 @@ private struct ScheduleDraftView: View {
                     } header: {
                         Text("歩く道のり")
                     } footer: {
-                        Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して"
-                             + "時速5kmで歩いたときの値です。お題や休憩の時間は含みません。")
+                        Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して時速5kmで歩いたときの値です。お題や休憩の時間は含みません。")
                     }
                 }
                 Section("3　集合日時（日本時間）") {

@@ -13,7 +13,10 @@ struct ScheduleTests {
 
     private let context: ModelContext
     private let store: GameSessionStore
-    private let startAt = Date(timeIntervalSince1970: 1_786_000_000)
+    /// **固定の日時を書かない。** 以前は `1_786_000_000` と書いていて、
+    /// その日を過ぎた日に「立てた予定はその場で一覧に出る」が突然落ちた
+    /// （`nextSchedule` は先の予定しか返さない）。いまから見た未来にする
+    private let startAt = Date().addingTimeInterval(7 * 24 * 60 * 60)
 
     init() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)

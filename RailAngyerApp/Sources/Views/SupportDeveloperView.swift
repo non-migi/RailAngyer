@@ -17,16 +17,13 @@ struct SupportDeveloperView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("このアプリは1人で作っています。")
                             .font(.headline)
-                        Text("駅の座標を調べ、コースを増やし、"
-                             + "みんなで遊べるようにサーバーを動かしています。"
-                             + "気に入っていただけたら、応援してもらえるとうれしいです。")
+                        Text("駅の座標を調べ、コースを増やし、みんなで遊べるようにサーバーを動かしています。気に入っていただけたら、応援してもらえるとうれしいです。")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 4)
                 } footer: {
                     // **期待させない。** ここを曖昧にすると、買ったあとに落胆させる
-                    Text("応援しても、機能が増えたり広告が消えたりはしません。"
-                         + "気持ちだけを受け取る仕組みです。")
+                    Text("応援しても、機能が増えたり広告が消えたりはしません。気持ちだけを受け取る仕組みです。")
                 }
 
                 if tipJar.isLoading {
@@ -84,8 +81,7 @@ struct SupportDeveloperView: View {
             .alert("ありがとうございます", isPresented: $tipJar.isThanking) {
                 Button("どういたしまして") { }
             } message: {
-                Text("いただいた気持ちは、コースを増やす手間と"
-                     + "サーバーを動かす費用にあてます。")
+                Text("いただいた気持ちは、コースを増やす手間とサーバーを動かす費用にあてます。")
             }
         }
     }

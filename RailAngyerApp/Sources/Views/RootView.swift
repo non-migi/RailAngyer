@@ -402,7 +402,7 @@ private struct HomeDashboardView: View {
                     Text(hasProgress ? "旅を続けよう" : "次の駅へ、歩き出そう")
                         .font(.title2.bold())
                     Text(store.room?.course?.name ?? "コースを準備中")
-                        .font(.subheadline).foregroundStyle(.white.opacity(0.75))
+                        .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image("WalkingMascot")
@@ -422,24 +422,27 @@ private struct HomeDashboardView: View {
                     .frame(maxWidth: .infinity, minHeight: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.white)
-            .foregroundStyle(Theme.ink)
+            .tint(Theme.line)
+            .foregroundStyle(Theme.onLine)
             .accessibilityIdentifier("startJourney")
         }
         .padding(20)
-        .foregroundStyle(.white)
-        .background(
-            LinearGradient(colors: [Color(red: 0.02, green: 0.55, blue: 0.27),
-                                    Color(red: 0.01, green: 0.28, blue: 0.17)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Theme.line.opacity(0.24), radius: 18, y: 9)
+        // **緑一色で塗らない。** 乗換案内の類はどれも地を白か淡い灰にして、
+        // 色は路線と主ボタンだけに使う。塗ると路線の色が埋もれ、
+        // 文字も白抜きになって読みづらくなる（濃い緑の上の薄い文字が読めなかった）
+        .background(Theme.surface,
+                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
     }
 
-    private func metric(_ title: String, _ value: String) -> some View {
+    private func metric(_ title: LocalizedStringKey, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(value).font(.headline.monospacedDigit()).lineLimit(1).minimumScaleFactor(0.7)
-            Text(title).font(.caption2).foregroundStyle(.white.opacity(0.68))
+            Text(title).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -522,7 +525,8 @@ private struct HomeDashboardView: View {
         }
     }
 
-    private func actionButton(_ title: String, _ icon: String, _ action: @escaping () -> Void) -> some View {
+    private func actionButton(_ title: LocalizedStringKey, _ icon: String,
+                              _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 7) {
                 Image(systemName: icon).font(.title3)

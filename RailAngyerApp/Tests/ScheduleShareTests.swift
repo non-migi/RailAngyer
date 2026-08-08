@@ -14,7 +14,9 @@ struct ScheduleShareTests {
 
     private let context: ModelContext
     private let store: GameSessionStore
-    /// 2026-08-09(日) 09:00 JST
+    /// 2026-08-09(日) 09:00 JST。
+    /// **ここは固定でよい。** 「8月9日(日) 9:00」と書けることを確かめる試験があり、
+    /// 日時が動くと確かめようがない。先の予定かどうかは見ていない
     private let startAt = Date(timeIntervalSince1970: 1_786_233_600)
 
     init() throws {

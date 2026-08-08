@@ -57,8 +57,7 @@ struct RuleSettingsView: View {
                 } header: {
                     Text("コース")
                 } footer: {
-                    Text("コースを変えると区間は両端に戻ります。"
-                         + "前のコースに書いたお題は消えず、そのコースを選んだときに使えます。")
+                    Text("コースを変えると区間は両端に戻ります。前のコースに書いたお題は消えず、そのコースを選んだときに使えます。")
                 }
                 .disabled(locked)
 
@@ -100,9 +99,7 @@ struct RuleSettingsView: View {
                             value: $arrivalRadius,
                             in: ArrivalRule.radiusRange,
                             step: 10)
-                    Text("南北線の最短駅間は約655m（大通〜すすきの）。"
-                         + "半径を大きくしすぎると隣の駅の圏内と重なるため、"
-                         + "\(Int(ArrivalRule.radiusRange.upperBound))m までに制限しています。")
+                    Text("南北線の最短駅間は約655m（大通〜すすきの）。半径を大きくしすぎると隣の駅の圏内と重なるため、\(Int(ArrivalRule.radiusRange.upperBound))m までに制限しています。")
                         .font(.caption).foregroundStyle(.secondary)
                     Text("札幌3路線は国土交通省の鉄道データ（JGD2011）に合わせた駅位置です。")
                         .font(.caption).foregroundStyle(.secondary)

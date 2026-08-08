@@ -29,8 +29,7 @@ struct StartFromScheduleView: View {
                 } header: {
                     Text("これからの予定")
                 } footer: {
-                    Text("選ぶと、その予定のコース・区間・サイコロで始めます。"
-                         + "予定に書いたお題もそのまま使えます。")
+                    Text("選ぶと、その予定のコース・区間・サイコロで始めます。予定に書いたお題もそのまま使えます。")
                 }
 
                 Section {

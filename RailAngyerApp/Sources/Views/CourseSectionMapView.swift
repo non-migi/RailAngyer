@@ -194,7 +194,8 @@ struct CourseSectionSummaryView: View {
         }
     }
 
-    private func metric(_ title: String, _ value: String, _ symbol: String) -> some View {
+    private func metric(_ title: LocalizedStringKey, _ value: String,
+                        _ symbol: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Label(title, systemImage: symbol)
                 .font(.caption2).foregroundStyle(.secondary)

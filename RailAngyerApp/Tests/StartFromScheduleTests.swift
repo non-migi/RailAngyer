@@ -14,8 +14,9 @@ struct StartFromScheduleTests {
 
     private let context: ModelContext
     private let store: GameSessionStore
-    /// 2026-08-09(日) 09:00 JST
-    private let startAt = Date(timeIntervalSince1970: 1_786_233_600)
+    /// **固定の日時を書かない。** `startableSchedules` は先の予定しか返さないので、
+    /// 固定日時にすると、その日を過ぎた日から突然落ちる
+    private let startAt = Date().addingTimeInterval(7 * 24 * 60 * 60)
 
     init() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)

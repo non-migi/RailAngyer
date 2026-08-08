@@ -240,7 +240,8 @@ private struct SummaryCard: View {
         .padding()
     }
 
-    private func stat(_ title: String, _ value: String) -> some View {
+    // 見出しは訳す。値は数字なのでそのまま
+    private func stat(_ title: LocalizedStringKey, _ value: String) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.title3.bold())
             Text(title).font(.caption2).foregroundStyle(.secondary)
@@ -248,7 +249,7 @@ private struct SummaryCard: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func timeStat(_ title: String, _ seconds: TimeInterval) -> some View {
+    private func timeStat(_ title: LocalizedStringKey, _ seconds: TimeInterval) -> some View {
         VStack(spacing: 2) {
             Text(DurationText.text(seconds))
                 .font(.subheadline.weight(.semibold).monospacedDigit())

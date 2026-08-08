@@ -76,11 +76,12 @@ struct BoardView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background {
-            LinearGradient(
-                colors: [Theme.paper, Theme.line.opacity(0.08)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing)
+        // **地は淡く保つ。** 濃い緑を敷いていたころは、その上の
+        // 「踏破 0 / 16」が緑の文字と灰の文字で、どちらも読めなかった。
+        // 乗換案内の類と同じく、色は路線と要点だけに使う
+        .background(Theme.surface)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.separator).frame(height: 0.5)
         }
     }
 

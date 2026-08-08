@@ -22,8 +22,28 @@ enum Theme {
     static let ink = Color(red: 0.09, green: 0.15, blue: 0.25)
     /// 焦茶。ミッションと効果まわり
     static let mission = Color(red: 0.66, green: 0.33, blue: 0.11)
-    /// 起動画像と共通の、旅支度を思わせる淡い紙色
-    static let paper = Color("LaunchBackground")
+    /// 起動画面の地色。**濃い緑**（`LaunchBackground` は RGB 0.02/0.38/0.18）。
+    ///
+    /// > ⚠️ **本文の背景には使わない。** 濃い緑の上に薄い文字を置くと読めなくなる。
+    /// > 起動画面はロゴを白抜きで置くので濃くてよいが、
+    /// > 数字や説明を載せる面は `surface` を使うこと。
+    static let launch = Color("LaunchBackground")
+
+    /// 本文を載せる面の色。**交通系のアプリに合わせて、地は淡く保つ**。
+    ///
+    /// 乗換案内の類はどれも、地を白か淡い灰にして、
+    /// 色は路線と要点だけに使う。地を塗ると路線の色が埋もれて読み取れなくなる。
+    static let surface = Color(uiColor: .secondarySystemGroupedBackground)
+
+    /// 画面全体の地。`surface` より一段沈めて、面の境目が分かるようにする
+    static let canvas = Color(uiColor: .systemGroupedBackground)
+
+    /// 緑をうっすら敷きたいときの色。**帯や見出しの地に使う程度に留める**
+    static let tint = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.33, green: 0.78, blue: 0.47, alpha: 0.14)
+            : UIColor(red: 0.16, green: 0.48, blue: 0.25, alpha: 0.08)
+    })
     /// 笠や木の杖に使う麦色
     static let wheat = Color(red: 0.89, green: 0.67, blue: 0.29)
 }

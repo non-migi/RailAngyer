@@ -143,8 +143,7 @@ struct RoomJoinView: View {
             } header: {
                 Text("ルーム名")
             } footer: {
-                Text("いまの区間（\(rangeText)）と最大出目 \(store.room?.diceMax ?? 6) で作ります。"
-                     + "プレイを始めると変更できません。")
+                Text("いまの区間（\(rangeText)）と最大出目 \(store.room?.diceMax ?? 6) で作ります。プレイを始めると変更できません。")
             }
         }
     }
