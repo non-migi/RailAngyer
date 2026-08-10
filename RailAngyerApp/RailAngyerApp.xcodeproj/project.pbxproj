@@ -75,6 +75,7 @@
 		CEBEE71543D6AE2739E150E0 /* BoardMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */; };
 		D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */; };
 		D54180DB7B9867B3580BAF9D /* StartFromScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE87431E8C664179BE6DC00C /* StartFromScheduleTests.swift */; };
+		D92A320C30930592914B4CF1 /* TelemetryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7F563491D82043110DDCA5 /* TelemetryTests.swift */; };
 		D96CB8A376C418A4182CAF8C /* CourseDirectoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7601E3978780FCBEA0C739CB /* CourseDirectoryTests.swift */; };
 		DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */; };
 		DACFE2A82A073E7669EB0136 /* PhotoVisibleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60704DCD90679AFAEBB91412 /* PhotoVisibleUITests.swift */; };
@@ -128,6 +129,7 @@
 		1B812383D18940B50805E027 /* CourseDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDirectory.swift; sourceTree = "<group>"; };
 		1BE146ABE7DE17202EA011B9 /* BoardMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMapView.swift; sourceTree = "<group>"; };
 		1E0CB81EAFFC74827CB26EBF /* room.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = room.json; sourceTree = "<group>"; };
+		1E7F563491D82043110DDCA5 /* TelemetryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryTests.swift; sourceTree = "<group>"; };
 		1F20D423F434E767B13723EB /* SupportDeveloperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportDeveloperView.swift; sourceTree = "<group>"; };
 		221879CB631B13ABDD16A06A /* RoomJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomJoinView.swift; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
@@ -445,6 +447,7 @@
 				5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */,
 				CE87431E8C664179BE6DC00C /* StartFromScheduleTests.swift */,
 				160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */,
+				1E7F563491D82043110DDCA5 /* TelemetryTests.swift */,
 				EBEC6D332774134FE7C1C143 /* TrackRecordingTests.swift */,
 				5241C4F1484E4B126481D40B /* WalkTimingTests.swift */,
 			);
@@ -624,6 +627,7 @@
 				F045E39BD922B1C6A3A942D0 /* ScheduleTests.swift in Sources */,
 				D54180DB7B9867B3580BAF9D /* StartFromScheduleTests.swift in Sources */,
 				2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */,
+				D92A320C30930592914B4CF1 /* TelemetryTests.swift in Sources */,
 				19031EB674080BA5E093E220 /* TrackRecordingTests.swift in Sources */,
 				B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */,
 			);
@@ -764,7 +768,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -779,7 +783,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				TELEMETRYDECK_APP_ID = "";
+				TELEMETRYDECK_APP_ID = "3548357F-E985-4373-9D48-798EEA8545ED";
 			};
 			name = Debug;
 		};
@@ -925,7 +929,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -940,7 +944,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				TELEMETRYDECK_APP_ID = "";
+				TELEMETRYDECK_APP_ID = "3548357F-E985-4373-9D48-798EEA8545ED";
 			};
 			name = Release;
 		};

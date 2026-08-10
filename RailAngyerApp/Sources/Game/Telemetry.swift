@@ -27,11 +27,22 @@ enum Telemetry {
 
     private(set) static var isEnabled = false
 
+    /// テストの最中か。
+    ///
+    /// **`RAILANGYER_IN_MEMORY` だけでは足りなかった。** それを渡すのはUIテストで、
+    /// ユニットテストはアプリを起動したまま走るため、素通りして**本番へ送っていた**。
+    /// XCTest が読み込まれているかで見る
+    private static var isRunningTests: Bool {
+        NSClassFromString("XCTestCase") != nil
+            || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     /// 起動時に1回だけ呼ぶ
     static func start() {
         guard !isEnabled, let appID else { return }
-        // テストで数字を汚さない
-        guard !TestHooks.usesInMemoryStore else { return }
+        // **テストで数字を汚さない。** 手元の試行が利用状況に混ざると、
+        // どれが本当の利用か分からなくなる
+        guard !TestHooks.usesInMemoryStore, !isRunningTests else { return }
 
         TelemetryDeck.initialize(config: .init(appID: appID))
         isEnabled = true
