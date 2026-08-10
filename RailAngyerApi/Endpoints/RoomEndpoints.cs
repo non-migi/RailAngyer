@@ -174,6 +174,23 @@ public static class RoomEndpoints
                 return ApiResults.BadRequest("invalid_range", "スタートとゴールは別の駅にしてください");
             }
 
+            // POST /rooms と同じ検査。変えた駅だけ見ればよい
+            var changedStationIds = new List<int>();
+            if (req.StartStationId is { } newStart) changedStationIds.Add(newStart);
+            if (req.GoalStationId is { } newGoal) changedStationIds.Add(newGoal);
+            if (changedStationIds.Count > 0)
+            {
+                var stationCourseIds = await db.Stations
+                    .Where(s => changedStationIds.Contains(s.StationId))
+                    .Select(s => s.CourseId)
+                    .ToListAsync(ct);
+                if (stationCourseIds.Count != changedStationIds.Count
+                    || stationCourseIds.Any(id => id != room.CourseId))
+                {
+                    return ApiResults.BadRequest("invalid_range", "区間の駅がコースと一致しません");
+                }
+            }
+
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });

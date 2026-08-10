@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using RailAngyerApi.Auth;
 using RailAngyerApi.Data;
@@ -38,6 +39,19 @@ builder.Services.AddSingleton<IPhotoStorage>(_ =>
                                builder.Configuration["Storage:PhotoContainer"] ?? "photos"));
 
 var app = builder.Build();
+
+// 例外がそのまま500になると、本文が空でクライアントが理由を出し分けられない。
+// とくに存在しない駅IDなどのFK違反はクライアントの誤りなので 400 に落とす（§6）
+app.UseExceptionHandler(handler => handler.Run(async context =>
+{
+    var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+    var (status, error, message) = ex is DbUpdateException
+        ? (StatusCodes.Status400BadRequest, "invalid_reference", "存在しないデータを参照しています")
+        : (StatusCodes.Status500InternalServerError, "server_error", "サーバー側で問題が起きました");
+
+    context.Response.StatusCode = status;
+    await context.Response.WriteAsJsonAsync(new ApiError(error, message));
+}));
 
 // アプリとDBを起こすためだけの応答。
 // 両方が寝ていると最初のリクエストに1分近くかかるため、クライアントは起動時にこれを投げておく

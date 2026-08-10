@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using RailAngyerApi.Auth;
 using RailAngyerApi.Endpoints;
 
 namespace RailAngyerApi.Tests;
@@ -159,6 +160,23 @@ public class RoomEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>
             .PatchAsJsonAsync($"/rooms/{host.RoomId}", new UpdateRoomRequest(null, null, diceMax));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task コースにない駅へは変更できない()
+    {
+        var host = await CreateRoomAsync("ツアー", "のん");
+
+        // 南北線に 999 番の駅は無い。DBのCHECKでは表現できないので、ここで弾く（06_schema.sql）
+        var response = await Authorized(host.Token)
+            .PatchAsJsonAsync($"/rooms/{host.RoomId}", new UpdateRoomRequest(999, null, null));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<ApiError>();
+        Assert.Equal("invalid_range", error!.Error);
+
+        var room = await Authorized(host.Token).GetFromJsonAsync<RoomDto>($"/rooms/{host.RoomId}");
+        Assert.Equal(1, room!.StartStationId);
     }
 
     [Fact]

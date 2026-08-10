@@ -65,6 +65,9 @@ public static class ProgressEndpoints
 
             var turn = await db.Turns.FirstOrDefaultAsync(t => t.TurnId == turnId, ct);
 
+            // 主キーはクライアント生成なので、他ルームのIDを当てられる。上書きさせない
+            if (turn is not null && turn.MissionSetId != roomId) return ApiResults.Forbidden();
+
             if (turn is null)
             {
                 if (req.DiceValue is not (>= 1 and <= 9))
@@ -135,8 +138,19 @@ public static class ProgressEndpoints
             }
 
             var visit = await db.Visits.FirstOrDefaultAsync(v => v.VisitId == visitId, ct);
+            if (visit is not null && visit.MissionSetId != roomId) return ApiResults.Forbidden();
+
             if (visit is null)
             {
+                // 紐づけ先のターンも同じルームのものに限る。
+                // FK は Turn の存在しか見ないので、他ルームのターンにぶら下げられてしまう
+                if (req.TurnId is { } turnId)
+                {
+                    var mine = await db.Turns
+                        .AnyAsync(t => t.TurnId == turnId && t.MissionSetId == roomId, ct);
+                    if (!mine) return ApiResults.Forbidden();
+                }
+
                 db.Visits.Add(new Visit
                 {
                     VisitId = visitId,

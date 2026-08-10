@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using RailAngyerApi.Auth;
 using RailAngyerApi.Endpoints;
 
 namespace RailAngyerApi.Tests;
@@ -255,6 +256,57 @@ public class ProgressEndpointTests(ApiFactory factory) : IClassFixture<ApiFactor
             new SaveVisitRequest(null, 3, DateTime.UtcNow, 1));   // 通り道なのに TurnId が無い
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task 他ルームのターンは更新できない()
+    {
+        var (client, room) = await SetUpAsync("のん");
+        var (otherClient, otherRoom) = await SetUpAsync("ケンタ");
+        var turnId = Guid.NewGuid();
+        await otherClient.PutAsJsonAsync($"/rooms/{otherRoom.RoomId}/turns/{turnId}",
+            new SaveTurnRequest(1, 3, 4, DateTime.UtcNow, null, null, null, null, null, null));
+
+        // 自分のルーム宛てだが、ターンのIDは隣のルームのもの
+        var response = await client.PutAsJsonAsync($"/rooms/{room.RoomId}/turns/{turnId}",
+            new SaveTurnRequest(1, 3, 4, null, DateTime.UtcNow, null, true, 0, 16, DateTime.UtcNow));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+
+        var state = await otherClient.GetFromJsonAsync<StateDto>($"/rooms/{otherRoom.RoomId}/state");
+        Assert.NotNull(state!.ActiveTurn);          // 勝手に完了させられていない
+        Assert.Equal(1, state.CurrentStationId);
+    }
+
+    [Fact]
+    public async Task 他ルームのターンを指す訪問は作れない()
+    {
+        var (client, room) = await SetUpAsync("のん");
+        var (otherClient, otherRoom) = await SetUpAsync("ケンタ");
+        var otherTurnId = Guid.NewGuid();
+        await otherClient.PutAsJsonAsync($"/rooms/{otherRoom.RoomId}/turns/{otherTurnId}",
+            new SaveTurnRequest(1, 3, 4, DateTime.UtcNow, null, null, null, null, null, null));
+
+        var response = await client.PutAsJsonAsync($"/rooms/{room.RoomId}/visits/{Guid.NewGuid()}",
+            new SaveVisitRequest(otherTurnId, 3, DateTime.UtcNow, 1));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+
+        var state = await client.GetFromJsonAsync<StateDto>($"/rooms/{room.RoomId}/state");
+        Assert.Empty(state!.Visits);
+    }
+
+    [Fact]
+    public async Task 存在しない駅を指すターンは400で返る()
+    {
+        var (client, room) = await SetUpAsync("のん");
+
+        var response = await client.PutAsJsonAsync($"/rooms/{room.RoomId}/turns/{Guid.NewGuid()}",
+            new SaveTurnRequest(1, 3, 999, DateTime.UtcNow, null, null, null, null, null, null));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<ApiError>();
+        Assert.Equal("invalid_reference", error!.Error);
     }
 
     [Fact]
