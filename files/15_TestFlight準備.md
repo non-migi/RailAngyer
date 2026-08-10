@@ -56,6 +56,16 @@ Explicit App ID登録後の最終アーカイブは
 対処した `1.0.0 (3)` を、2026-08-01 18:29 JSTにアップロード成功。App Store Connectで処理中。
 アーカイブは `/tmp/RailAngyerApp-1.0.0-3.xcarchive`。
 
+導線整理版（盤面のボタン集約・「ふりかえり」「過去の旅」への改名・予定→お題のpush遷移・
+「みんなで遊ぶ」のホーム格上げ・一周モードで保存できない不具合の修正）を
+`1.0.0 (26)` として2026-08-10 20:08 JSTにアップロード成功。
+アーカイブは `/tmp/RailAngyerApp-1.0.0-26.xcarchive`。
+
+> ⚠️ **ビルド番号はApp Store Connect側が正。** この文書の通し番号（1〜5）と違い、
+> 実際のアップロード済み番号は25まで進んでいた（低い番号は
+> 「bundle version must be higher than ‘25’」で弾かれる）。今回から
+> `CURRENT_PROJECT_VERSION` はApp Store Connectの実番号に合わせて26とした。
+
 > ⚠️ **クラッシュログはこの環境からは見えない。**
 > 端末が繋がっておらず（`~/Library/Logs/CrashReporter/MobileDevice/` が無い）、
 > App Store Connect API の鍵も置いていないため。取得の手順は §8。
@@ -119,6 +129,21 @@ xcodebuild \
 App Store Connectへの送信まで行う。送信前にApp Store Connectで同じBundle IDの
 Appレコードを作っておく。
 
+XcodeのApple IDセッションが切れていると `Failed to Use Accounts` / `No Accounts` で
+失敗する。その場合は最後のコマンドに App Store Connect API キーを足す
+（GUIでのサインインが不要になるので、こちらを既定にしてよい）:
+
+```bash
+xcodebuild -exportArchive \
+  -archivePath /tmp/RailAngyerApp-<バージョン>-<ビルド>.xcarchive \
+  -exportOptionsPlist RailAngyerApp/ExportOptions-TestFlight.plist \
+  -exportPath /tmp/RailAngyerApp-TestFlight \
+  -allowProvisioningUpdates \
+  -authenticationKeyPath ~/private_keys/AuthKey_BMCT4QBV35.p8 \
+  -authenticationKeyID BMCT4QBV35 \
+  -authenticationKeyIssuerID "$(python3 -c 'import json;print(json.load(open("'"$HOME"'/private_keys/asc-config.json"))["issuerId"])')"
+```
+
 ## 6. Appleアカウント側で必要な項目
 
 - [x] Explicit App IDとApp Store ConnectのAppレコードを作成
@@ -127,6 +152,7 @@ Appレコードを作っておく。
 - [x] ビルド `1.0.0 (2)` をApp Store Connectへアップロード
 - [x] ビルド `1.0.0 (3)` をApp Store Connectへアップロード（不具合報告への対処版）
 - [x] ビルド `1.0.0 (4)`（起動時クラッシュの修正）と `1.0.0 (5)`（起動の待ち・環状線・市電）を送信
+- [x] ビルド `1.0.0 (26)`（導線整理・一周モードの保存修正）を2026-08-10に送信
 - [x] App Store Connect API のキーを設定し、ビルドとクラッシュ報告を自動で見られるようにした
 - [x] ビルド `3` のテスト項目（日本語）をAPIから登録
 - [ ] Beta Review連絡先の電話番号を入力
