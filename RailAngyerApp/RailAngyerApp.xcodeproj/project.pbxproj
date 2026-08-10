@@ -204,6 +204,7 @@
 		E87BBBAE4AF5160E731DC77C /* StartFromScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartFromScheduleView.swift; sourceTree = "<group>"; };
 		EA6A195889CC18D3B9AEE608 /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		EBEC6D332774134FE7C1C143 /* TrackRecordingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingTests.swift; sourceTree = "<group>"; };
+		ED66A9844B39AE3E48EB5747 /* asc-devices.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "asc-devices.py"; sourceTree = "<group>"; };
 		F104A1A3937B4371EB01F2D3 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
 		F1B5442CA36FB47ADDB55432 /* Privacy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Privacy.md; sourceTree = "<group>"; };
 		F772C0174D0030FFE12D7BC7 /* GameSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStoreTests.swift; sourceTree = "<group>"; };
@@ -321,6 +322,7 @@
 			children = (
 				5929FDCB88E5F61769D457AF /* __pycache__ */,
 				3B085D3B5A85606ACF5463F6 /* asc-crashes.py */,
+				ED66A9844B39AE3E48EB5747 /* asc-devices.py */,
 				92BB1B0553B65D8A2C03101B /* asc-release.py */,
 				6A7C46209573C400F462A79D /* asc-setup.sh */,
 				BABB6E7340F1BBE52D155055 /* asc-whattotest.py */,
@@ -762,7 +764,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -923,7 +925,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;

@@ -45,6 +45,16 @@ struct SyncServiceTests {
         return SyncService(context: context, client: client, credentials: credentials)
     }
 
+    /// いまの現在地。`GameSessionStore.currentOrder` と同じ数え方
+    private var currentOrder: Int {
+        let completed = room.turns
+            .filter { $0.completedAt != nil }
+            .max { $0.turnNo < $1.turnNo }
+        return completed?.endPosition
+            ?? completed?.endStation?.orderNo
+            ?? room.startStation?.orderNo ?? 1
+    }
+
     private func station(_ orderNo: Int) -> Station? {
         room.course?.stations.first { $0.orderNo == orderNo }
     }
@@ -380,6 +390,91 @@ struct SyncServiceTests {
 
         // 未送信の記録が消えると、歩いた事実そのものが失われる
         #expect(try context.fetch(FetchDescriptor<Visit>()).contains { $0.id == local.id })
+    }
+
+    // MARK: - 2台で遊ぶときの現在地
+    //
+    // **もう片方が進んでも、こちらは出発した駅から動かなかった。**
+    // 取り込みが「進行中のターン」と「訪問」だけで、
+    // 終わったターンを一切取り込んでいなかったのが原因（実際に2台で遊んで判明）。
+    // 現在地は終わったターンから計算するので、こちらには何も伝わらなかった
+
+    @Test("相手が終えたターンを取り込むと、現在地が進む")
+    func completedTurnMovesCurrentOrder() async throws {
+        let turnId = UUID()
+        let service = makeService(.json("""
+        {"currentStationId":4,"isCleared":false,"activeTurn":null,
+         "visits":[],"completedTurnCount":1,
+         "completedTurns":[{"turnId":"\(turnId.uuidString)","turnNo":1,"diceValue":3,
+           "fromStationId":1,"landingStationId":4,"rolledAt":"2026-08-09T00:00:00Z",
+           "arrivedAt":"2026-08-09T00:20:00Z","selectedMissionId":null,"missionDone":true,
+           "appliedEffectType":null,"endStationId":4,"completedAt":"2026-08-09T00:30:00Z"}]}
+        """))
+        #expect(currentOrder == 1, "はじめは出発した駅")
+
+        _ = await service.pull()
+
+        #expect(currentOrder == 4, "相手が進んだのに、出発した駅のまま")
+    }
+
+    @Test("同じターンを二度取り込んでも増えない")
+    func completedTurnIsIdempotent() async throws {
+        let turnId = UUID()
+        let body = """
+        {"currentStationId":4,"isCleared":false,"activeTurn":null,
+         "visits":[],"completedTurnCount":1,
+         "completedTurns":[{"turnId":"\(turnId.uuidString)","turnNo":1,"diceValue":3,
+           "fromStationId":1,"landingStationId":4,"rolledAt":"2026-08-09T00:00:00Z",
+           "arrivedAt":null,"selectedMissionId":null,"missionDone":false,
+           "appliedEffectType":null,"endStationId":4,"completedAt":"2026-08-09T00:30:00Z"}]}
+        """
+        let service = makeService(.json(body))
+        _ = await service.pull()
+        _ = await service.pull()
+
+        #expect(try context.fetch(FetchDescriptor<Turn>()).filter { $0.id == turnId }.count == 1)
+    }
+
+    @Test("進行中だったターンが終わったら、こちらでも終わりになる")
+    func activeTurnBecomesCompleted() async throws {
+        let turnId = UUID()
+        let service = makeService(.json("""
+        {"currentStationId":1,"isCleared":false,
+         "activeTurn":{"turnId":"\(turnId.uuidString)","turnNo":1,"diceValue":3,
+           "fromStationId":1,"landingStationId":4,"rolledAt":"2026-08-09T00:00:00Z",
+           "arrivedAt":null,"selectedMissionId":null,"missionDone":false,
+           "appliedEffectType":null},
+         "visits":[],"completedTurnCount":0}
+        """))
+        _ = await service.pull()
+        #expect(currentOrder == 1, "進行中のターンでは現在地は動かない")
+
+        // 相手がそのターンを終えた
+        StubURLProtocol.behavior = .json("""
+        {"currentStationId":4,"isCleared":false,"activeTurn":null,
+         "visits":[],"completedTurnCount":1,
+         "completedTurns":[{"turnId":"\(turnId.uuidString)","turnNo":1,"diceValue":3,
+           "fromStationId":1,"landingStationId":4,"rolledAt":"2026-08-09T00:00:00Z",
+           "arrivedAt":"2026-08-09T00:20:00Z","selectedMissionId":null,"missionDone":true,
+           "appliedEffectType":null,"endStationId":4,"completedAt":"2026-08-09T00:30:00Z"}]}
+        """)
+        _ = await service.pull()
+
+        // **同じターンを書き換える。** 足すだけだと、いつまでも進行中のまま
+        let turns = try context.fetch(FetchDescriptor<Turn>()).filter { $0.id == turnId }
+        #expect(turns.count == 1)
+        #expect(turns.first?.completedAt != nil, "終わったことが伝わっていない")
+        #expect(currentOrder == 4)
+    }
+
+    @Test("古いサーバー（終わったターンを返さない）でも落ちない")
+    func toleratesOldServer() async throws {
+        let service = makeService(.json("""
+        {"currentStationId":1,"isCleared":false,"activeTurn":null,
+         "visits":[],"completedTurnCount":0}
+        """))
+
+        #expect(await service.pull())
     }
 
     @Test("参加をやめると未送信も消える")

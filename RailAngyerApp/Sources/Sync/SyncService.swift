@@ -500,18 +500,49 @@ final class SyncService {
         let stations = room.course?.stations ?? []
         func station(_ serverId: Int) -> Station? { stations.first { $0.serverId == serverId } }
 
-        if let active = state.activeTurn, !room.turns.contains(where: { $0.id == active.turnId }) {
-            let turn = Turn(turnNo: active.turnNo, diceValue: active.diceValue)
-            turn.id = active.turnId
-            turn.missionSet = room
-            turn.fromStation = station(active.fromStationId)
-            turn.landingStation = station(active.landingStationId)
-            turn.rolledAt = active.rolledAt
-            turn.arrivedAt = active.arrivedAt
-            turn.missionDone = active.missionDone
-            turn.appliedEffectTypeRaw = active.appliedEffectType
+        /// ターンを1件取り込む。**すでにあれば書き換える。**
+        ///
+        /// 以前は「無ければ足す」だけで、終わったターンは取り込んですらいなかった。
+        /// 現在地は終わったターンから計算するので、**もう片方の端末が
+        /// 出発した駅から動かない**という形で表に出た（2台で遊んで判明）。
+        func upsert(id: UUID, turnNo: Int, dice: Int, from: Int, landing: Int,
+                    rolledAt: Date, arrivedAt: Date?, missionDone: Bool,
+                    appliedEffect: Int?, endStationId: Int?, completedAt: Date?) {
+            let turn = room.turns.first { $0.id == id }
+                ?? {
+                    let created = Turn(turnNo: turnNo, diceValue: dice)
+                    created.id = id
+                    created.missionSet = room
+                    context.insert(created)
+                    return created
+                }()
+            turn.turnNo = turnNo
+            turn.diceValue = dice
+            turn.fromStation = station(from)
+            turn.landingStation = station(landing)
+            turn.rolledAt = rolledAt
+            turn.arrivedAt = arrivedAt
+            turn.missionDone = missionDone
+            turn.appliedEffectTypeRaw = appliedEffect
+            if let endStationId { turn.endStation = station(endStationId) }
+            if let completedAt { turn.completedAt = completedAt }
             turn.syncStateRaw = SyncState.synced.rawValue
-            context.insert(turn)
+        }
+
+        if let a = state.activeTurn {
+            upsert(id: a.turnId, turnNo: a.turnNo, dice: a.diceValue,
+                   from: a.fromStationId, landing: a.landingStationId,
+                   rolledAt: a.rolledAt, arrivedAt: a.arrivedAt, missionDone: a.missionDone,
+                   appliedEffect: a.appliedEffectType, endStationId: nil, completedAt: nil)
+        }
+
+        // **終わったターンを取り込む。** ここが現在地の元になる
+        for c in state.completedTurns ?? [] {
+            upsert(id: c.turnId, turnNo: c.turnNo, dice: c.diceValue,
+                   from: c.fromStationId, landing: c.landingStationId,
+                   rolledAt: c.rolledAt, arrivedAt: c.arrivedAt, missionDone: c.missionDone,
+                   appliedEffect: c.appliedEffectType,
+                   endStationId: c.endStationId, completedAt: c.completedAt ?? c.rolledAt)
         }
 
         for incoming in state.visits where !room.visits.contains(where: { $0.id == incoming.visitId }) {

@@ -316,12 +316,30 @@ struct AttendeeResponse: Codable {
     let status: Int
 }
 
+/// 終わったターン。**現在地はこれで決まる**
+struct CompletedTurnResponse: Codable {
+    let turnId: UUID
+    let turnNo: Int
+    let diceValue: Int
+    let fromStationId: Int
+    let landingStationId: Int
+    let rolledAt: Date
+    let arrivedAt: Date?
+    let selectedMissionId: UUID?
+    let missionDone: Bool
+    let appliedEffectType: Int?
+    let endStationId: Int
+    let completedAt: Date?
+}
+
 struct StateResponse: Codable {
     let currentStationId: Int
     let isCleared: Bool
     let activeTurn: ActiveTurnResponse?
     let visits: [VisitResponse]
     let completedTurnCount: Int
+    /// 終わったターン。**古いサーバーは返さない**ので省略できるようにしてある
+    let completedTurns: [CompletedTurnResponse]?
 }
 
 struct ActiveTurnResponse: Codable {

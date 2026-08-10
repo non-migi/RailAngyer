@@ -49,9 +49,24 @@ public static class ProgressEndpoints
 
             var turnCount = await db.Turns.CountAsync(t => t.MissionSetId == roomId && t.CompletedAt != null, ct);
 
+            // **終わったターンも返す。** これが無いと、他の端末は現在地を計算できず
+            // 出発した駅から動かない（実際に2台で遊んで判明）。
+            // 直近だけで足りる（現在地は最後のターンで決まる）
+            var completed = await db.Turns.AsNoTracking()
+                .Where(t => t.MissionSetId == roomId && t.EndStationId != null)
+                .OrderByDescending(t => t.RolledAt)
+                .Take(60)
+                .Select(t => new CompletedTurnDto(t.TurnId, t.TurnNo, t.DiceValue,
+                                                  t.FromStationId, t.LandingStationId,
+                                                  t.RolledAt, t.ArrivedAt,
+                                                  t.SelectedMissionId, t.MissionDone,
+                                                  t.AppliedEffectType,
+                                                  t.EndStationId!.Value, t.CompletedAt))
+                .ToListAsync(ct);
+
             return Results.Ok(new StateDto(currentStationId,
                                            currentStationId == room.GoalStationId,
-                                           active, visited, turnCount));
+                                           active, visited, turnCount, completed));
         });
 
         // --- ターン -------------------------------------------------------------
@@ -203,5 +218,11 @@ public record ActiveTurnDto(Guid TurnId, int TurnNo, byte DiceValue, int FromSta
                             int LandingStationId, DateTime RolledAt, DateTime? ArrivedAt,
                             Guid? SelectedMissionId, bool MissionDone, byte? AppliedEffectType);
 public record VisitDto(Guid VisitId, Guid? TurnId, int StationId, DateTime ArrivedAt, byte VisitKind);
+/// <summary>終わったターン。**現在地はこれで決まる**ので、他の端末に必ず渡す</summary>
+public record CompletedTurnDto(Guid TurnId, int TurnNo, byte DiceValue, int FromStationId,
+                               int LandingStationId, DateTime RolledAt, DateTime? ArrivedAt,
+                               Guid? SelectedMissionId, bool MissionDone, byte? AppliedEffectType,
+                               int EndStationId, DateTime? CompletedAt);
 public record StateDto(int CurrentStationId, bool IsCleared, ActiveTurnDto? ActiveTurn,
-                       List<VisitDto> Visits, int CompletedTurnCount);
+                       List<VisitDto> Visits, int CompletedTurnCount,
+                       List<CompletedTurnDto>? CompletedTurns = null);
