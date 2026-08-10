@@ -22,11 +22,20 @@ public struct StationRef: Codable, Sendable, Hashable, Identifiable {
 public struct CourseRef: Codable, Sendable {
     public let name: String
     public let lineColorHex: String
+    /// 国の名前（表示用）。**いずれ日本の外も扱う**ため、国から先にたどれる形にしてある
+    public let country: String
+    /// ISO 3166-1 alpha-2。並び順と旗の表示に使う
+    public let countryCode: String
+    /// 通る行政区画（日本では都道府県）。**またぐ路線は複数持つ**
+    public let regions: [String]
     public let stations: [StationRef]
     /// 環状線か。一周して戻ってこられる
     public let isLoop: Bool
     /// 到着とみなす半径（メートル）。駅間が短い路線では既定の150mだと隣と重なる
     public let arrivalRadius: Double?
+    /// この路線がある土地の時間帯（IANA名。例 "Europe/Berlin"）。
+    /// 書いていなければ日本時間。**集合日時はこの時計で読む**
+    public let timeZoneIdentifier: String?
     /// 一周する向きの呼び名。`forward` は通し番号が増える向き
     public let loopDirectionNames: LoopDirectionNames?
 
@@ -40,9 +49,14 @@ public struct CourseRef: Codable, Sendable {
         name = try c.decode(String.self, forKey: .name)
         lineColorHex = try c.decode(String.self, forKey: .lineColorHex)
         stations = try c.decode([StationRef].self, forKey: .stations)
+        // 国と地方を書いていない定義は日本のものとして読む（既存の5コースはすべて日本）
+        country = try c.decodeIfPresent(String.self, forKey: .country) ?? "日本"
+        countryCode = try c.decodeIfPresent(String.self, forKey: .countryCode) ?? "JP"
+        regions = try c.decodeIfPresent([String].self, forKey: .regions) ?? []
         // 既存のコース定義には無い項目なので、書いていなければ直線・既定半径として読む
         isLoop = try c.decodeIfPresent(Bool.self, forKey: .isLoop) ?? false
         arrivalRadius = try c.decodeIfPresent(Double.self, forKey: .arrivalRadius)
+        timeZoneIdentifier = try c.decodeIfPresent(String.self, forKey: .timeZoneIdentifier)
         loopDirectionNames = try c.decodeIfPresent(LoopDirectionNames.self,
                                                    forKey: .loopDirectionNames)
     }
@@ -109,9 +123,83 @@ public enum StationMaster {
         try load(resource: "shiden")
     }
 
+    /// 阪急京都本線（大阪梅田 → 京都河原町、28駅）。
+    ///
+    /// 座標は OpenStreetMap の駅ノード（© OpenStreetMap contributors / ODbL）。
+    /// 直線距離の合計は約46.8kmで、営業キロ47.7kmとよく合う。
+    public static func hankyuKyoto() throws -> CourseRef {
+        try load(resource: "hankyu_kyoto")
+    }
+
+    /// ベルリン Ringbahn（27駅・環状）。**日本の外に出る最初のコース**。
+    ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション S41
+    /// （© OpenStreetMap contributors / ODbL）。
+    /// 直線距離の合計は約35.4kmで、営業キロ37.5kmとよく合う。
+    /// 内回り／外回りにあたるものが S41／S42 として実在する
+    public static func berlinRingbahn() throws -> CourseRef {
+        try load(resource: "berlin_ringbahn")
+    }
+
+    /// ロンドン サークル線（27駅・環状）。
+    ///
+    /// 2009年から実際の運行は「らせん」（ハマースミス発着）だが、
+    /// **環になっている元の Inner Circle だけを扱う**。
+    /// 直線距離の合計は約20.0kmで、Inner Circle の約21kmとよく合う。
+    /// 駅間が短いので到着判定の半径を110mにしてある
+    public static func londonCircle() throws -> CourseRef {
+        try load(resource: "london_circle")
+    }
+
+    /// モスクワ 環状線（12駅・環状）。
+    ///
+    /// **いちばん手頃な一周**。直線18.4kmで、公称19.4kmとよく合う。
+    /// 1950〜54年にできた古い環状線で、駅そのものが見どころになっている
+    public static func moscowKoltsevaya() throws -> CourseRef {
+        try load(resource: "moscow_koltsevaya")
+    }
+
+    /// モスクワ 大環状線（29駅・環状）。世界最長級の地下鉄環状。
+    /// 直線54.0km（公称57.5km）。**1日で歩き切るのは山手線より重い**
+    public static func moscowBolshaya() throws -> CourseRef {
+        try load(resource: "moscow_bolshaya")
+    }
+
+    /// 北京地下鉄10号線（45駅・環状）。直線54.7km（公称57.0km）。
+    /// 内環／外環という呼び分けが実在する
+    public static func beijingLine10() throws -> CourseRef {
+        try load(resource: "beijing_line10")
+    }
+
+    /// 大阪環状線（19駅・環状）。**山手線の次に歩かれている環状線**。
+    /// 直線20.7km（営業キロ21.7km）。実際に歩くと35km前後になる
+    public static func osakaLoop() throws -> CourseRef {
+        try load(resource: "osaka_loop")
+    }
+
+    /// ニューヨーク地下鉄7号線（22駅・直線）。
+    ///
+    /// クイーンズ側は高架で、**線路沿いをそのまま歩ける**。
+    /// 移民の街を貫くことから "International Express" とも呼ばれる。
+    /// 直線15.9km。ハドソンヤードからフラッシングまで
+    public static func nycFlushing() throws -> CourseRef {
+        try load(resource: "nyc_flushing")
+    }
+
+    /// ロサンゼルス Eライン（29駅・直線）。
+    ///
+    /// ダウンタウンから**サンタモニカの海まで**。直線34.7km。
+    /// 終点が浜辺なので、歩き切った先に分かりやすいご褒美がある
+    public static func laEline() throws -> CourseRef {
+        try load(resource: "la_eline")
+    }
+
     /// 同梱しているコースすべて
     public static func all() throws -> [CourseRef] {
-        [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden()]
+        [try nanboku(), try tozai(), try toho(), try yamanote(), try shiden(),
+         try hankyuKyoto(), try berlinRingbahn(), try londonCircle(),
+         try moscowKoltsevaya(), try moscowBolshaya(), try beijingLine10(),
+         try osakaLoop(), try nycFlushing(), try laEline()]
     }
 
     static func load(resource: String) throws -> CourseRef {

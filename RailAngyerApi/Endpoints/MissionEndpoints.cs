@@ -22,9 +22,22 @@ public static class MissionEndpoints
             var me = http.Member();
             if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
-            var missions = await db.Missions.AsNoTracking()
-                .Where(m => m.MissionSetId == roomId
-                         && (includeOthers || m.MemberId == me.MemberId))
+            // **どこまで見せるかはルームの取り決めが正。** クライアントで隠すだけでは
+            // 通信を覗けば見えるので、ここでも絞る。呼び出し側が自分のぶんだけを
+            // 求めたとき（includeOthers=false）も同じく絞る
+            var visibility = await db.MissionSets.AsNoTracking()
+                .Where(r => r.MissionSetId == roomId)
+                .Select(r => r.MissionVisibility)
+                .FirstOrDefaultAsync(ct);
+
+            var query = db.Missions.AsNoTracking().Where(m => m.MissionSetId == roomId);
+            if (visibility == 0 || !includeOthers)
+            {
+                // 当日までのお楽しみ。自分が書いたぶんだけ返す
+                query = query.Where(m => m.MemberId == me.MemberId);
+            }
+
+            var missions = await query
                 .OrderBy(m => m.Station!.OrderNo)
                 .Select(m => new MissionDto(m.MissionId, m.StationId, m.Content,
                                             m.EffectType, m.EffectValue, m.EffectStationId,
@@ -113,6 +126,13 @@ public static class MissionEndpoints
             var me = http.Member();
             if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
+            // ルームの取り決めが「伏せる」なら、求められても中身は返さない
+            var visibility = await db.MissionSets.AsNoTracking()
+                .Where(r => r.MissionSetId == roomId)
+                .Select(r => r.MissionVisibility)
+                .FirstOrDefaultAsync(ct);
+            var revealsContent = includeContent && visibility != 0;
+
             var missions = await db.Missions.AsNoTracking()
                 .Where(m => m.MissionSetId == roomId)
                 .OrderBy(m => m.Station!.OrderNo)
@@ -135,7 +155,7 @@ public static class MissionEndpoints
                     g.Count(),
                     g.Count(m => m.EffectType != 0),
                     g.Count(m => m.EffectType == 2),   // 戻るが多いと進まなくなる（E-08）
-                    includeContent
+                    revealsContent
                         ? g.Select(m => new MissionBriefDto(m.MissionId, m.MemberId,
                                                             m.Content, m.DisplayName)).ToList()
                         : []))

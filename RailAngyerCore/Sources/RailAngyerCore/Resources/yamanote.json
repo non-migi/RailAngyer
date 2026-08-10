@@ -1,6 +1,9 @@
 {
   "name": "山手線",
   "lineColorHex": "#9ACD32",
+  "country": "日本",
+  "countryCode": "JP",
+  "regions": ["東京都"],
   "isLoop": true,
   "loopDirectionNames": { "forward": "内回り（上野・池袋・新宿まわり）", "backward": "外回り（品川・渋谷・新宿まわり）" },
   "stations": [

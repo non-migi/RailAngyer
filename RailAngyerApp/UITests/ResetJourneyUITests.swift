@@ -15,10 +15,10 @@ final class ResetJourneyUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
 
-        // 現在地を始点（麻生）に戻す。**前のテストが残した位置のままだと、
-        // 出発した瞬間に目的地の圏内にいて自動到着してしまい、手動の導線を通れない**
+        // 現在地を始点に戻す。**前のテストが残した位置のままだと、
+        // 出発した瞬間に目的地の圏内にいて自動到着し、手動到着のボタンが消える**
         XCUIDevice.shared.location = XCUILocation(
-            location: CLLocation(latitude: 43.10834, longitude: 141.33848))
+            location: CLLocation(latitude: 43.10834, longitude: 141.33848))   // 麻生
 
         app = XCUIApplication()
         app.launchEnvironment["RAILANGYER_FIXED_DICE"] = "1"
@@ -53,6 +53,7 @@ final class ResetJourneyUITests: XCTestCase {
         app.launchEnvironment["RAILANGYER_RESET"] = "1"
         app.launch()
 
+        dismissHowToPlayIfNeeded()
         startFromHome()
         walkOneTurn()
 
@@ -83,7 +84,8 @@ final class ResetJourneyUITests: XCTestCase {
         // 区間は予定で決める（旅を始めるときに取り込まれる）
         planTwoStationJourney()
 
-        startFromHome()
+        // 立てた予定を選んで始める。ここで区間（麻生 → 北34条）が旅に移る
+        startFromHome(choosing: "2駅だけ歩く")
         walkOneTurn()
 
         let cleared = app.staticTexts["ゴールに到達しました"]
@@ -100,12 +102,36 @@ final class ResetJourneyUITests: XCTestCase {
 
     // MARK: - 補助
 
-    /// ホームから旅を始めて、盤面が出るまで待つ
-    private func startFromHome() {
+    /// ホームから旅を始めて、盤面が出るまで待つ。
+    ///
+    /// 予定が立ててあると「どの予定で歩きますか」が挟まる。
+    /// 予定のルールで歩きたいときは名前で選び、そうでなければいまの設定のまま始める
+    private func startFromHome(choosing scheduleTitle: String? = nil) {
         let start = app.buttons["startJourney"]
         XCTAssertTrue(start.waitForExistence(timeout: 15), "ホームが出ていない")
         start.tap()
+
+        if app.navigationBars["どの予定で歩きますか"].waitForExistence(timeout: 4) {
+            if let scheduleTitle {
+                let row = app.buttons.matching(
+                    NSPredicate(format: "label BEGINSWITH %@", scheduleTitle)).firstMatch
+                XCTAssertTrue(row.waitForExistence(timeout: 5), "立てた予定が選べない")
+                row.tap()
+            } else {
+                app.buttons["いまの設定のまま始める"].tap()
+            }
+        } else {
+            XCTAssertNil(scheduleTitle, "予定を選ぶ画面が出ていない")
+        }
+
         XCTAssertTrue(app.buttons["サイコロを振る"].waitForExistence(timeout: 15), "盤面が出ていない")
+    }
+
+    /// 初回だけ出る「遊び方」。
+    /// **保存を効かせて起動するテストでは出る**（メモリ上の起動では出ない）ので、閉じてから進む
+    private func dismissHowToPlayIfNeeded() {
+        guard app.navigationBars["遊び方"].waitForExistence(timeout: 5) else { return }
+        app.buttons["閉じる"].firstMatch.tap()
     }
 
     /// 1ターンぶん歩いて盤面へ戻る（出目は1に固定してあるので隣の駅で止まる）

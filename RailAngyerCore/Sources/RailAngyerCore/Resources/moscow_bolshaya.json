@@ -1,0 +1,192 @@
+{
+  "name": "モスクワ 大環状線",
+  "lineColorHex": "#82C0C0",
+  "country": "ロシア",
+  "countryCode": "RU",
+  "timeZoneIdentifier": "Europe/Moscow",
+  "regions": [
+    "モスクワ"
+  ],
+  "isLoop": true,
+  "loopDirectionNames": {
+    "forward": "時計回り",
+    "backward": "反時計回り"
+  },
+  "arrivalRadius": 150,
+  "stations": [
+    {
+      "name": "Сокольники",
+      "orderNo": 1,
+      "latitude": 55.790217,
+      "longitude": 37.679366
+    },
+    {
+      "name": "Рижская",
+      "orderNo": 2,
+      "latitude": 55.793983,
+      "longitude": 37.634333
+    },
+    {
+      "name": "Марьина Роща",
+      "orderNo": 3,
+      "latitude": 55.796631,
+      "longitude": 37.616409
+    },
+    {
+      "name": "Савёловская",
+      "orderNo": 4,
+      "latitude": 55.792428,
+      "longitude": 37.586103
+    },
+    {
+      "name": "Петровский парк",
+      "orderNo": 5,
+      "latitude": 55.791963,
+      "longitude": 37.556998
+    },
+    {
+      "name": "ЦСКА",
+      "orderNo": 6,
+      "latitude": 55.786608,
+      "longitude": 37.533114
+    },
+    {
+      "name": "Хорошёвская",
+      "orderNo": 7,
+      "latitude": 55.776757,
+      "longitude": 37.5191
+    },
+    {
+      "name": "Народное Ополчение",
+      "orderNo": 8,
+      "latitude": 55.775802,
+      "longitude": 37.485729
+    },
+    {
+      "name": "Мнёвники",
+      "orderNo": 9,
+      "latitude": 55.761201,
+      "longitude": 37.471283
+    },
+    {
+      "name": "Терехово",
+      "orderNo": 10,
+      "latitude": 55.748039,
+      "longitude": 37.459617
+    },
+    {
+      "name": "Кунцевская",
+      "orderNo": 11,
+      "latitude": 55.728864,
+      "longitude": 37.445956
+    },
+    {
+      "name": "Давыдково",
+      "orderNo": 12,
+      "latitude": 55.715139,
+      "longitude": 37.451711
+    },
+    {
+      "name": "Аминьевская",
+      "orderNo": 13,
+      "latitude": 55.697136,
+      "longitude": 37.464863
+    },
+    {
+      "name": "Мичуринский проспект",
+      "orderNo": 14,
+      "latitude": 55.688236,
+      "longitude": 37.485086
+    },
+    {
+      "name": "Проспект Вернадского",
+      "orderNo": 15,
+      "latitude": 55.678382,
+      "longitude": 37.503847
+    },
+    {
+      "name": "Новаторская",
+      "orderNo": 16,
+      "latitude": 55.670015,
+      "longitude": 37.521684
+    },
+    {
+      "name": "Воронцовская",
+      "orderNo": 17,
+      "latitude": 55.658779,
+      "longitude": 37.539415
+    },
+    {
+      "name": "Зюзино",
+      "orderNo": 18,
+      "latitude": 55.65572,
+      "longitude": 37.573489
+    },
+    {
+      "name": "Каховская",
+      "orderNo": 19,
+      "latitude": 55.652846,
+      "longitude": 37.598454
+    },
+    {
+      "name": "Варшавская",
+      "orderNo": 20,
+      "latitude": 55.653276,
+      "longitude": 37.619504
+    },
+    {
+      "name": "Каширская",
+      "orderNo": 21,
+      "latitude": 55.65496,
+      "longitude": 37.6489
+    },
+    {
+      "name": "Кленовый бульвар",
+      "orderNo": 22,
+      "latitude": 55.674467,
+      "longitude": 37.680751
+    },
+    {
+      "name": "Нагатинский Затон",
+      "orderNo": 23,
+      "latitude": 55.684316,
+      "longitude": 37.704335
+    },
+    {
+      "name": "Печатники",
+      "orderNo": 24,
+      "latitude": 55.69459,
+      "longitude": 37.727383
+    },
+    {
+      "name": "Текстильщики",
+      "orderNo": 25,
+      "latitude": 55.707054,
+      "longitude": 37.728506
+    },
+    {
+      "name": "Нижегородская",
+      "orderNo": 26,
+      "latitude": 55.732009,
+      "longitude": 37.730065
+    },
+    {
+      "name": "Авиамоторная",
+      "orderNo": 27,
+      "latitude": 55.753949,
+      "longitude": 37.719104
+    },
+    {
+      "name": "Лефортово",
+      "orderNo": 28,
+      "latitude": 55.764742,
+      "longitude": 37.706856
+    },
+    {
+      "name": "Электрозаводская",
+      "orderNo": 29,
+      "latitude": 55.780304,
+      "longitude": 37.703107
+    }
+  ]
+}

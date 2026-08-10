@@ -12,21 +12,44 @@ struct StationDetailView: View {
 
     private var visits: [Visit] { store.visits(at: order) }
     private var arrivingLegs: [WalkTiming.Leg] { store.legs(arrivingAt: order) }
+    /// この駅に書かれているお題。**まだ訪れていなくても見せる**
+    private var missions: [Mission] { store.missions(at: order) }
 
     var body: some View {
         NavigationStack {
             Group {
-                if visits.isEmpty {
+                if visits.isEmpty && missions.isEmpty {
                     ContentUnavailableView("まだ訪れていません",
                                            systemImage: "figure.walk",
                                            description: Text("サイコロを振って歩くと記録が残ります"))
                 } else {
                     List {
+                        // **着く前に「この駅で何をするか」が分かるようにする。**
+                        // 地図から駅を押したとき、知りたいのはまずそこ
+                        if !missions.isEmpty {
+                            Section {
+                                ForEach(missions) { missionRow($0) }
+                            } header: {
+                                Text("この駅のお題　\(missions.count)個")
+                            } footer: {
+                                Text(visits.isEmpty
+                                     ? "着地すると、この中から1つ引かれます。"
+                                     : "着地したときに1つ引かれます。")
+                            }
+                        }
+
                         ForEach(Array(visits.enumerated()), id: \.element.id) { index, visit in
                             Section {
                                 visitRow(visit)
                             } header: {
                                 Text(visits.count > 1 ? "\(index + 1) 回目の訪問" : "訪問")
+                            }
+                        }
+
+                        if visits.isEmpty {
+                            Section {
+                                Text("まだこの駅には来ていません。")
+                                    .font(.footnote).foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -40,6 +63,15 @@ struct StationDetailView: View {
                 }
             }
         }
+    }
+
+    private func missionRow(_ mission: Mission) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(mission.content).font(.subheadline)
+            Text(mission.member?.displayName.nilIfEmpty.map { "\($0)のお題" } ?? "だれかのお題")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 2)
     }
 
     @ViewBuilder

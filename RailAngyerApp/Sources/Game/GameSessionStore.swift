@@ -1,13 +1,18 @@
 import Foundation
 import SwiftData
 import UIKit
+import CoreLocation
 import RailAngyerCore
 
 /// ゲームの進行を担う。SwiftData への読み書きと、局面の導出を引き受ける。
 ///
 /// ルールの計算そのものは `GameEngine` が持つ（10_アプリ設計.md AD-03）。
 /// ここは「いつ何を保存するか」だけを扱う。
+///
+/// > ⚠️ **`@MainActor` を外さない。** `ModelContext` は画面と同じものを持っており、
+/// > SwiftData のコンテキストはスレッドをまたいで触れない（`SyncService` と同じ理由）。
 @Observable
+@MainActor
 final class GameSessionStore {
 
     private let context: ModelContext
@@ -229,6 +234,7 @@ final class GameSessionStore {
             context.insert(turn)
             try context.save()
             enqueueForSync()
+            Telemetry.diceRolled(value: dice)
 
             showingAnnouncement = true
         } catch {
@@ -284,6 +290,40 @@ final class GameSessionStore {
     /// 引いたお題の照合には **`persistentModelID` を使う**。
     /// 消えたお題を掴んだままのターンがあると、`id` のような**属性を読んだ瞬間に落ちる**
     /// （SwiftData の `_InvalidFutureBackingData`）。IDだけなら属性を読まずに比べられる。
+    /// その駅に書かれているお題。**まだ引かれていないものも含めて全部**。
+    ///
+    /// 「当日までのお楽しみ」のルームでは、他人のお題は端末に届いていないので
+    /// 自分のぶんしか並ばない。伏せるかどうかの判断は取り込みの側が済ませている
+    func missions(at order: Int) -> [Mission] {
+        guard let room else { return [] }
+        return room.missions
+            .filter { $0.station?.orderNo == order && $0.station?.course?.name == room.course?.name }
+            .sorted { ($0.member?.displayName ?? "") < ($1.member?.displayName ?? "") }
+    }
+
+    /// 地図に添える、その駅のお題の短い見出し。
+    ///
+    /// **旗のピンだけでは「何かある」までしか分からない。**
+    /// 一目で中身が読めるよう、1件目を短く切って出す（続きは駅を押せば読める）。
+    /// 伏せる設定のルームでは、そもそも他人のお題が端末に無いので自分のぶんだけ出る
+    func missionLabel(at order: Int, limit: Int = 12) -> String? {
+        let missions = missions(at: order)
+        guard let first = missions.first else { return nil }
+
+        let text = first.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let head = text.count > limit ? text.prefix(limit) + "…" : text[...]
+        return missions.count > 1 ? "\(head)　ほか\(missions.count - 1)件" : String(head)
+    }
+
+    /// お題が書かれている駅の番号（地図にピンを立てるため）
+    var missionOrders: Set<Int> {
+        guard let room else { return [] }
+        let course = room.course?.name
+        return Set(room.missions
+            .filter { $0.station?.course?.name == course }
+            .compactMap { $0.station?.orderNo })
+    }
+
     func missionCandidates(at order: Int) -> [Mission] {
         guard let room, let station = station(order) else { return [] }
         // お題を使わない予定では候補を出さない。書いたお題は消さず、次の旅に残す
@@ -386,6 +426,7 @@ final class GameSessionStore {
         guard let turn = activeTurn,
               let landing = turn.landingPosition ?? turn.landingStation?.orderNo else { return }
         let candidates = missionCandidates(at: landing)
+        Telemetry.missionDrawn(hadCandidates: !candidates.isEmpty)
         guard let picked = candidates.randomElement() else {
             finishMission(done: false)   // 候補0件。効果なしとして扱う
             return
@@ -455,22 +496,25 @@ final class GameSessionStore {
     func applySchedule(_ schedule: Schedule) -> String? {
         guard let room else { return "ルームがありません" }
         if hasStartedJourney || !room.turns.isEmpty {
-            return "旅の途中はルールを変えられません"
+            return "すでに歩き始めています。予定の「記録を保存して新しい旅へ」を押すと、この予定で始められます。"
         }
 
         // コースは予定に決めたものへ切り替える。
         // **サーバー未参加では serverId が無い**（同梱マスタは nil のまま）ので、名前でも引き当てる
-        let courses = (try? context.fetch(FetchDescriptor<Course>())) ?? []
         let planned = schedule.courseServerId.flatMap { id in courses.first { $0.serverId == id } }
             ?? (schedule.courseName.isEmpty ? nil : courses.first { $0.name == schedule.courseName })
-        if let planned, room.course !== planned { room.course = planned }
+        if !schedule.courseName.isEmpty && planned == nil {
+            // 手元に無い路線へ半端に合わせるより、何もしない方が壊れない
+            return "この予定のコース（\(schedule.courseName)）が端末にありません"
+        }
 
-        // 予定がコースを指しているのに手元で引き当てられなかったら、**区間は写さない**。
-        // いまのコースに別路線の駅番号を当てると、番号が重なって黙って取り違えるため
-        let mayApplySection = planned != nil || schedule.courseName.isEmpty
+        // コースが違うなら先に切り替える（区間とお題の後始末は updateCourse が引き受ける）
+        if let planned, room.course !== planned {
+            guard updateCourse(planned) else { return "コースを切り替えられませんでした" }
+        }
+
         let stations = room.course?.stations ?? []
-        if mayApplySection,
-           let start = stations.first(where: { $0.orderNo == schedule.startOrder }) {
+        if let start = stations.first(where: { $0.orderNo == schedule.startOrder }) {
             room.startStation = start
             // 一周はスタートとゴールが同じ駅（MissionSet.isLap はこの一致で決まる）
             room.goalStation = schedule.isLap
@@ -481,7 +525,17 @@ final class GameSessionStore {
         room.loopDirectionRaw = schedule.loopDirectionRaw >= 0 ? 1 : -1
         room.usesDice = schedule.usesDice
         room.usesMissions = schedule.usesMissions
-        room.missionVisibilityRaw = schedule.missionVisibilityRaw
+        // **選んだ予定の名前を旅の名前にする。** 盤面の見出しがルーム名のままだと、
+        // どの予定で歩いているのかが画面から分からない
+        room.name = schedule.title
+        // 予定とルームでは**0と1の意味が逆**。必ず変換を通す。
+        // updateMissionVisibility が「お楽しみへ戻したら他人のお題を消す」後始末までやる
+        let visibility = MissionVisibility(scheduleVisibility: schedule.missionVisibility)
+        if room.missionVisibility != visibility {
+            updateMissionVisibility(visibility)
+            // サーバーの取り決めも合わせる（お題を伏せる/見せるはサーバーが実際に絞る）
+            Task { [sync] in await sync?.updateMissionVisibility(visibility) }
+        }
         activeSchedule = schedule
         save()
         return nil
@@ -519,9 +573,14 @@ final class GameSessionStore {
         let selectedCourse = course ?? room?.course
         let selectedStart = startOrder ?? room?.startStation?.orderNo ?? 0
         let selectedGoal = goalOrder ?? room?.goalStation?.orderNo ?? 0
-        guard selectedCourse != nil else { return "コースを選んでください" }
-        // 一周は出発した駅へ戻ってくる。ここだけスタート＝ゴールが正しい
+        guard let selectedCourse else { return "コースを選んでください" }
+
+        // **一周は同じ駅で始まって同じ駅で終わる。** 山手線を東京から出て東京へ戻る形。
+        // 一周でないときだけ「別の駅」を求める
         let lapping = isLap ?? existing?.isLap ?? false
+        if lapping && !selectedCourse.isLoop {
+            return "このコースは一周できません"
+        }
         if !lapping && selectedStart == selectedGoal {
             return "スタートとゴールは別の駅にしてください"
         }
@@ -530,10 +589,11 @@ final class GameSessionStore {
         schedule.title = trimmed
         schedule.startAt = startAt
         schedule.meetPlace = meetPlace?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
-        schedule.courseServerId = selectedCourse?.serverId
-        schedule.courseName = selectedCourse?.name ?? ""
+        schedule.courseServerId = selectedCourse.serverId
+        schedule.courseName = selectedCourse.name
         schedule.startOrder = selectedStart
-        schedule.goalOrder = selectedGoal
+        // 一周では出発した駅へ戻る。ゴールはスタートと同じ駅にそろえる
+        schedule.goalOrder = lapping ? selectedStart : selectedGoal
         schedule.diceMax = min(max(diceMax ?? room?.diceMax ?? 6, 1), 9)
         schedule.isLap = lapping
         if let loopDirection { schedule.loopDirectionRaw = loopDirection >= 0 ? 1 : -1 }
@@ -546,6 +606,9 @@ final class GameSessionStore {
         }
         if let isShared { schedule.isShared = isShared }
         schedule.timeZoneIdentifier = timeZoneIdentifier
+        if existing == nil {
+            Telemetry.scheduleCreated(course: selectedCourse.name, isLap: lapping)
+        }
 
         if existing == nil {
             schedule.missionSet = room
@@ -610,6 +673,7 @@ final class GameSessionStore {
         guard let visit = currentVisit else { return }
         do {
             let fileName = try PhotoStore.save(image)
+            Telemetry.photoTaken()
             let photo = Photo(localFileName: fileName)
             photo.visit = visit
             photo.member = room.members.first { $0.isMe } ?? room.members.first
@@ -716,6 +780,11 @@ final class GameSessionStore {
                 turn.missionSet = nil
                 context.delete(turn)
             }
+            // 歩いた跡も前の旅のもの。残すと次の旅の地図に他人の線が出る
+            for point in Array(room.trackPoints) {
+                point.missionSet = nil
+                context.delete(point)
+            }
             try context.save()
 
             // 記録として残すなら実体は消さない。破棄するときだけ消す
@@ -785,6 +854,119 @@ final class GameSessionStore {
         room.goalStation = last
         save()
         return true
+    }
+
+    /// この旅で撮った写真を、撮った順に。**どこからでも見られるようにするため**
+    var photoItems: [PhotoGalleryView.Item] {
+        (room?.visits ?? [])
+            .flatMap { visit in
+                visit.photos.map { photo in
+                    PhotoGalleryView.Item(fileName: photo.localFileName,
+                                          stationName: visit.station?.name ?? "-",
+                                          takenAt: photo.takenAt)
+                }
+            }
+            .sorted { $0.takenAt < $1.takenAt }
+    }
+
+    /// このターンで通る駅（着地は含まない）。
+    ///
+    /// **駅の通し番号ではなく「位置」で数える。** 一周では番号が一巡して元に戻るため、
+    /// 番号のまま経路を出すと逆向きに路線をほぼ一周ぶん並べてしまう
+    /// （札幌市電で「途中の◯◯も1駅ずつ歩いて訪れます」が大量に出た原因）。
+    ///
+    /// - Returns: 位置の並び。名前は `stationName(_:)` で引ける
+    func passingPositions(of turn: Turn) -> [Int] {
+        guard let engine else { return [] }
+        let from = turn.fromPosition ?? turn.fromStation?.orderNo ?? currentOrder
+        let landing = turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
+        return Array(engine.path(from: from, to: landing).dropLast())
+    }
+
+    /// このターンの着地位置
+    func landingPosition(of turn: Turn) -> Int {
+        turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
+    }
+
+    // MARK: - 歩いた跡
+
+    /// 跡を残す間隔。これより近い点は捨てる。
+    ///
+    /// **色を50mごとに変えるので、点はそれより細かく要る。**
+    /// 20mおきだと1区切りに2点しか入らず、GPSの誤差がそのまま色に出る。
+    /// 測位そのものは動きっぱなしなので、ここを詰めても電池はほとんど変わらない
+    /// （増えるのは保存の回数）
+    private static let trackMinimumDistance: CLLocationDistance = 10
+    /// これより粗い点は跡に混ぜない。地下や高層ビルの谷間では大きく飛ぶ
+    private static let trackWorstAccuracy: CLLocationDistance = 60
+
+    /// 実際に歩いた位置を残す。
+    ///
+    /// **歩いている間だけ残す。** 待っている間の点まで拾うと、
+    /// 駅で立ち止まっているところが団子になって線が汚れる。
+    /// サーバーへは送らない（生のGPS座標は端末の外へ出さない約束）
+    func recordTrackPoint(_ location: CLLocation) {
+        guard let room else { return }
+        switch phase {
+        case .walking, .effectWalking: break
+        default: return
+        }
+        guard location.horizontalAccuracy > 0,
+              location.horizontalAccuracy <= Self.trackWorstAccuracy else { return }
+
+        if let last = room.trackPoints.max(by: { $0.recordedAt < $1.recordedAt }) {
+            let previous = CLLocation(latitude: last.latitude, longitude: last.longitude)
+            guard location.distance(from: previous) >= Self.trackMinimumDistance else { return }
+        }
+
+        let point = TrackPoint(latitude: location.coordinate.latitude,
+                               longitude: location.coordinate.longitude,
+                               accuracy: location.horizontalAccuracy,
+                               recordedAt: location.timestamp)
+        point.missionSet = room
+        context.insert(point)
+        save()
+    }
+
+    /// 歩いた跡（古い順）
+    var trackPoints: [TrackPoint] {
+        (room?.trackPoints ?? []).sorted { $0.recordedAt < $1.recordedAt }
+    }
+
+    // MARK: - 予定から始める
+
+    /// これから歩ける予定。**始めるときに選ばせるためのもの**。
+    ///
+    /// 終わった予定は出さない（当日を過ぎたら選ぶ意味がない）。
+    /// コースが端末に無い予定も出さない（選んでもルールを移せない）。
+    /// 集合が近い順に並べる
+    var startableSchedules: [Schedule] {
+        let now = Date()
+        return schedules
+            .filter { $0.startAt >= Calendar.current.startOfDay(for: now) }
+            .filter { schedule in
+                !schedule.courseName.isEmpty
+                    && courses.contains { $0.name == schedule.courseName }
+            }
+            .sorted { $0.startAt < $1.startAt }
+    }
+
+    /// お題の見え方を変える。**プレイ中でも変えられる**
+    /// （区間や出目と違い、すでにある記録の整合を壊さない）。
+    ///
+    /// お楽しみへ戻したときは、端末に残っている他人のお題を消す。
+    /// 残すと「戻したのに見えたまま」になる
+    func updateMissionVisibility(_ visibility: MissionVisibility) {
+        guard let room else { return }
+        Telemetry.missionVisibilityChanged(to: visibility)
+        room.missionVisibility = visibility
+
+        if visibility == .surprise, let me {
+            for mission in room.missions where mission.member?.id != me.id {
+                deleteMission(mission)       // 掴んでいるターンの参照も外してくれる
+            }
+        }
+        save()
     }
 
     /// 一周する／しないを切り替える（環状コースだけ）。

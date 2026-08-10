@@ -33,11 +33,17 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     /// 到着したときに呼ばれる。引数は到着した駅の OrderNo
     var onArrive: ((Int) -> Void)?
 
+    /// 位置が動くたびに呼ばれる。**歩いた跡を残すため**。
+    /// 到着判定と分けてあるのは、跡は目標が無いときも残したいから
+    var onMove: ((CLLocation) -> Void)?
+
     override init() {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-        manager.distanceFilter = 20                 // 20m動くまで更新しない（電池対策）
+        // 10m動くまで更新しない。**歩いた跡を50mごとに色分けするため**、
+        // 1区切りに数点は入るようにしておく（測位自体は動きっぱなしなので電池は変わらない）
+        manager.distanceFilter = 10
         manager.pausesLocationUpdatesAutomatically = false
         authorizationStatus = manager.authorizationStatus
     }
@@ -140,6 +146,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         lastLocation = location
+        onMove?(location)
         evaluate(location)
     }
 

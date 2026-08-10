@@ -185,4 +185,40 @@ struct LapJourneyTests {
         #expect(store.updateCourse(try course("南北線")))
         #expect(store.arrivalRadius == nil)
     }
+
+    // MARK: - 一周の途中の駅
+    //
+    // **番号ではなく「位置」で数える。** 一周では駅の通し番号が一巡して元に戻るので、
+    // 番号のまま経路を出すと、逆向きに路線をほぼ一周ぶん並べてしまう
+    // （札幌市電で「途中の◯◯も1駅ずつ歩いて訪れます」が大量に出た）
+
+    @Test("一周で番号が一巡しても、途中の駅は出目のぶんだけ")
+    func passingStaysWithinDice() throws {
+        try startLap("札幌市電")
+        let count = try #require(store.room?.course?.stations.count)   // 24
+
+        // 位置が駅の番号を追い越すところまで歩く
+        while store.currentOrder <= count { playTurn(dice: 4) }
+
+        store.roll(dice: 4)
+        let turn = try #require(store.activeTurn)
+        #expect((turn.fromPosition ?? 0) > count, "一巡していないので確認になっていない")
+
+        let passing = store.passingPositions(of: turn)
+
+        // 出目は4なので、途中の駅は3つまで（着地は含まない）
+        #expect(passing.count <= 3, "途中の駅が多すぎる: \(passing.count)")
+        // 名前も引ける（位置から駅へ直せている）
+        for position in passing {
+            #expect(store.stationName(position) != "-")
+        }
+    }
+
+    @Test("一周でない区間でも、途中の駅は出目のぶんだけ")
+    func passingOnStraightCourse() throws {
+        store.roll(dice: 3)
+        let turn = try #require(store.activeTurn)
+
+        #expect(store.passingPositions(of: turn).count == 2)
+    }
 }

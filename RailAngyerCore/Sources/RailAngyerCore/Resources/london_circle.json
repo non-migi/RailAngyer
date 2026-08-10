@@ -1,0 +1,180 @@
+{
+  "name": "ロンドン サークル線",
+  "lineColorHex": "#FFD300",
+  "country": "イギリス",
+  "countryCode": "GB",
+  "timeZoneIdentifier": "Europe/London",
+  "regions": [
+    "ロンドン"
+  ],
+  "isLoop": true,
+  "loopDirectionNames": {
+    "forward": "時計回り",
+    "backward": "反時計回り"
+  },
+  "arrivalRadius": 110,
+  "stations": [
+    {
+      "name": "Paddington",
+      "orderNo": 1,
+      "latitude": 51.515404,
+      "longitude": -0.17545
+    },
+    {
+      "name": "Bayswater",
+      "orderNo": 2,
+      "latitude": 51.512273,
+      "longitude": -0.188244
+    },
+    {
+      "name": "Notting Hill Gate",
+      "orderNo": 3,
+      "latitude": 51.508709,
+      "longitude": -0.195975
+    },
+    {
+      "name": "High Street Kensington",
+      "orderNo": 4,
+      "latitude": 51.500192,
+      "longitude": -0.191863
+    },
+    {
+      "name": "Gloucester Road",
+      "orderNo": 5,
+      "latitude": 51.494537,
+      "longitude": -0.183048
+    },
+    {
+      "name": "South Kensington",
+      "orderNo": 6,
+      "latitude": 51.494123,
+      "longitude": -0.172017
+    },
+    {
+      "name": "Sloane Square",
+      "orderNo": 7,
+      "latitude": 51.492174,
+      "longitude": -0.155548
+    },
+    {
+      "name": "Victoria",
+      "orderNo": 8,
+      "latitude": 51.496355,
+      "longitude": -0.144098
+    },
+    {
+      "name": "St. James's Park",
+      "orderNo": 9,
+      "latitude": 51.499429,
+      "longitude": -0.134173
+    },
+    {
+      "name": "Westminster",
+      "orderNo": 10,
+      "latitude": 51.501682,
+      "longitude": -0.124378
+    },
+    {
+      "name": "Embankment",
+      "orderNo": 11,
+      "latitude": 51.507293,
+      "longitude": -0.122373
+    },
+    {
+      "name": "Temple",
+      "orderNo": 12,
+      "latitude": 51.511016,
+      "longitude": -0.114297
+    },
+    {
+      "name": "Blackfriars",
+      "orderNo": 13,
+      "latitude": 51.511655,
+      "longitude": -0.103563
+    },
+    {
+      "name": "Mansion House",
+      "orderNo": 14,
+      "latitude": 51.511929,
+      "longitude": -0.095226
+    },
+    {
+      "name": "Cannon Street",
+      "orderNo": 15,
+      "latitude": 51.511507,
+      "longitude": -0.090302
+    },
+    {
+      "name": "Monument",
+      "orderNo": 16,
+      "latitude": 51.510715,
+      "longitude": -0.086025
+    },
+    {
+      "name": "Tower Hill",
+      "orderNo": 17,
+      "latitude": 51.509872,
+      "longitude": -0.076637
+    },
+    {
+      "name": "Aldgate",
+      "orderNo": 18,
+      "latitude": 51.51421,
+      "longitude": -0.075823
+    },
+    {
+      "name": "Liverpool Street",
+      "orderNo": 19,
+      "latitude": 51.517184,
+      "longitude": -0.082555
+    },
+    {
+      "name": "Moorgate",
+      "orderNo": 20,
+      "latitude": 51.518707,
+      "longitude": -0.090854
+    },
+    {
+      "name": "Barbican",
+      "orderNo": 21,
+      "latitude": 51.520203,
+      "longitude": -0.09873
+    },
+    {
+      "name": "Farringdon",
+      "orderNo": 22,
+      "latitude": 51.520819,
+      "longitude": -0.105255
+    },
+    {
+      "name": "King's Cross St Pancras",
+      "orderNo": 23,
+      "latitude": 51.529592,
+      "longitude": -0.124545
+    },
+    {
+      "name": "Euston Square",
+      "orderNo": 24,
+      "latitude": 51.525828,
+      "longitude": -0.135137
+    },
+    {
+      "name": "Great Portland Street",
+      "orderNo": 25,
+      "latitude": 51.523798,
+      "longitude": -0.143869
+    },
+    {
+      "name": "Baker Street",
+      "orderNo": 26,
+      "latitude": 51.522259,
+      "longitude": -0.15665
+    },
+    {
+      "name": "Edgware Road",
+      "orderNo": 27,
+      "latitude": 51.5201,
+      "longitude": -0.166663
+    }
+  ]
+}

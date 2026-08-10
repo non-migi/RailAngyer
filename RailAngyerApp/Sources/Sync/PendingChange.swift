@@ -31,6 +31,9 @@ final class PendingChange {
 }
 
 /// キューの出し入れ。**保存はここでしかしない**（呼び出し側が保存忘れをしないように）
+///
+/// 画面と同じ `ModelContext` を触るので、`SyncService` と同じくメインに固定する
+@MainActor
 struct SyncQueue {
 
     private let context: ModelContext

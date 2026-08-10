@@ -24,12 +24,14 @@ final class LapRuleUITests: XCTestCase {
 
         openScheduleDraft()
 
-        // 環状のコースにしないと「一周する」が出ない
-        let coursePicker = app.buttons.matching(
-            NSPredicate(format: "label BEGINSWITH 'コース'")).firstMatch
+        // 環状のコースにしないと「一周する」が出ない。
+        // コースは国 → 都道府県 → 路線 の3段をたどって選ぶ
+        let coursePicker = app.buttons["coursePicker"]
         XCTAssertTrue(coursePicker.waitForExistence(timeout: 5), "コースの選択が見つからない")
         coursePicker.tap()
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH '山手線'")).firstMatch.tap()
+        tapRow("日本", missing: "国の一覧が出ていない")
+        tapRow("東京都", missing: "都道府県の一覧が出ていない")
+        tapRow("山手線", missing: "路線の一覧が出ていない")
 
         // 行の真ん中は文字の上で、押しても切り替わらない。スイッチそのものを押す
         let lap = app.switches["一周する"]
@@ -87,6 +89,14 @@ final class LapRuleUITests: XCTestCase {
         }
         XCTAssertTrue(app.navigationBars["予定を立てる"].waitForExistence(timeout: 5),
                       "予定の入力が開いていない")
+    }
+
+    /// コースをたどる一覧の行。行の見出しは「日本, 7 路線」のように続くので前方一致で引く
+    private func tapRow(_ prefix: String, missing message: String) {
+        let row = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), message)
+        row.tap()
     }
 
     /// 畳まれた「詳細設定」を開く。長い入力なので、見えるところまで下ってから押す

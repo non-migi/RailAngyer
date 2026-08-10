@@ -19,6 +19,11 @@ enum MasterSeeder {
         for ref in try StationMaster.all() {
             if let course = existing.first(where: { $0.name == ref.name }) {
                 course.lineColorHex = ref.lineColorHex
+                // 国と都道府県・時間帯は後から足した項目。すでに入っているコースにも書き足す
+                course.countryName = ref.country
+                course.countryCode = ref.countryCode
+                course.regionNames = ref.regions
+                course.timeZoneIdentifier = ref.timeZoneIdentifier
                 for source in ref.sortedStations {
                     guard let station = course.stations.first(where: {
                         $0.orderNo == source.orderNo && $0.name == source.name
@@ -47,8 +52,12 @@ enum MasterSeeder {
 
     private static func seed(_ ref: CourseRef, into context: ModelContext) throws -> Course {
         let course = Course(name: ref.name, lineColorHex: ref.lineColorHex)
+        course.countryName = ref.country
+        course.countryCode = ref.countryCode
+        course.regionNames = ref.regions
         course.isLoop = ref.isLoop
         course.arrivalRadius = ref.arrivalRadius
+        course.timeZoneIdentifier = ref.timeZoneIdentifier
         course.forwardDirectionName = ref.directionName(forward: true)
         course.backwardDirectionName = ref.directionName(forward: false)
         context.insert(course)

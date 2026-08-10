@@ -6,11 +6,13 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
     @State private var store: GameSessionStore?
     @State private var sync: SyncService?
+    /// アプリの中で選んだ言語。**選んだその場で画面が切り替わる**
+    @State private var language = LanguageSetting()
 
     var body: some View {
         Group {
             if let store, let sync {
-                MainView(store: store, sync: sync)
+                MainView(store: store, sync: sync, language: language)
                     .transition(.opacity)
             } else {
                 LaunchLoadingView()
@@ -18,14 +20,18 @@ struct RootView: View {
             }
         }
         .tint(Theme.line)
+        // **いちばん外側で流す。** ここに置けば、下のシートまで一度に切り替わる
+        .environment(\.locale, language.locale)
         .task {
             guard store == nil else { return }
             let credentials = KeychainCredentialStore()
             let client = ApiClient(baseURL: ApiConfiguration.baseURL, credentials: credentials)
             let syncService = SyncService(context: context, client: client, credentials: credentials)
 
+            Telemetry.start()
+
             let s = GameSessionStore(context: context)
-            s.prepare()
+            s.prepare(sampleMissions: TestHooks.seedsSampleMissions)
             s.sync = syncService
 
             // 初期化が速い端末でも起動画面が一瞬ちらつかないよう、短い一拍だけ保つ。
@@ -47,8 +53,10 @@ private struct LaunchLoadingView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.02, green: 0.50, blue: 0.25),
-                                    Color(red: 0.01, green: 0.24, blue: 0.14)],
+            // アイコンの地色に合わせる（#4CAB72 → #357F55）。
+            // **アイコンと起動画面がつながって見えるようにする**
+            LinearGradient(colors: [Color(red: 0.298, green: 0.671, blue: 0.447),
+                                    Color(red: 0.208, green: 0.498, blue: 0.333)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
 
@@ -99,15 +107,27 @@ private struct LaunchLoadingView: View {
 private struct MainView: View {
     @Bindable var store: GameSessionStore
     let sync: SyncService
+    @Bindable var language: LanguageSetting
     @State private var location = LocationService()
     @State private var showingSettings = false
     @State private var showingSchedules = false
     @State private var showingMissions = false
     @State private var showingRoom = false
+    @State private var showingPhotos = false
+    /// ターンの画面をしまって盤面を見ているか。**次のターンが始まれば戻す**
+    @State private var isTurnMinimized = false
     @State private var didAskForNotifications = false
     @State private var didRequestLocation = false
     @State private var selectedTab: AppTab = .home
     @State private var isInitialDatabaseLoad = false
+    /// 共有リンクから開かれた招待。出している間だけ値が入る
+    @State private var invitation: InviteLink.Invitation?
+    /// 「旅をスタート」で出す、予定から選ぶ画面
+    @State private var showingStartPicker = false
+    /// 初めて遊ぶ人に、最初の一度だけ遊び方を出す。
+    /// **このアプリは初見で分かる作りではない**（サイコロ・お題・到着判定）
+    @AppStorage("didReadHowToPlay") private var didReadHowToPlay = false
+    @State private var showingHowToPlay = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
     @Environment(\.scenePhase) private var scenePhase
 
@@ -123,6 +143,7 @@ private struct MainView: View {
                     startJourney: startJourney,
                     showSchedules: { showingSchedules = true },
                     showMissions: { showingMissions = true },
+                    showPhotos: { showingPhotos = true },
                     showRecords: { selectedTab = .records },
                     showRoom: { showingRoom = true },
                     showSettings: { showingSettings = true })
@@ -131,7 +152,11 @@ private struct MainView: View {
             .tabItem { Label("ホーム", systemImage: "house.fill") }
 
             NavigationStack {
-                BoardView(store: store, showingSettings: $showingSettings)
+                // 引数は統合後の BoardView に合わせる（sync は取らない）。
+                // 末尾のクロージャは、しまったターン画面へ戻る操作
+                BoardView(store: store, showingSettings: $showingSettings) {
+                    isTurnMinimized = false
+                }
             }
             .tag(AppTab.journey)
             .tabItem { Label("旅", systemImage: "map.fill") }
@@ -143,11 +168,18 @@ private struct MainView: View {
             .tabItem { Label("記録", systemImage: "chart.bar.xaxis") }
         }
         .tint(Theme.line)
-        .fullScreenCover(isPresented: .constant(store.phase.isInTurn || store.showingAnnouncement)) {
-            TurnFlowView(store: store, location: location)
+        // **プレイ中でも盤面へ抜けられるようにする。**
+        // 覆いっぱなしだと、歩いている間ずっと全体マップが見られない
+        .fullScreenCover(isPresented: Binding(
+            get: { (store.phase.isInTurn || store.showingAnnouncement) && !isTurnMinimized },
+            set: { if !$0 { isTurnMinimized = true } })) {
+            TurnFlowView(store: store, location: location) {
+                isTurnMinimized = true
+                selectedTab = .journey
+            }
         }
         .sheet(isPresented: $showingSettings) {
-            RuleSettingsView(store: store, sync: sync)
+            RuleSettingsView(store: store, sync: sync, language: language)
         }
         .sheet(isPresented: $showingSchedules) {
             ScheduleListView(store: store, sync: sync)
@@ -157,6 +189,25 @@ private struct MainView: View {
         }
         .sheet(isPresented: $showingRoom) {
             RoomJoinView(store: store, sync: sync)
+        }
+        .sheet(isPresented: $showingPhotos) {
+            PhotoGalleryView(items: store.photoItems)
+        }
+        .sheet(item: $invitation) { invite in
+            InviteAcceptView(invitation: invite, store: store, sync: sync)
+        }
+        .sheet(isPresented: $showingStartPicker) {
+            StartFromScheduleView(store: store) { startJourneyNow() }
+        }
+        .sheet(isPresented: $showingHowToPlay) {
+            HowToPlayView()
+        }
+        // **リンクから開いたら、ルームへ入れるところまで案内する。**
+        // 地図を開くだけでは、誘われた側が何をすればいいか分からない
+        .onOpenURL { url in
+            guard let invite = InviteLink.invitation(from: url) else { return }
+            Telemetry.inviteOpened()
+            invitation = invite
         }
         .overlay(alignment: .top) {
             if isInitialDatabaseLoad {
@@ -183,8 +234,15 @@ private struct MainView: View {
                 store.arriveAtNextStop(expected: order)
                 notifyArrival(at: order)
             }
+            // 実際に歩いた跡を残す。**歩いている間だけ**（判断は store 側）
+            location.onMove = { store.recordTrackPoint($0) }
             location.rule = ArrivalRule(radius: effectiveArrivalRadius)
             syncTarget()
+
+            // 初回だけ遊び方を出す。UIテストの邪魔をしないよう、testでは出さない
+            if !didReadHowToPlay && !TestHooks.usesInMemoryStore {
+                showingHowToPlay = true
+            }
 
             // アプリもDBも寝ていることがある。**起こすのは待たずに裏で進める。**
             // 起きるまで数分かかることがあり、そのあいだ画面を止めると
@@ -210,7 +268,13 @@ private struct MainView: View {
             guard scenePhase == .active else { return }
             Task { await exchange() }
         }
+        .onChange(of: store.showingAnnouncement) {
+            // 新しくサイコロを振ったら、しまっていても前に出す
+            if store.showingAnnouncement { isTurnMinimized = false }
+        }
         .onChange(of: store.phase) {
+            // ターンが終わったら、次に振るときのためにしまいを解く
+            if !store.phase.isInTurn { isTurnMinimized = false }
             syncTarget()
             askForNotificationsIfNeeded()
             // 溜めっぱなしにせず、局面が動いたら送っておく。失敗しても続行できる
@@ -225,12 +289,27 @@ private struct MainView: View {
         }
     }
 
+    /// 旅を始める。
+    ///
+    /// **これから歩く予定が立っているなら、まずそれを選ばせる。**
+    /// 予定のたびにルール設定をたどり直すのは、同じことを二度決めているのと同じ。
+    /// 予定が無ければ、これまでどおりそのまま盤面へ進む
     private func startJourney() {
-        // 予定のルール（一周・向き・サイコロ・お題・区間）は**歩き出す前にだけ**取り込む。
-        // 始まってから入れ替えると、すでに進んだ盤面と食い違う
-        if !store.hasStartedJourney, let schedule = journeySchedule {
-            store.applySchedule(schedule)
+        // **歩き出したあとは選ばせない。** 途中でルールは移せない（T-06）ので、
+        // 選ばせても断るしかない。再開はそのまま盤面へ
+        if store.hasStartedJourney || store.startableSchedules.isEmpty {
+            startJourneyNow()
+        } else {
+            showingStartPicker = true
         }
+    }
+
+    /// 予定を選び終えた（あるいは予定が無い）あとの、実際の開始。
+    /// 予定のルールの取り込みは `StartFromScheduleView` が `applySchedule` で済ませている
+    private func startJourneyNow() {
+        Telemetry.journeyStarted(course: store.room?.course?.name,
+                                 isLap: store.room?.isLap == true,
+                                 stationCount: store.stationsInOrder.count)
         selectedTab = .journey
         prepareLocationIfNeeded()
         // 予定を取り込むと区間も半径も変わりうるので、監視をやり直す
@@ -239,18 +318,11 @@ private struct MainView: View {
         // ここではサイコロを振らない。盤面の「サイコロを振る」を押して初めて開始する。
     }
 
-    /// この旅に効かせる予定。
-    ///
-    /// **集合時刻を過ぎたら次の予定へ、とはしない。** 集合してから歩き出すので、
-    /// 過ぎた直後こそがその予定の本番になる。`Schedule.isFinished` は翌日まで false のまま
-    private var journeySchedule: Schedule? {
-        store.schedules.first { !$0.isFinished() }
-    }
-
     /// 到着判定の半径。**予定 > コース > 端末の設定**の順で、先に決まっているものを使う。
-    /// 予定ごとに変えられるようにしたのは、駅前広場の広さが場所でだいぶ違うため
+    /// 予定とコースの優先は `GameSessionStore.arrivalRadius` が見ているので、
+    /// ここは最後の受け皿として端末の設定を足すだけ
     private var effectiveArrivalRadius: Double {
-        journeySchedule?.arrivalRadius ?? store.arrivalRadius ?? arrivalRadius
+        store.arrivalRadius ?? arrivalRadius
     }
 
     private func prepareLocationIfNeeded() {
@@ -318,6 +390,7 @@ private struct HomeDashboardView: View {
     let startJourney: () -> Void
     let showSchedules: () -> Void
     let showMissions: () -> Void
+    let showPhotos: () -> Void
     let showRecords: () -> Void
     let showRoom: () -> Void
     let showSettings: () -> Void
@@ -335,7 +408,7 @@ private struct HomeDashboardView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.canvas)
         .navigationTitle("ホーム")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -352,7 +425,7 @@ private struct HomeDashboardView: View {
                     Text(hasProgress ? "旅を続けよう" : "次の駅へ、歩き出そう")
                         .font(.title2.bold())
                     Text(store.room?.course?.name ?? "コースを準備中")
-                        .font(.subheadline).foregroundStyle(.white.opacity(0.75))
+                        .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image("WalkingMascot")
@@ -372,24 +445,27 @@ private struct HomeDashboardView: View {
                     .frame(maxWidth: .infinity, minHeight: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.white)
-            .foregroundStyle(Theme.ink)
+            .tint(Theme.line)
+            .foregroundStyle(Theme.onLine)
             .accessibilityIdentifier("startJourney")
         }
         .padding(20)
-        .foregroundStyle(.white)
-        .background(
-            LinearGradient(colors: [Color(red: 0.02, green: 0.55, blue: 0.27),
-                                    Color(red: 0.01, green: 0.28, blue: 0.17)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Theme.line.opacity(0.24), radius: 18, y: 9)
+        // **緑一色で塗らない。** 乗換案内の類はどれも地を白か淡い灰にして、
+        // 色は路線と主ボタンだけに使う。塗ると路線の色が埋もれ、
+        // 文字も白抜きになって読みづらくなる（濃い緑の上の薄い文字が読めなかった）
+        .background(Theme.surface,
+                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
     }
 
-    private func metric(_ title: String, _ value: String) -> some View {
+    private func metric(_ title: LocalizedStringKey, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(value).font(.headline.monospacedDigit()).lineLimit(1).minimumScaleFactor(0.7)
-            Text(title).font(.caption2).foregroundStyle(.white.opacity(0.68))
+            Text(title).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -418,7 +494,30 @@ private struct HomeDashboardView: View {
         .buttonStyle(.plain)
     }
 
+    /// 記録の入口。**写真もここから開く。**
+    /// 写真は旅の記録を別の角度から見ているだけなので、ホームのボタンを分けない
     private var recordsCard: some View {
+        VStack(spacing: 0) {
+            recordsSummary
+            Divider().padding(.leading, 17)
+            Button(action: showPhotos) {
+                HStack {
+                    Label("写真をまとめて見る", systemImage: "photo.on.rectangle.angled")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 17).padding(.vertical, 13)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("openPhotos")
+        }
+        .background(Theme.surface,
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var recordsSummary: some View {
         Button(action: showRecords) {
             dashboardCard(title: "最近の旅", icon: "chart.line.uptrend.xyaxis") {
                 if let archive = store.archives.first {
@@ -531,7 +630,7 @@ private struct HomeDashboardView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(17)
-        .background(Color(.secondarySystemGroupedBackground),
+        .background(Theme.surface,
                     in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
@@ -541,10 +640,12 @@ private struct HomeDashboardView: View {
             actionButton("お題", "square.and.pencil", showMissions)
             actionButton("ルーム", "person.2.fill", showRoom)
             actionButton("過去の旅", "clock.arrow.circlepath", showRecords)
+            // 写真はここには置かない。旅の記録と同じものなので、記録カードの中から開く
         }
     }
 
-    private func actionButton(_ title: String, _ icon: String, _ action: @escaping () -> Void) -> some View {
+    private func actionButton(_ title: LocalizedStringKey, _ icon: String,
+                              _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 7) {
                 Image(systemName: icon).font(.title3)

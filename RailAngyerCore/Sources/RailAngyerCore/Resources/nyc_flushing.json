@@ -1,0 +1,144 @@
+{
+  "name": "ニューヨーク 7号線",
+  "lineColorHex": "#B933AD",
+  "country": "アメリカ合衆国",
+  "countryCode": "US",
+  "timeZoneIdentifier": "America/New_York",
+  "regions": [
+    "ニューヨーク"
+  ],
+  "stations": [
+    {
+      "name": "34th Street–Hudson Yards",
+      "orderNo": 1,
+      "latitude": 40.755884,
+      "longitude": -74.001829
+    },
+    {
+      "name": "Times Square–42nd Street",
+      "orderNo": 2,
+      "latitude": 40.755092,
+      "longitude": -73.986847
+    },
+    {
+      "name": "5th Avenue",
+      "orderNo": 3,
+      "latitude": 40.753354,
+      "longitude": -73.981002
+    },
+    {
+      "name": "Grand Central–42nd Street",
+      "orderNo": 4,
+      "latitude": 40.751052,
+      "longitude": -73.975219
+    },
+    {
+      "name": "Vernon Boulevard–Jackson Avenue",
+      "orderNo": 5,
+      "latitude": 40.7424,
+      "longitude": -73.952426
+    },
+    {
+      "name": "Hunters Point Avenue",
+      "orderNo": 6,
+      "latitude": 40.742447,
+      "longitude": -73.947883
+    },
+    {
+      "name": "Court Square",
+      "orderNo": 7,
+      "latitude": 40.747788,
+      "longitude": -73.944981
+    },
+    {
+      "name": "Queensboro Plaza",
+      "orderNo": 8,
+      "latitude": 40.750235,
+      "longitude": -73.939499
+    },
+    {
+      "name": "33rd Street–Rawson Street",
+      "orderNo": 9,
+      "latitude": 40.744437,
+      "longitude": -73.929977
+    },
+    {
+      "name": "40th Street–Lowery Street",
+      "orderNo": 10,
+      "latitude": 40.743633,
+      "longitude": -73.923006
+    },
+    {
+      "name": "46th Street–Bliss Street",
+      "orderNo": 11,
+      "latitude": 40.742982,
+      "longitude": -73.917403
+    },
+    {
+      "name": "52nd Street–Lincoln Avenue",
+      "orderNo": 12,
+      "latitude": 40.744399,
+      "longitude": -73.911649
+    },
+    {
+      "name": "61st Street–Woodside",
+      "orderNo": 13,
+      "latitude": 40.745672,
+      "longitude": -73.901962
+    },
+    {
+      "name": "69th Street",
+      "orderNo": 14,
+      "latitude": 40.746399,
+      "longitude": -73.895406
+    },
+    {
+      "name": "74th Street–Broadway",
+      "orderNo": 15,
+      "latitude": 40.74693,
+      "longitude": -73.890368
+    },
+    {
+      "name": "82nd Street–Jackson Heights",
+      "orderNo": 16,
+      "latitude": 40.747728,
+      "longitude": -73.88277
+    },
+    {
+      "name": "90th Street–Elmhurst Avenue",
+      "orderNo": 17,
+      "latitude": 40.748474,
+      "longitude": -73.875671
+    },
+    {
+      "name": "Junction Boulevard",
+      "orderNo": 18,
+      "latitude": 40.749187,
+      "longitude": -73.868567
+    },
+    {
+      "name": "103rd Street–Corona Plaza",
+      "orderNo": 19,
+      "latitude": 40.749944,
+      "longitude": -73.861661
+    },
+    {
+      "name": "111th Street",
+      "orderNo": 20,
+      "latitude": 40.751956,
+      "longitude": -73.85439
+    },
+    {
+      "name": "Mets–Willets Point",
+      "orderNo": 21,
+      "latitude": 40.754836,
+      "longitude": -73.844596
+    },
+    {
+      "name": "Flushing–Main Street",
+      "orderNo": 22,
+      "latitude": 40.759891,
+      "longitude": -73.829108
+    }
+  ]
+}

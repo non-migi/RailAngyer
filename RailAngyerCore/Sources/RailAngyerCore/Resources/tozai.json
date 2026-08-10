@@ -1,6 +1,9 @@
 {
   "name": "東西線",
   "lineColorHex": "#F39700",
+  "country": "日本",
+  "countryCode": "JP",
+  "regions": ["北海道"],
   "stations": [
     { "name": "宮の沢",       "orderNo": 1,  "latitude": 43.089525, "longitude": 141.27776 },
     { "name": "発寒南",       "orderNo": 2,  "latitude": 43.08153, "longitude": 141.29022 },

@@ -5,6 +5,8 @@ import RailAngyerCore
 struct BoardView: View {
     @Bindable var store: GameSessionStore
     @Binding var showingSettings: Bool
+    /// ターンの画面をしまって盤面を見ているとき、戻るための操作
+    var onResumeTurn: (() -> Void)?
     @State private var selectedStation: StationSelection?
     @State private var showingSummary = false
     @State private var showingCamera = false
@@ -70,11 +72,12 @@ struct BoardView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background {
-            LinearGradient(
-                colors: [Theme.paper, Theme.line.opacity(0.08)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing)
+        // **地は淡く保つ。** 濃い緑を敷いていたころは、その上の
+        // 「踏破 0 / 16」が緑の文字と灰の文字で、どちらも読めなかった。
+        // 乗換案内の類と同じく、色は路線と要点だけに使う
+        .background(Theme.surface)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.separator).frame(height: 0.5)
         }
     }
 
@@ -163,6 +166,22 @@ struct BoardView: View {
 
     // MARK: - 下部
 
+    private var isTurnInProgress: Bool {
+        store.phase.isInTurn || store.showingAnnouncement
+    }
+
+    /// 戻る口の文言。いま何の途中なのかが分かるようにする
+    private var resumeTitle: String {
+        switch store.phase {
+        case .walking(let next, _):        "\(store.stationName(next)) へ歩く"
+        case .effectWalking(let next, _):  "\(store.stationName(next)) へ歩く"
+        case .landed:                      "お題を引く"
+        case .mission:                     "お題を続ける"
+        case .arrivedPassing:              "次の駅へ"
+        default:                           "旅を続ける"
+        }
+    }
+
     @ViewBuilder
     private var footer: some View {
         VStack(spacing: 8) {
@@ -178,6 +197,18 @@ struct BoardView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity, minHeight: 48)
+            } else if isTurnInProgress, let onResumeTurn {
+                // **進行中は「振る」を出さない。** 押しても何も起きない飾りになるうえ、
+                // 戻る口をその上に重ねると、どちらを押すのか分からなくなる
+                Button(action: onResumeTurn) {
+                    Label(resumeTitle, systemImage: "figure.walk.motion")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(Theme.line)
+                .accessibilityIdentifier("resumeTurn")
             } else {
                 stationAction
                 Button {
@@ -190,6 +221,7 @@ struct BoardView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(Theme.line)
+                .disabled(isTurnInProgress)
             }
         }
         .padding()

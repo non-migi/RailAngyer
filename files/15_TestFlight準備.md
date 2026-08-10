@@ -1,6 +1,6 @@
 # RailAngyer TestFlight 配布準備
 
-> 更新日: 2026-08-01。TestFlight v1.0 の正とする。
+> 更新日: 2026-08-02。TestFlight v1.0 の正とする。
 
 ## 1. 配布ビルド
 
@@ -11,7 +11,7 @@
 | Bundle ID | `com.non-migi.RailAngyerApp` |
 | Team ID | `949FXAWTYZ` |
 | バージョン | `1.0.0` |
-| ビルド | `5` |
+| ビルド | `11` |
 | 対象 | iPhone / iOS 17.0 以降 |
 | カテゴリ | Games |
 | SKU案 | `railangyer-ios` |
@@ -24,6 +24,11 @@
 ## 2. 完了済み
 
 - [x] 既存ロゴから、文字なし・不透明RGB・1024×1024のApp Iconを作成
+- [x] **アイコンの地色を落ち着かせた**（2026-08-08）。
+      彩度96%・明度38%の放射状グラデーション（#046428）は濃すぎたため、
+      #4CAB72 → #357F55 の穏やかな縦グラデーションに置き換え。
+      起動画面の地色も同じ色に合わせ、アイコンからつながって見えるようにした。
+      **元の画像は `files/assets/AppIcon-1024-original.png` に残してある**
 - [x] ネイティブ起動画面と、アプリ内の短い読み込み画面をブランド画像で統一
 - [x] 盤面の操作を整理し、ルーム名が読めるレイアウトへ調整
 - [x] 設定画面にバージョン／ビルド番号を表示
@@ -56,15 +61,25 @@ Explicit App ID登録後の最終アーカイブは
 対処した `1.0.0 (3)` を、2026-08-01 18:29 JSTにアップロード成功。App Store Connectで処理中。
 アーカイブは `/tmp/RailAngyerApp-1.0.0-3.xcarchive`。
 
+コースを場所からたどれるようにし、地図と歩く目安・予定の共有を入れた `1.0.0 (6)` を、
+2026-08-02 00:22 JSTにアップロード成功。**同 00:30 に VALID・内部テスト配布中**。
+アーカイブは `/tmp/RailAngyerApp-1.0.0-6.xcarchive`。
+テスト内容（日本語）は `tools/asc-whattotest.py 6` で登録済み。
+
+**ビルド6は配ってすぐクラッシュ報告が来た**（「阪急を選ぶとクラッシュ」/ 2026-08-02 00:33 JST）。
+原因は阪急ではなく `SyncService` のスレッド（`14_引き継ぎ.md` §5）。
+直した `1.0.0 (7)` を 2026-08-02 00:43 JSTにアップロード。
+
 導線整理版（盤面のボタン集約・「ふりかえり」「過去の旅」への改名・予定→お題のpush遷移・
 「みんなで遊ぶ」のホーム格上げ・一周モードで保存できない不具合の修正）を
 `1.0.0 (26)` として2026-08-10 20:08 JSTにアップロード成功。
 アーカイブは `/tmp/RailAngyerApp-1.0.0-26.xcarchive`。
 
-> ⚠️ **ビルド番号はApp Store Connect側が正。** この文書の通し番号（1〜5）と違い、
+> ⚠️ **ビルド番号はApp Store Connect側が正。** この文書の通し番号（1〜7）と違い、
 > 実際のアップロード済み番号は25まで進んでいた（低い番号は
-> 「bundle version must be higher than ‘25’」で弾かれる）。今回から
-> `CURRENT_PROJECT_VERSION` はApp Store Connectの実番号に合わせて26とした。
+> 「bundle version must be higher than ‘25’」で弾かれる）。
+> `CURRENT_PROJECT_VERSION` はApp Store Connectの実番号に合わせて上げていく
+> （2026-08-11の統合で27とした）。
 
 > ⚠️ **クラッシュログはこの環境からは見えない。**
 > 端末が繋がっておらず（`~/Library/Logs/CrashReporter/MobileDevice/` が無い）、
@@ -129,20 +144,24 @@ xcodebuild \
 App Store Connectへの送信まで行う。送信前にApp Store Connectで同じBundle IDの
 Appレコードを作っておく。
 
-XcodeのApple IDセッションが切れていると `Failed to Use Accounts` / `No Accounts` で
-失敗する。その場合は最後のコマンドに App Store Connect API キーを足す
-（GUIでのサインインが不要になるので、こちらを既定にしてよい）:
-
-```bash
-xcodebuild -exportArchive \
-  -archivePath /tmp/RailAngyerApp-<バージョン>-<ビルド>.xcarchive \
-  -exportOptionsPlist RailAngyerApp/ExportOptions-TestFlight.plist \
-  -exportPath /tmp/RailAngyerApp-TestFlight \
-  -allowProvisioningUpdates \
-  -authenticationKeyPath ~/private_keys/AuthKey_BMCT4QBV35.p8 \
-  -authenticationKeyID BMCT4QBV35 \
-  -authenticationKeyIssuerID "$(python3 -c 'import json;print(json.load(open("'"$HOME"'/private_keys/asc-config.json"))["issuerId"])')"
-```
+> ⚠️ **`error: exportArchive Failed to Use Accounts` が出たら、APIキーで送る。**
+> Xcode に入れた Apple ID のセッションが切れると出る。
+> サインインし直さなくても、**クラッシュ報告に使っているのと同じ鍵**で送れる
+> （GUIでのサインインが不要になるので、こちらを既定にしてよい）。
+>
+> ```bash
+> ISSUER=$(python3 -c "import json;print(json.load(open('$HOME/private_keys/asc-config.json'))['issuerId'])")
+> xcodebuild -exportArchive \
+>   -archivePath /tmp/RailAngyerApp-<バージョン>-<ビルド>.xcarchive \
+>   -exportOptionsPlist RailAngyerApp/ExportOptions-TestFlight.plist \
+>   -exportPath /tmp/RailAngyerApp-TestFlight \
+>   -allowProvisioningUpdates \
+>   -authenticationKeyPath "$HOME/private_keys/AuthKey_BMCT4QBV35.p8" \
+>   -authenticationKeyID BMCT4QBV35 \
+>   -authenticationKeyIssuerID "$ISSUER"
+> ```
+>
+> **アーカイブ（`archive`）は鍵が無くても通る。** 詰まるのは送信の段だけ。
 
 ## 6. Appleアカウント側で必要な項目
 
@@ -154,7 +173,10 @@ xcodebuild -exportArchive \
 - [x] ビルド `1.0.0 (4)`（起動時クラッシュの修正）と `1.0.0 (5)`（起動の待ち・環状線・市電）を送信
 - [x] ビルド `1.0.0 (26)`（導線整理・一周モードの保存修正）を2026-08-10に送信
 - [x] App Store Connect API のキーを設定し、ビルドとクラッシュ報告を自動で見られるようにした
+- [x] ビルド `1.0.0 (6)`（場所からたどるコース選択・区間の地図と歩く目安・予定の共有・阪急京都本線）を送信
 - [x] ビルド `3` のテスト項目（日本語）をAPIから登録
+- [x] テスト項目の登録を `tools/asc-whattotest.py` にまとめた
+      （**Xcodeからの送信では文面が付かない**ので、上げるたびに打つ）
 - [ ] Beta Review連絡先の電話番号を入力
 - [ ] 必要なら公開用プライバシーポリシーURLを用意
 - [ ] ビルドの処理完了後、輸出コンプライアンスが「不要」になっていることを確認
@@ -262,17 +284,21 @@ python3 tools/asc-crashes.py --save /tmp/crash # 本体(.ips)も保存する
 
 ---
 
-## 9. 現在の配布状況（2026-08-01 API で確認）
+## 9. 現在の配布状況（2026-08-02 API で確認）
 
 | ビルド | 処理 | 内部テスト | 外部テスト | 期限 |
 |---|---|---|---|---|
-| `1.0.0 (5)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出 | 2026-10-30 |
+| `1.0.0 (6)` | VALID | **配布中**（IN_BETA_TESTING） | 未提出（READY_FOR_BETA_SUBMISSION） | 2026-10-30 |
+| `1.0.0 (5)` | VALID | 配布中（IN_BETA_TESTING） | 未提出 | 2026-10-30 |
 | `1.0.0 (4)` | VALID | 配布中 | 未提出 | 2026-10-30 |
 | `1.0.0 (3)` | VALID | 配布中 | 未提出（READY_FOR_BETA_SUBMISSION） | 2026-10-30 |
 | `1.0.0 (2)` | VALID | 配布中 | 未提出 | 2026-10-29 |
 | `1.0.0 (1)` | VALID | 配布中 | 未提出 | 2026-10-26 |
 
 - テスターグループ: `テスト`（内部・全ビルド自動配布）／`外部テスト`（外部・公開リンク無効）
+- ビルド6のテスト項目（日本語）も登録済み。
+  **`/v1/builds/<id>/betaGroups` は GET を許していない**（403。作成と削除のみ）ので、
+  どのグループに配られているかはAPIからは読めない。内部は自動配布の設定で全ビルドに配られる
 - ビルド3のテスト項目（日本語）は登録済み。自動通知も有効
 - ビルド4のテスト項目（日本語）も登録済み（自動で作られた `ja` があったので PATCH で更新した）
 - **クラッシュ報告は1件取得できた**（2026-08-01 19:01 JST / iPhone 11 / iOS 26.6 / ビルド2）。

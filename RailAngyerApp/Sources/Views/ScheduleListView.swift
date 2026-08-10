@@ -17,6 +17,7 @@ struct ScheduleListView: View {
     @State private var editing: ScheduleDraft?
     @State private var isLoading = false
     @State private var loadingMessage = "予定を読み込み中…"
+    @State private var sharing: SharingText?
     @State private var showingFinished = false
     @State private var showResetConfirm = false
 
@@ -76,6 +77,7 @@ struct ScheduleListView: View {
             .sheet(item: $editing, onDismiss: { Task { await syncAfterEdit() } }) { draft in
                 ScheduleDraftView(store: store, draft: draft)
             }
+            .sheet(item: $sharing) { ShareSheet(items: [$0.text]) }
             .overlay {
                 if isLoading {
                     ProgressView(loadingMessage)
@@ -92,9 +94,6 @@ struct ScheduleListView: View {
             .task { await refresh() }
             .refreshable { await refresh() }
         }
-        .environment(\.locale, Locale(identifier: "ja_JP"))
-        .environment(\.calendar, .japanStandard)
-        .environment(\.timeZone, .japanStandard)
     }
 
     // MARK: - 予定1件
@@ -102,8 +101,10 @@ struct ScheduleListView: View {
     @ViewBuilder
     private func scheduleRows(_ schedule: Schedule) -> some View {
         header(schedule)
+        sectionMap(schedule)
         attendancePicker(schedule)
         attendeeList(schedule)
+
         // シートを重ねず、この一覧の上に積む。「戻る」一回で予定へ帰れる
         if schedule.usesMissions {
             NavigationLink {
@@ -117,6 +118,17 @@ struct ScheduleListView: View {
             .disabled(plan(for: schedule) == nil)
         }
 
+        // **`ShareLink` に `.simultaneousGesture` を足したら、
+        // 押しても何も起きなくなった。** 記録を取りたいので、
+        // ボタンから共有シートを出す形にしてある
+        Button {
+            Telemetry.scheduleShared()
+            sharing = SharingText(text: ScheduleShare.text(
+                for: schedule, course: course(for: schedule), room: store.room))
+        } label: {
+            Label("この予定を共有する", systemImage: "square.and.arrow.up")
+        }
+
         if isMine(schedule) {
             Button("この予定を消す", role: .destructive) {
                 store.deleteSchedule(schedule)
@@ -124,20 +136,33 @@ struct ScheduleListView: View {
         }
     }
 
+    /// 予定の区間を地図と目安で見せる。コースが分からない古い予定には出さない
+    @ViewBuilder
+    private func sectionMap(_ schedule: Schedule) -> some View {
+        let stations = ScheduleShare.sectionStations(schedule, course: course(for: schedule))
+        if stations.count >= 2 {
+            CourseSectionSummaryView(
+                stations: stations,
+                isLoop: schedule.isLap,
+                caption: sectionText(schedule))
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 10, trailing: 16))
+        }
+    }
+
+    private func course(for schedule: Schedule) -> Course? {
+        store.courses.first { $0.name == schedule.courseName }
+    }
+
     /// 予定に決めたルールを、お題の編集画面へ渡す形にする。
     /// コースが決まっていない古い予定には渡せない
     private func plan(for schedule: Schedule) -> MissionPlan? {
-        guard let course = store.courses.first(where: { $0.name == schedule.courseName })
-        else { return nil }
-        // 一周する予定はコースの全駅を通る。区間として渡すと1駅ぶんしか書けなくなる
-        let orders = course.stations.map(\.orderNo)
-        let start = schedule.isLap ? (orders.min() ?? schedule.startOrder) : schedule.startOrder
-        let goal = schedule.isLap ? (orders.max() ?? schedule.goalOrder) : schedule.goalOrder
+        guard let course = course(for: schedule) else { return nil }
         return MissionPlan(course: course,
-                           startOrder: start,
-                           goalOrder: goal,
+                           startOrder: schedule.startOrder,
+                           goalOrder: schedule.goalOrder,
                            title: schedule.title,
-                           sharesMissions: schedule.missionVisibility == .everyone)
+                           sharesMissions: schedule.missionVisibility == .everyone,
+                           isLap: schedule.isLap)
     }
 
     private func isMine(_ schedule: Schedule) -> Bool {
@@ -154,10 +179,6 @@ struct ScheduleListView: View {
                 Text(schedule.title).font(.headline).foregroundStyle(.primary)
                 Text(dateText(schedule))
                     .font(.subheadline).foregroundStyle(.secondary)
-                if !schedule.courseName.isEmpty {
-                    Label(sectionText(schedule), systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                        .font(.caption).foregroundStyle(Theme.line)
-                }
                 Label(ruleText(schedule), systemImage: "slider.horizontal.3")
                     .font(.caption).foregroundStyle(.secondary)
                 if let place = schedule.meetPlace {
@@ -170,7 +191,7 @@ struct ScheduleListView: View {
     }
 
     /// 集合日時。**コースのある土地の時計で読む。**
-    /// 海外のコースを足したとき、日本時間のまま出すと集合できない
+    /// 海外のコースでは、日本時間のまま出すと集合できない
     private func dateText(_ schedule: Schedule) -> String {
         let style = Date.FormatStyle(locale: Locale(identifier: "ja_JP"),
                                      calendar: .japan(in: schedule.timeZone),
@@ -178,12 +199,12 @@ struct ScheduleListView: View {
             .month().day().weekday().hour().minute()
         let text = schedule.startAt.formatted(style)
         guard schedule.timeZone != .japanStandard else { return text }
-        return "\(text)（\(schedule.timeZone.identifier)）"
+        return "\(text)（現地時間）"
     }
 
     /// どこからどこまで歩くか
     private func sectionText(_ schedule: Schedule) -> String {
-        let course = store.courses.first { $0.name == schedule.courseName }
+        let course = course(for: schedule)
         let start = course?.stations.first { $0.orderNo == schedule.startOrder }?.name ?? "—"
         if schedule.isLap {
             let direction = schedule.loopDirectionRaw >= 0
@@ -341,6 +362,12 @@ struct ScheduleListView: View {
     }
 }
 
+/// 共有する本文を `sheet(item:)` へ渡すための包み
+private struct SharingText: Identifiable {
+    let id = UUID()
+    let text: String
+}
+
 struct ScheduleDraft: Identifiable {
     let id = UUID()
     let existing: Schedule?
@@ -374,6 +401,7 @@ private struct ScheduleDraftView: View {
     @State private var arrivalRadius: Double
     @State private var isShared: Bool
 
+    @State private var showingCoursePicker = false
     @State private var showingDetail = false
     @State private var errorMessage: String?
 
@@ -395,6 +423,9 @@ private struct ScheduleDraftView: View {
         _isLap = State(initialValue: existing?.isLap ?? false)
         _loopDirection = State(initialValue: existing?.loopDirectionRaw ?? 1)
 
+        // **名前が空でも保存できる。** 空のままなら「南北線を歩く」のような既定の名前を付ける。
+        // 空だと保存を止める作りにしていたころ、入力欄が画面の外にあって
+        // 「なぜ押せないのか分からない」状態になっていた
         _title = State(initialValue: existing?.title ?? "")
         // 既定は次の土曜の朝9時。歩くのはたいてい休日の午前から
         _startAt = State(initialValue: existing?.startAt ?? Self.nextSaturdayMorning())
@@ -413,8 +444,7 @@ private struct ScheduleDraftView: View {
         let device = UserDefaults.standard.object(forKey: "arrivalRadius") as? Double
         let radius = existing?.arrivalRadius ?? course?.arrivalRadius
             ?? device ?? ArrivalRule.default.radius
-        _arrivalRadius = State(initialValue: min(max(radius, ArrivalRule.radiusRange.lowerBound),
-                                                 ArrivalRule.radiusRange.upperBound))
+        _arrivalRadius = State(initialValue: Self.clampRadius(radius))
     }
 
     private var selectedCourse: Course? { store.courses.first { $0.name == courseName } }
@@ -426,10 +456,27 @@ private struct ScheduleDraftView: View {
     private var effectiveGoalOrder: Int { isLap ? startOrder : goalOrder }
     private var timeZone: TimeZone { selectedCourse?.timeZone ?? .japanStandard }
 
+    /// 選んだコースの駅名。**いま遊んでいるコースとは限らない**ので、選んだほうから引く
+    private func stationName(_ order: Int) -> String {
+        stations.first { $0.orderNo == order }?.name ?? "-"
+    }
+
+    /// いま選んでいる区間の駅。地図と目安に渡す。
+    /// 一周ではコース全体を通るので、全駅が対象になる
+    private var sectionStations: [Station] {
+        if isLap { return stations }
+        let range = min(startOrder, goalOrder)...max(startOrder, goalOrder)
+        return stations.filter { range.contains($0.orderNo) }
+    }
+
+    /// 保存するときの名前。空のままなら既定の名前を付ける
+    private var resolvedTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? Self.defaultTitle(selectedCourse?.name) : trimmed
+    }
+
     private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && selectedCourse != nil
-            && (isLap || startOrder != goalOrder)
+        selectedCourse != nil && (isLap || startOrder != goalOrder)
     }
 
     var body: some View {
@@ -458,16 +505,20 @@ private struct ScheduleDraftView: View {
                         .disabled(!canSave)
                 }
             }
+            .sheet(isPresented: $showingCoursePicker) {
+                CoursePickerView(courses: store.courses, selectedName: $courseName)
+            }
             .onChange(of: courseName) {
-                // コースが変わると駅の通し番号の意味が変わる。区間は両端に戻す
+                // コースが変わると駅の通し番号の意味が変わる。区間は両端に戻す。
+                // 環状でないコースへ変えたら、一周の設定は残さない
+                if !canLap { isLap = false }
+                arrivalRadius = Self.clampRadius(selectedCourse?.arrivalRadius
+                                                 ?? ArrivalRule.default.radius)
                 guard let first = stations.first, let last = stations.last else { return }
                 startOrder = first.orderNo
                 goalOrder = last.orderNo
-                if !canLap { isLap = false }
-                arrivalRadius = selectedCourse?.arrivalRadius ?? ArrivalRule.default.radius
             }
         }
-        .environment(\.locale, Locale(identifier: "ja_JP"))
         .environment(\.calendar, .japan(in: timeZone))
         .environment(\.timeZone, timeZone)
     }
@@ -476,15 +527,30 @@ private struct ScheduleDraftView: View {
 
     private var courseSection: some View {
         Section {
-            Picker("コース", selection: $courseName) {
-                ForEach(store.courses) { course in
-                    Text("\(course.name)（\(course.stations.count)駅）").tag(course.name)
+            Button {
+                showingCoursePicker = true
+            } label: {
+                HStack(spacing: 6) {
+                    Text("コース").foregroundStyle(.primary)
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(courseName.isEmpty ? "選ぶ" : courseName)
+                            .foregroundStyle(.secondary)
+                        if let course = selectedCourse {
+                            Text("\(CourseDirectory.regionText(course))　\(course.stations.count)駅")
+                                .font(.caption).foregroundStyle(.tertiary)
+                        }
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold()).foregroundStyle(.tertiary)
                 }
+                .contentShape(Rectangle())
             }
+            .accessibilityIdentifier("coursePicker")
         } header: {
             Text("1　コース")
         } footer: {
-            Text("まず、どの路線に沿って歩くかを決めます。")
+            Text("まず、どの路線に沿って歩くかを決めます。国 → 都道府県 → 路線 の順にたどります。")
         }
     }
 
@@ -493,6 +559,8 @@ private struct ScheduleDraftView: View {
     @ViewBuilder
     private var sectionSection: some View {
         Section {
+            // **環状線は一周できる。** 山手線を東京から出て東京へ戻る形。
+            // 一周のときは「別の駅にしてください」を出してはいけない
             if canLap {
                 Toggle("一周する", isOn: $isLap)
                 if isLap {
@@ -500,14 +568,16 @@ private struct ScheduleDraftView: View {
                         Text(selectedCourse?.forwardDirectionName ?? "順まわり").tag(1)
                         Text(selectedCourse?.backwardDirectionName ?? "逆まわり").tag(-1)
                     }
-                    .pickerStyle(.inline)
                 }
             }
 
             Picker(isLap ? "出発する駅" : "スタート", selection: $startOrder) {
                 ForEach(stations) { Text($0.name).tag($0.orderNo) }
             }
-            if !isLap {
+            if isLap {
+                Text("\(stationName(startOrder)) を出て、\(stationName(startOrder)) へ戻ってきたら終わりです")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
                 Picker("ゴール", selection: $goalOrder) {
                     ForEach(stations) { Text($0.name).tag($0.orderNo) }
                 }
@@ -519,46 +589,45 @@ private struct ScheduleDraftView: View {
         } header: {
             Text("2　区間")
         } footer: {
-            Text(isLap
-                 ? "出発した駅に戻ってきたら一周です。"
-                 : "スタートとゴールを決めます。環状のコースなら一周もできます。")
+            Text("スタートとゴールを決めます。環状のコースなら一周もできます。")
         }
     }
 
     // MARK: - 3 予定の名前
 
+    /// **名前は地図より先に置く。** 地図を先に挟んだところ、
+    /// 名前の入力欄が画面の外へ押し出され、見つけられなくなった
     private var titleSection: some View {
-        Section("3　予定の名前") {
+        Section {
             TextField("南北線を歩く", text: $title)
+        } header: {
+            Text("3　予定の名前")
+        } footer: {
+            Text(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                 ? "空のままなら「\(Self.defaultTitle(selectedCourse?.name))」として保存します。"
+                 : "予定の一覧とお題の画面に出る名前です。")
         }
     }
 
     // MARK: - 4 歩く道のり
 
     /// 決めた区間から出る、その日の歩く量の見当。
-    /// **入力ではなく結果**なので、読むだけの行として置く
+    /// **入力ではなく結果**なので、地図と目安を読むだけの行として置く
+    @ViewBuilder
     private var distanceSection: some View {
-        Section {
-            LabeledContent("駅の数", value: "\(stationCount) 駅")
-            LabeledContent("おおよその道のり",
-                           value: String(format: "約 %.1f km", Double(stationCount - 1) * 0.94))
-            if usesDice {
+        if sectionStations.count >= 2 {
+            Section {
+                CourseSectionSummaryView(stations: sectionStations, isLoop: isLap)
+                    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 12, trailing: 16))
                 LabeledContent("1ターンで進む駅",
-                               value: "1〜\(diceMax) 駅")
-            } else {
-                LabeledContent("1ターンで進む駅", value: "1 駅ずつ")
+                               value: usesDice ? "1〜\(diceMax) 駅" : "1 駅ずつ")
+            } header: {
+                Text("4　歩く道のり")
+            } footer: {
+                Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して時速5kmで歩いたときの値です。"
+                     + "お題や休憩の時間は含みません。")
             }
-        } header: {
-            Text("4　歩く道のり")
-        } footer: {
-            Text("駅の間はおよそ0.94kmとして計算しています。実際の道のりは経路によって変わります。")
         }
-    }
-
-    /// 歩く駅の数。一周はコース一周ぶん、区間なら両端を含めた数
-    private var stationCount: Int {
-        if isLap { return max(stations.count + 1, 1) }
-        return abs(goalOrder - startOrder) + 1
     }
 
     // MARK: - 5 集合日時
@@ -572,12 +641,12 @@ private struct ScheduleDraftView: View {
             Text("5　集合日時（\(timeZoneLabel)）")
         } footer: {
             Text("コースのある土地の時計で入力します。"
-                 + "海外のコースを足したときも、その土地の時刻で集合できます。")
+                 + "海外のコースでも、その土地の時刻で集合できます。")
         }
     }
 
     private var timeZoneLabel: String {
-        timeZone == .japanStandard ? "日本時間" : timeZone.identifier
+        timeZone == .japanStandard ? "日本時間" : "現地時間"
     }
 
     // MARK: - 6 集合場所
@@ -647,7 +716,7 @@ private struct ScheduleDraftView: View {
     // MARK: - 保存
 
     private func save() {
-        errorMessage = store.saveSchedule(draft.existing, title: title,
+        errorMessage = store.saveSchedule(draft.existing, title: resolvedTitle,
                                           startAt: startAt, meetPlace: meetPlace,
                                           course: selectedCourse,
                                           startOrder: startOrder,
@@ -665,6 +734,17 @@ private struct ScheduleDraftView: View {
         // 到着判定は端末が見ている値でもある。予定に決めた半径をそのまま効かせる
         deviceArrivalRadius = arrivalRadius
         dismiss()
+    }
+
+    /// 半径は隣の駅と圏内が重ならない範囲に収める
+    private static func clampRadius(_ value: Double) -> Double {
+        min(max(value, ArrivalRule.radiusRange.lowerBound), ArrivalRule.radiusRange.upperBound)
+    }
+
+    /// 既定の名前。コースが分かれば「南北線を歩く」、分からなければ「歩く予定」
+    private static func defaultTitle(_ courseName: String?) -> String {
+        guard let courseName, !courseName.isEmpty else { return "歩く予定" }
+        return "\(courseName)を歩く"
     }
 
     private static func nextSaturdayMorning() -> Date {

@@ -1,6 +1,9 @@
 {
   "name": "札幌市電",
   "lineColorHex": "#E5352B",
+  "country": "日本",
+  "countryCode": "JP",
+  "regions": ["北海道"],
   "isLoop": true,
   "arrivalRadius": 90,
   "loopDirectionNames": { "forward": "外回り（西8丁目まわり）", "backward": "内回り（狸小路まわり）" },

@@ -93,8 +93,10 @@ private struct DiceSceneView: UIViewRepresentable {
             return scene
         }
 
-        /// 静止時の傾き。真正面を向くと平面に見えてしまうため、少しだけ傾けて立体に見せる
-        private static let restTilt: (x: Float, y: Float, z: Float) = (0.16, -0.22, 0.05)
+        /// 静止時の傾き。真正面を向くと平面に見えてしまうため、わずかに傾けて立体に見せる。
+        /// **z（横倒し）は 0 にする。** 入れるとサイコロが斜めのまま止まって見え、
+        /// 「まだ転がり切っていない」ように読める
+        private static let restTilt: (x: Float, y: Float, z: Float) = (0.10, -0.13, 0)
 
         /// 指定の目を手前に向けて止める
         func roll(to value: Int) {

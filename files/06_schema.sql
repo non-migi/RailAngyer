@@ -90,6 +90,15 @@ CREATE TABLE dbo.MissionSet (
        ------------------------------------------------------------ */
     DiceMax        TINYINT          NOT NULL CONSTRAINT DF_MissionSet_DiceMax DEFAULT 6,
 
+    /* --- お題の見え方 --------------------------------------------
+       0 = 当日までのお楽しみ（既定）。他人のお題は件数しか返さない
+       1 = いつでも見える。予定の段階から全員のお題を読める
+
+       **サーバーが他人のお題を返すかどうかを決める値。**
+       クライアントで隠すだけでは、通信を覗けば見えてしまう。
+       ------------------------------------------------------------ */
+    MissionVisibility TINYINT       NOT NULL CONSTRAINT DF_MissionSet_MissionVisibility DEFAULT 0,
+
     CreatedAt      DATETIME2(0)     NOT NULL CONSTRAINT DF_MissionSet_CreatedAt DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT PK_MissionSet         PRIMARY KEY (MissionSetId),
@@ -98,7 +107,8 @@ CREATE TABLE dbo.MissionSet (
     CONSTRAINT FK_MissionSet_Goal    FOREIGN KEY (GoalStationId)  REFERENCES dbo.Station(StationId),
     CONSTRAINT UQ_MissionSet_Invite  UNIQUE (InviteCode),
     CONSTRAINT CK_MissionSet_Range   CHECK (StartStationId <> GoalStationId),
-    CONSTRAINT CK_MissionSet_DiceMax CHECK (DiceMax BETWEEN 1 AND 9)
+    CONSTRAINT CK_MissionSet_DiceMax CHECK (DiceMax BETWEEN 1 AND 9),
+    CONSTRAINT CK_MissionSet_MissionVisibility CHECK (MissionVisibility IN (0, 1))
 );
 GO
 

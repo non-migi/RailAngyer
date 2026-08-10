@@ -37,6 +37,13 @@ final class Course {
     var serverId: Int?
     var name: String = ""
     var lineColorHex: String?
+    /// 国の名前（表示用）。**いずれ日本の外も扱う**ため、国からたどれるようにしてある
+    var countryName: String = "日本"
+    /// ISO 3166-1 alpha-2
+    var countryCode: String = "JP"
+    /// 通る都道府県を改行区切りで持つ（`JourneyArchive.photoFileNamesText` と同じやり方）。
+    /// SwiftData の配列は移行が重いので、既存のモデルに合わせて文字列で保つ
+    var regionNamesText: String = ""
     /// 環状線か。一周して戻ってこられる
     var isLoop: Bool = false
     /// この路線での到着判定の半径（メートル）。駅間が短い路線だけ持つ
@@ -57,10 +64,23 @@ final class Course {
         self.lineColorHex = lineColorHex
     }
 
-    /// 集合日時を読み書きするときの時計。同梱コースはすべて日本時間
+    /// 集合日時を読み書きするときの時計。国内のコースはすべて日本時間
     var timeZone: TimeZone {
         timeZoneIdentifier.flatMap(TimeZone.init(identifier:)) ?? .japanStandard
     }
+
+    /// 通る都道府県。**またぐ路線は複数返る**（阪急京都本線は大阪府と京都府）
+    var regionNames: [String] {
+        get { regionNamesText.split(separator: "\n").map(String.init) }
+        set { regionNamesText = newValue.joined(separator: "\n") }
+    }
+
+    /// 一覧に出す都道府県。古い端末のデータで空なら「その他」にまとめる
+    var regionNamesForDisplay: [String] {
+        regionNames.isEmpty ? ["その他"] : regionNames
+    }
+
+    var stationsInOrder: [Station] { stations.sorted { $0.orderNo < $1.orderNo } }
 }
 
 @Model
@@ -81,6 +101,9 @@ final class Station {
         self.longitude = longitude
     }
 }
+
+/// 距離の見積もりを駅マスタと同じ計算で行う（RailAngyerCore の `WalkEstimator`）
+extension Station: GeoPoint {}
 
 // MARK: - ルーム
 
@@ -106,6 +129,8 @@ final class MissionSet {
     var turns: [Turn] = []
     @Relationship(deleteRule: .cascade, inverse: \Visit.missionSet)
     var visits: [Visit] = []
+    @Relationship(deleteRule: .cascade, inverse: \TrackPoint.missionSet)
+    var trackPoints: [TrackPoint] = []
 
     init(name: String, diceMax: Int = 6) {
         self.name = name
@@ -121,12 +146,17 @@ final class MissionSet {
     var usesDice: Bool = true
     /// お題を使うか。false なら駅に着いてもお題は出さない
     var usesMissions: Bool = true
-    /// お題の見え方（`ScheduleMissionVisibility`）。既定は全員に見える
-    var missionVisibilityRaw: Int = ScheduleMissionVisibility.everyone.rawValue
 
-    /// お題を当日まで伏せる遊び方か
-    var hidesMissions: Bool {
-        missionVisibilityRaw == ScheduleMissionVisibility.landedOnly.rawValue
+    /// お題の見え方。**既定はみんなに見える。**
+    /// 変えるとサーバーが他人のお題を伏せるようになるので、**ルームの取り決め**として持つ。
+    /// ⚠️ ここは**サーバーの `MissionSet.MissionVisibility` と同じ値**（0=伏せる 1=見える）。
+    /// 予定側の `ScheduleMissionVisibility`（0=全員に見える 1=着いた人だけ）とは**0と1の意味が逆**なので、
+    /// 予定から写すときは必ず `MissionVisibility(scheduleVisibility:)` を通すこと
+    var missionVisibilityRaw: Int = MissionVisibility.always.rawValue
+
+    var missionVisibility: MissionVisibility {
+        get { MissionVisibility(rawValue: missionVisibilityRaw) ?? .always }
+        set { missionVisibilityRaw = newValue.rawValue }
     }
 
     /// 環状コースを一周する設定か（スタートとゴールが同じ駅）
@@ -331,6 +361,12 @@ final class Schedule {
     var startOrder: Int = 0
     var goalOrder: Int = 0
     var diceMax: Int = 6
+    /// 一周する予定か。**環状線ではスタートとゴールが同じ駅になる**
+    /// （山手線を東京から出て東京へ戻る）。この印が無いと、
+    /// 同じ駅を指す区間は「間違い」として弾かれてしまう
+    var isLap: Bool = false
+    /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
+    var loopDirectionRaw: Int = 1
     /// 立てた人。この人だけが直せる（サーバー側でも同じ判定をしている）
     var createdById: UUID?
     var syncStateRaw: Int = SyncState.localOnly.rawValue
@@ -339,10 +375,6 @@ final class Schedule {
     // 既定値は「これまで通りの遊び方」に合わせてあるので、
     // 値を持っていない古い予定でも見え方は変わらない。
 
-    /// 環状コースを一周する予定か。true のときスタートとゴールは同じ駅
-    var isLap: Bool = false
-    /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
-    var loopDirectionRaw: Int = 1
     /// サイコロを使うか。false なら1駅ずつ順に歩くだけ
     var usesDice: Bool = true
     /// お題を使うか。false なら駅に着いてもお題は出さない
@@ -477,12 +509,75 @@ enum AttendanceStatus: Int, CaseIterable {
     }
 }
 
+/// 実際に歩いた跡（10_アプリ設計.md「歩いた跡」）。
+///
+/// **駅と駅を直線で結ぶと、実際に歩いた道と違う線になる。**
+/// 曲がった川沿いを歩いても地図上はまっすぐで、あとから見返す楽しみが減る。
+/// 歩いている間の位置を間引いて残し、通った形そのものを描く。
+///
+/// > ⚠️ **サーバーへは送らない。** 生のGPS座標を端末の外へ出さないのは
+/// > プライバシーポリシーで約束していること（`16_プライバシーポリシー.md` §1）。
+/// > 共有するのは「到着した駅と時刻」だけ。
+@Model
+final class TrackPoint {
+    var id: UUID = UUID()
+    var latitude: Double = 0
+    var longitude: Double = 0
+    var recordedAt: Date = Date()
+    /// 記録した時点の水平精度（m）。粗い点は線から外すために持つ
+    var accuracy: Double = 0
+
+    var missionSet: MissionSet?
+
+    init(latitude: Double, longitude: Double, accuracy: Double, recordedAt: Date = Date()) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.accuracy = accuracy
+        self.recordedAt = recordedAt
+    }
+}
+
+/// お題をいつ見せるか（ルームの取り決め）。
+///
+/// **遊び方が変わる。** 伏せれば当日の驚きが残り、見せれば
+/// 「あの駅で何をするのか」を見ながら予定を組める。どちらが良いかは集まり次第。
+enum MissionVisibility: Int, CaseIterable, Identifiable {
+    /// 当日までのお楽しみ。他人のお題は件数しか見えない（これまでの動き）
+    case surprise = 0
+    /// いつでも見える。予定の段階から全員のお題を読める
+    case always = 1
+
+    var id: Int { rawValue }
+
+    /// 予定側の見え方（`ScheduleMissionVisibility`）から写す。
+    /// **0と1の意味が逆**なので、直接 rawValue を代入せず必ずここを通す
+    init(scheduleVisibility: ScheduleMissionVisibility) {
+        self = scheduleVisibility == .everyone ? .always : .surprise
+    }
+
+    var label: String {
+        switch self {
+        case .surprise: return "当日までのお楽しみ"
+        case .always:   return "いつでも見える"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .surprise:
+            return "他の人のお題は件数だけが見えます。中身は着地して初めて分かります。"
+        case .always:
+            return "みんなのお題を予定の段階から読めます。相談しながら決めたいときに。"
+        }
+    }
+}
+
 // MARK: - コンテナ
 
 enum AppSchema {
     static let all: [any PersistentModel.Type] = [
         Course.self, Station.self, MissionSet.self, Member.self,
-        Mission.self, Turn.self, Visit.self, Photo.self,
+        Mission.self, Turn.self, Visit.self, Photo.self, TrackPoint.self,
         Schedule.self, Attendance.self, JourneyArchive.self,
         // 送信キュー。記録そのものではないが、圏外で落としても残す必要がある
         PendingChange.self

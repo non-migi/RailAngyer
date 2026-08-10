@@ -1,0 +1,90 @@
+{
+  "name": "モスクワ 環状線",
+  "lineColorHex": "#894E35",
+  "country": "ロシア",
+  "countryCode": "RU",
+  "timeZoneIdentifier": "Europe/Moscow",
+  "regions": [
+    "モスクワ"
+  ],
+  "isLoop": true,
+  "loopDirectionNames": {
+    "forward": "時計回り",
+    "backward": "反時計回り"
+  },
+  "arrivalRadius": 150,
+  "stations": [
+    {
+      "name": "Белорусская",
+      "orderNo": 1,
+      "latitude": 55.776055,
+      "longitude": 37.584208
+    },
+    {
+      "name": "Новослободская",
+      "orderNo": 2,
+      "latitude": 55.779741,
+      "longitude": 37.603517
+    },
+    {
+      "name": "Проспект Мира",
+      "orderNo": 3,
+      "latitude": 55.779518,
+      "longitude": 37.631752
+    },
+    {
+      "name": "Комсомольская",
+      "orderNo": 4,
+      "latitude": 55.774587,
+      "longitude": 37.654334
+    },
+    {
+      "name": "Курская",
+      "orderNo": 5,
+      "latitude": 55.757265,
+      "longitude": 37.659173
+    },
+    {
+      "name": "Таганская",
+      "orderNo": 6,
+      "latitude": 55.741763,
+      "longitude": 37.651197
+    },
+    {
+      "name": "Павелецкая",
+      "orderNo": 7,
+      "latitude": 55.732409,
+      "longitude": 37.638028
+    },
+    {
+      "name": "Добрынинская",
+      "orderNo": 8,
+      "latitude": 55.729221,
+      "longitude": 37.624396
+    },
+    {
+      "name": "Октябрьская",
+      "orderNo": 9,
+      "latitude": 55.729876,
+      "longitude": 37.6095
+    },
+    {
+      "name": "Парк Культуры",
+      "orderNo": 10,
+      "latitude": 55.73591,
+      "longitude": 37.591405
+    },
+    {
+      "name": "Киевская",
+      "orderNo": 11,
+      "latitude": 55.744723,
+      "longitude": 37.565708
+    },
+    {
+      "name": "Краснопресненская",
+      "orderNo": 12,
+      "latitude": 55.76118,
+      "longitude": 37.577508
+    }
+  ]
+}

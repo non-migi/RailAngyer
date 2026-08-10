@@ -1,4 +1,5 @@
 import XCTest
+import CoreLocation
 
 /// 時間とペースが、歩行中だけでなく盤面・駅詳細・ふりかえりにもつながることを確認する。
 final class TimingUITests: XCTestCase {
@@ -7,6 +8,11 @@ final class TimingUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
+        // 現在地を始点に戻す。前のテストが残した位置のままだと、
+        // 出発した瞬間に目的地の圏内にいて自動到着し、手動到着のボタンが消える
+        XCUIDevice.shared.location = XCUILocation(
+            location: CLLocation(latitude: 43.10834, longitude: 141.33848))   // 麻生
+
         app = XCUIApplication()
         app.launchEnvironment["RAILANGYER_FIXED_DICE"] = "1"
         app.launchEnvironment["RAILANGYER_IN_MEMORY"] = "1"

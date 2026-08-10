@@ -1,6 +1,9 @@
 {
   "name": "東豊線",
   "lineColorHex": "#0080C6",
+  "country": "日本",
+  "countryCode": "JP",
+  "regions": ["北海道"],
   "stations": [
     { "name": "栄町",         "orderNo": 1,  "latitude": 43.11302, "longitude": 141.367145 },
     { "name": "新道東",       "orderNo": 2,  "latitude": 43.1046266667, "longitude": 141.3691966667 },

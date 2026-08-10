@@ -2,17 +2,28 @@ import SwiftUI
 import RailAngyerCore
 
 /// プレイ中の全画面フロー（SC-05〜SC-09、SC-21）。
-/// タブや盤面を隠し、次にやることを画面下端に1つだけ置く（CM-01 / CM-02）。
+/// 次にやることを画面下端に1つだけ置く（CM-01 / CM-02）。
+///
+/// > **全体マップはいつでも見られるようにする。**
+/// > 以前はこの画面が盤面を覆い、歩いている間もサイコロを振った直後も
+/// > 道のり全体が見えなかった。次の駅しか見えないと、
+/// > 「あとどれくらいか」「どこを通ってきたか」が分からない。
+/// > 上の「全体マップ」で切り替えられ、右上から盤面へ抜けることもできる。
 struct TurnFlowView: View {
     @Bindable var store: GameSessionStore
     let location: LocationService
+    /// 盤面へ戻る（この画面を一旦しまう）
+    var onMinimize: (() -> Void)?
     @State private var showingCamera = false
     @State private var routes = RouteProvider()
     /// サイコロが止まったか。止まるまで行き先を伏せる
     @State private var diceSettled = false
+    /// 地図を全体で見るか。**選んだら憶えておく**（毎回切り替え直させない）
+    @AppStorage("turnShowsWholeCourse") private var showsWholeCourse = false
 
     var body: some View {
         VStack(spacing: 12) {
+            header
             turnTiming
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -23,6 +34,29 @@ struct TurnFlowView: View {
         .sheet(isPresented: $showingCamera) {
             CameraPicker { store.attachPhoto($0) }
                 .ignoresSafeArea()
+        }
+    }
+
+    /// 地図の出し方と、盤面へ抜ける口
+    private var header: some View {
+        HStack(spacing: 10) {
+            Picker("地図", selection: $showsWholeCourse) {
+                Text("次の駅").tag(false)
+                Text("全体マップ").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 240)
+
+            Spacer(minLength: 0)
+
+            if let onMinimize {
+                Button(action: onMinimize) {
+                    Label("盤面へ", systemImage: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .labelStyle(.titleAndIcon)
+                }
+                .accessibilityIdentifier("minimizeTurn")
+            }
         }
     }
 
@@ -87,9 +121,10 @@ struct TurnFlowView: View {
 
     /// SC-06 着地駅の告知。「途中の駅も歩いて訪れる」ことを必ず伝える
     private func announcement(_ turn: Turn) -> some View {
-        let landing = turn.landingStation?.orderNo ?? store.currentOrder
-        let from = turn.fromStation?.orderNo ?? store.currentOrder
-        let passing = (store.engine?.path(from: from, to: landing) ?? []).dropLast()
+        // 進行の計算は store が持つ（一周では番号ではなく「位置」で数える必要がある）
+        let landing = store.landingPosition(of: turn)
+        let from = turn.fromPosition ?? turn.fromStation?.orderNo ?? store.currentOrder
+        let passing = store.passingPositions(of: turn)
 
         return VStack(alignment: .leading, spacing: 20) {
             Text("\(store.stationName(from)) から").foregroundStyle(.secondary)
@@ -119,6 +154,10 @@ struct TurnFlowView: View {
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
+
+                // **振った直後こそ道のり全体を見たい。** どこまで進むのかが分かる
+                courseMap(at: landing)
+                    .transition(.opacity)
             }
 
             // 出発する駅でも写真を撮れる。**旅の1駅目（スタート駅）もここに含まれる**（R-19）
@@ -142,10 +181,32 @@ struct TurnFlowView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// 地図と、純正マップへの受け渡し。
-    /// 経路案内は自前で作らず、マップアプリに任せる
+    /// 地図。**全体マップを選んでいればそちらを出す**
     @ViewBuilder
     private var map: some View {
+        if showsWholeCourse {
+            wholeCourseMap
+        } else {
+            nextStationMap
+        }
+    }
+
+    /// 道のり全体。歩いた跡・通った駅・お題のある駅がまとめて見える
+    @ViewBuilder
+    private var wholeCourseMap: some View {
+        if store.stationsInOrder.count >= 2 {
+            JourneyTrackMapView(store: store)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(maxHeight: .infinity)
+        } else {
+            nextStationMap
+        }
+    }
+
+    /// 次の駅までの地図と、純正マップへの受け渡し。
+    /// 経路案内は自前で作らず、マップアプリに任せる
+    @ViewBuilder
+    private var nextStationMap: some View {
         if let target = location.target {
             StationMapView(target: target,
                            userLocation: location.lastLocation,
@@ -292,9 +353,32 @@ struct TurnFlowView: View {
             } else {
                 Text("ミッションはありません").foregroundStyle(.secondary)
             }
+            courseMap(at: station)
             photoSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// いま立っている駅が、選んだコースのどこなのかを出す。
+    /// お題をやっている最中は次の駅へ向かう地図が消えるため、
+    /// **道のり全体の中の現在地**が分かるようにしておく
+    @ViewBuilder
+    private func courseMap(at station: Int) -> some View {
+        let stations = store.stationsInOrder
+        if stations.count >= 2 {
+            if showsWholeCourse {
+                // 全体マップを選んでいるあいだは、着地・お題の場面でも全体を出す
+                JourneyTrackMapView(store: store)
+                    .frame(height: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else {
+                CourseSectionMapView(stations: stations,
+                                     isLoop: store.room?.isLap == true,
+                                     highlightedOrder: station)
+                    .frame(height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
     }
 
     /// SC-21 効果による移動

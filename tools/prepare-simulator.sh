@@ -58,8 +58,13 @@ if ! xcrun simctl list devices | grep -q "$UDID (Booted)"; then
 fi
 xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || true
 
+# **両方を付与する。** 消したばかり（`simctl erase` 直後）のシミュレータでは
+# location-always だけでは測位が始まらず、自動到着のテストが落ちる。
+# アプリが実際に使うのは requestWhenInUseAuthorization → requestAlwaysAuthorization の順で、
+# その1段目にあたる `location` が要る。
+xcrun simctl privacy "$UDID" grant location "$BUNDLE_ID"
 xcrun simctl privacy "$UDID" grant location-always "$BUNDLE_ID"
-echo "位置情報（常に許可）を付与しました"
+echo "位置情報（使用中・常に許可の両方）を付与しました"
 
 cat <<MSG
 

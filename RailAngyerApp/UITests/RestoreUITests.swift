@@ -36,6 +36,12 @@ final class RestoreUITests: XCTestCase {
     func testResumesWalkingAfterRelaunch() {
         app.launch()
 
+        // 初回だけ出る「遊び方」。**保存を効かせて起動するこのテストでは出る**
+        // （メモリ上の起動では出ない）ので、閉じてからホームに触る
+        if app.navigationBars["遊び方"].waitForExistence(timeout: 5) {
+            app.buttons["閉じる"].firstMatch.tap()
+        }
+
         let startButton = app.buttons["startJourney"]
         XCTAssertTrue(startButton.waitForExistence(timeout: 15), "ホームが出ていない")
         startButton.tap()
@@ -56,7 +62,10 @@ final class RestoreUITests: XCTestCase {
 
         // 通り道の駅で一拍おく（ここで写真を撮れる）
         XCTAssertTrue(app.staticTexts["北34条 に到着"].waitForExistence(timeout: 5))
-        app.buttons["次の駅へ"].tap()
+        // 盤面の「戻る口」も、通り道にいるあいだは同じ「次の駅へ」の文言になる。
+        // 全画面の手前にあるほう（＝いま操作している画面）を、識別子で選り分ける
+        app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@",
+                                         "次の駅へ", "resumeTurn")).firstMatch.tap()
         XCTAssertTrue(app.buttons["北24条 に到着した"].waitForExistence(timeout: 5))
 
         // ここで強制終了

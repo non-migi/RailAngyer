@@ -29,12 +29,23 @@ struct MissionEditorView: View {
     /// いま開いている対象で、お題の中身を見せてよいか
     private var missionsAreShared: Bool { plan?.sharesMissions ?? sharesMissions }
 
-    /// 対象の駅。予定から開いたときは、その予定の区間だけに絞る
+    /// 対象の駅。**必ず区間の中だけに絞る。**
+    ///
+    /// 予定から開いたときはその予定の区間、
+    /// ホームから開いたときは**いま遊んでいる区間**（コースの全駅ではない）。
+    /// 区間の外の駅を出すと、絶対に着地しない駅にお題を書けてしまう
     private var stations: [Station] {
         let all = (course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
-        guard let plan else { return all }
-        let range = min(plan.startOrder, plan.goalOrder)...max(plan.startOrder, plan.goalOrder)
-        return all.filter { range.contains($0.orderNo) }
+
+        if let plan {
+            // 一周はコース全体を通る。区間として絞ると1駅になってしまう
+            if plan.isLap { return all }
+            let range = min(plan.startOrder, plan.goalOrder)...max(plan.startOrder, plan.goalOrder)
+            return all.filter { range.contains($0.orderNo) }
+        }
+        // 一周では区間＝コース全体になる。`stationsInOrder` がその判断まで持っている
+        let inSection = store.stationsInOrder
+        return inSection.isEmpty ? all : inSection
     }
 
     private var missions: [Mission] {
@@ -52,6 +63,7 @@ struct MissionEditorView: View {
 
     private var list: some View {
         List {
+            mapSection
             mineSection
             if sync.isJoined { preparationSection }
         }
@@ -79,6 +91,42 @@ struct MissionEditorView: View {
         }
         .task { await refresh() }
         .refreshable { await refresh() }
+    }
+
+    // MARK: - コースの地図
+
+    /// **どこを歩くコースなのかを見ながらお題を書けるようにする。**
+    /// 駅名だけでは、その駅がどんな場所か（川沿いか、商店街か）を思い出せない。
+    /// お題を書き終えた駅にはチェックを付け、書き残しを地図の上で分かるようにする
+    @ViewBuilder
+    private var mapSection: some View {
+        if stations.count >= 2 {
+            Section {
+                CourseSectionSummaryView(stations: stations,
+                                         isLoop: isLap,
+                                         markedOrders: writtenOrders,
+                                         caption: sectionCaption)
+                    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 12, trailing: 16))
+            } footer: {
+                Text("チェックの付いた駅には、あなたのお題があります。")
+            }
+        }
+    }
+
+    private var writtenOrders: Set<Int> {
+        Set(missions.compactMap { $0.station?.orderNo })
+    }
+
+    /// 一周の対象か。予定から開いたときは予定に従い、
+    /// ホームから開いたときはいま遊んでいる設定に従う
+    private var isLap: Bool {
+        plan.map(\.isLap) ?? (store.room?.isLap == true)
+    }
+
+    private var sectionCaption: String {
+        let name = course?.name ?? ""
+        guard let start = stations.first, let goal = stations.last else { return name }
+        return isLap ? "\(name)　\(start.name) から一周" : "\(name)　\(start.name) → \(goal.name)"
     }
 
     // MARK: - 自分のお題
@@ -203,6 +251,9 @@ struct MissionPlan: Identifiable {
     let title: String
     /// お題の中身をみんなに見せるか。**既定は見せる**（予定側の設定で伏せられる）
     var sharesMissions = true
+    /// 一周する予定か。**スタートとゴールが同じ駅**になるので、
+    /// 区間として扱うと1駅しか取れない
+    var isLap: Bool = false
 }
 
 /// 編集中のお題。新規と書き換えを同じ画面で扱う
@@ -247,10 +298,22 @@ private struct MissionDraftView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("駅") {
+                Section {
                     Picker("駅", selection: $stationOrder) {
                         ForEach(selectableStations) { Text($0.name).tag($0.orderNo) }
                     }
+                    if stations.count >= 2 {
+                        // 選んだ駅が区間のどこにあるかを地図で示す。
+                        // 端どうしの駅は歩く距離が変わるため、書くお題の重さも変わる
+                        CourseSectionMapView(stations: stations,
+                                             highlightedOrder: stationOrder)
+                            .frame(height: 150)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16,
+                                                      bottom: 10, trailing: 16))
+                    }
+                } header: {
+                    Text("駅")
                 }
 
                 Section {
