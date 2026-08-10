@@ -274,7 +274,7 @@ struct JourneyHistoryView: View {
                 }
             }
         }
-        .navigationTitle("記録")
+        .navigationTitle("過去の旅")
         .sheet(isPresented: $showingCurrent) { JourneySummaryView(store: store) }
     }
 

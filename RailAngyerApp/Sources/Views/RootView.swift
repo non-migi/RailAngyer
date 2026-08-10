@@ -103,6 +103,7 @@ private struct MainView: View {
     @State private var showingSettings = false
     @State private var showingSchedules = false
     @State private var showingMissions = false
+    @State private var showingRoom = false
     @State private var didAskForNotifications = false
     @State private var didRequestLocation = false
     @State private var selectedTab: AppTab = .home
@@ -118,17 +119,19 @@ private struct MainView: View {
             NavigationStack {
                 HomeDashboardView(
                     store: store,
+                    sync: sync,
                     startJourney: startJourney,
                     showSchedules: { showingSchedules = true },
                     showMissions: { showingMissions = true },
                     showRecords: { selectedTab = .records },
+                    showRoom: { showingRoom = true },
                     showSettings: { showingSettings = true })
             }
             .tag(AppTab.home)
             .tabItem { Label("ホーム", systemImage: "house.fill") }
 
             NavigationStack {
-                BoardView(store: store, sync: sync, showingSettings: $showingSettings)
+                BoardView(store: store, showingSettings: $showingSettings)
             }
             .tag(AppTab.journey)
             .tabItem { Label("旅", systemImage: "map.fill") }
@@ -151,6 +154,9 @@ private struct MainView: View {
         }
         .sheet(isPresented: $showingMissions) {
             MissionEditorView(store: store, sync: sync)
+        }
+        .sheet(isPresented: $showingRoom) {
+            RoomJoinView(store: store, sync: sync)
         }
         .overlay(alignment: .top) {
             if isInitialDatabaseLoad {
@@ -283,12 +289,15 @@ private struct MainView: View {
 private enum AppTab: Hashable { case home, journey, records }
 
 /// 予定・現在の進捗・過去の記録を、起動直後にまとめて確認するホーム。
+/// **盤面の外で開くものは、すべてここを入口にする。**
 private struct HomeDashboardView: View {
     @Bindable var store: GameSessionStore
+    let sync: SyncService
     let startJourney: () -> Void
     let showSchedules: () -> Void
     let showMissions: () -> Void
     let showRecords: () -> Void
+    let showRoom: () -> Void
     let showSettings: () -> Void
 
     private var hasProgress: Bool { !(store.room?.turns.isEmpty ?? true) }
@@ -299,6 +308,7 @@ private struct HomeDashboardView: View {
                 hero
                 scheduleCard
                 recordsCard
+                roomCard
                 actions
             }
             .padding()
@@ -388,7 +398,7 @@ private struct HomeDashboardView: View {
 
     private var recordsCard: some View {
         Button(action: showRecords) {
-            dashboardCard(title: "最近の記録", icon: "chart.line.uptrend.xyaxis") {
+            dashboardCard(title: "最近の旅", icon: "chart.line.uptrend.xyaxis") {
                 if let archive = store.archives.first {
                     HStack(alignment: .firstTextBaseline) {
                         Text(DurationText.text(archive.elapsedSeconds)).font(.title2.bold())
@@ -406,6 +416,24 @@ private struct HomeDashboardView: View {
                 } else {
                     Text("歩いた旅はここに積み重なります")
                         .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// 仲間と遊ぶための入口。設定の奥に置くと、そもそも在ることに気づけない
+    private var roomCard: some View {
+        Button(action: showRoom) {
+            dashboardCard(title: "みんなで遊ぶ", icon: "person.2.fill") {
+                if sync.isJoined {
+                    Text(store.room?.name ?? "参加中").font(.headline)
+                    Text("\(store.room?.members.count ?? 1)人が参加しています")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else {
+                    Text("この端末だけで遊んでいます")
+                    Text("招待コードで参加するか、新しくルームを作る")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
@@ -433,7 +461,7 @@ private struct HomeDashboardView: View {
         HStack(spacing: 10) {
             actionButton("予定", "calendar.badge.plus", showSchedules)
             actionButton("お題", "square.and.pencil", showMissions)
-            actionButton("記録", "clock.arrow.circlepath", showRecords)
+            actionButton("過去の旅", "clock.arrow.circlepath", showRecords)
         }
     }
 

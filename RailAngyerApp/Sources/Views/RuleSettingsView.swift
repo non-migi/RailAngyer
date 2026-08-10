@@ -12,7 +12,6 @@ struct RuleSettingsView: View {
     @State private var goalOrder = 16
     @State private var diceMax = 6
     @State private var showResetConfirm = false
-    @State private var showingRoom = false
     @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
 
     private var allStations: [Station] {
@@ -21,6 +20,14 @@ struct RuleSettingsView: View {
     private var locked: Bool { !(store.room?.turns.isEmpty ?? true) }
     private var sectionCount: Int { abs(goalOrder - startOrder) + 1 }
     private var direction: String { goalOrder > startOrder ? "順方向" : "逆方向" }
+
+    /// 一周モードでは**スタートとゴールが同じ駅になるのが正しい**。
+    /// そこで弾くと「区間」を出していないぶん直す手立てがなく、
+    /// 最大出目を変えても保存できないまま消えてしまう
+    private var canSave: Bool {
+        guard !locked else { return false }
+        return store.room?.isLap == true || startOrder != goalOrder
+    }
 
     var body: some View {
         NavigationStack {
@@ -137,11 +144,8 @@ struct RuleSettingsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") { save() }
-                        .disabled(locked || startOrder == goalOrder)
+                        .disabled(!canSave)
                 }
-            }
-            .sheet(isPresented: $showingRoom) {
-                RoomJoinView(store: store, sync: sync)
             }
             .confirmationDialog("現在の旅を保存して、新しい旅を始めますか",
                                 isPresented: $showResetConfirm, titleVisibility: .visible) {
@@ -198,18 +202,13 @@ struct RuleSettingsView: View {
     }
 
     /// 未送信の状況（SC-20）。
-    /// 送れていなくてもプレイは続けられるので、**警告ではなく状態として見せる**
+    /// 送れていなくてもプレイは続けられるので、**警告ではなく状態として見せる**。
+    /// 参加そのものはホームの「みんなで遊ぶ」から行う（入口は1か所にまとめる）
     @ViewBuilder
     private var syncSection: some View {
         Section("共有") {
-            Button {
-                showingRoom = true
-            } label: {
-                LabeledContent("みんなで遊ぶ",
-                               value: sync.isJoined ? (store.room?.name ?? "参加中") : "未参加")
-            }
-
             if sync.isJoined {
+                LabeledContent("ルーム", value: store.room?.name ?? "参加中")
                 LabeledContent("未送信", value: sync.pendingCount == 0
                                ? "なし" : "\(sync.pendingCount) 件")
                 if let at = sync.lastSyncedAt {
@@ -226,7 +225,8 @@ struct RuleSettingsView: View {
                 }
                 .disabled(sync.isSyncing)
             } else {
-                Text("この端末だけで遊んでいます。記録はサーバーに送られません。")
+                Text("この端末だけで遊んでいます。記録はサーバーに送られません。"
+                     + "ホームの「みんなで遊ぶ」から参加できます。")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

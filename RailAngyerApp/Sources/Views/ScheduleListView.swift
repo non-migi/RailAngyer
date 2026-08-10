@@ -11,7 +11,6 @@ struct ScheduleListView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var editing: ScheduleDraft?
-    @State private var missionPlan: MissionPlan?
     @State private var isLoading = false
     @State private var loadingMessage = "予定を読み込み中…"
 
@@ -22,7 +21,7 @@ struct ScheduleListView: View {
                     Section {
                         Text(sync.isJoined
                              ? "まだ予定がありません。右上の＋から立ててください。"
-                             : "予定は参加しているルームで共有されます。設定の「みんなで遊ぶ」から参加してください。")
+                             : "予定は参加しているルームで共有されます。ホームの「みんなで遊ぶ」から参加してください。")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
@@ -31,8 +30,12 @@ struct ScheduleListView: View {
                         header(schedule)
                         attendancePicker(schedule)
                         attendeeList(schedule)
-                        Button {
-                            missionPlan = plan(for: schedule)
+                        // シートを重ねず、この一覧の上に積む。「戻る」一回で予定へ帰れる
+                        NavigationLink {
+                            if let plan = plan(for: schedule) {
+                                MissionEditorView(store: store, sync: sync,
+                                                  plan: plan, isPushed: true)
+                            }
                         } label: {
                             Label("この予定のお題を書く", systemImage: "square.and.pencil")
                         }
@@ -62,9 +65,6 @@ struct ScheduleListView: View {
             }
             .sheet(item: $editing, onDismiss: { Task { await syncAfterEdit() } }) { draft in
                 ScheduleDraftView(store: store, draft: draft)
-            }
-            .sheet(item: $missionPlan) { plan in
-                MissionEditorView(store: store, sync: sync, plan: plan)
             }
             .overlay {
                 if isLoading {

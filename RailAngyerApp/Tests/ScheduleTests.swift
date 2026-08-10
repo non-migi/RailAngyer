@@ -13,7 +13,9 @@ struct ScheduleTests {
 
     private let context: ModelContext
     private let store: GameSessionStore
-    private let startAt = Date(timeIntervalSince1970: 1_786_000_000)
+    /// **これからの予定**として扱われる日時。固定の日付にすると、
+    /// その日を過ぎた時点で `nextSchedule` から外れてテストが落ちる
+    private let startAt = Date().addingTimeInterval(7 * 86_400)
 
     init() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)

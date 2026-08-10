@@ -4,12 +4,9 @@ import RailAngyerCore
 /// SC-04 盤面。アプリの主画面。
 struct BoardView: View {
     @Bindable var store: GameSessionStore
-    let sync: SyncService
     @Binding var showingSettings: Bool
     @State private var selectedStation: StationSelection?
-    @State private var showingMissions = false
     @State private var showingSummary = false
-    @State private var showingSchedules = false
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -27,14 +24,8 @@ struct BoardView: View {
         .sheet(item: $selectedStation) { selection in
             StationDetailView(store: store, order: selection.id)
         }
-        .sheet(isPresented: $showingMissions) {
-            MissionEditorView(store: store, sync: sync)
-        }
         .sheet(isPresented: $showingSummary) {
             JourneySummaryView(store: store)
-        }
-        .sheet(isPresented: $showingSchedules) {
-            ScheduleListView(store: store, sync: sync)
         }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
@@ -110,16 +101,12 @@ struct BoardView: View {
         }
     }
 
+    /// 盤面は歩いている最中の画面なので、**いま遊ぶのに要るものだけ**を置く。
+    /// 予定とお題はホームから開く（同じ行き先のボタンを2か所に置かない）
     private var quickActions: some View {
         HStack(spacing: 8) {
-            quickAction("予定", systemImage: "calendar") {
-                showingSchedules = true
-            }
-            quickAction("記録", systemImage: "book.closed", accessibilityLabel: "ふりかえり") {
+            quickAction("ふりかえり", systemImage: "book.closed") {
                 showingSummary = true
-            }
-            quickAction("お題", systemImage: "square.and.pencil") {
-                showingMissions = true
             }
             quickAction("設定", systemImage: "gearshape") {
                 showingSettings = true
@@ -131,7 +118,6 @@ struct BoardView: View {
     private func quickAction(
         _ title: String,
         systemImage: String,
-        accessibilityLabel: String? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -142,7 +128,7 @@ struct BoardView: View {
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle(radius: 10))
-        .accessibilityLabel(accessibilityLabel ?? title)
+        .accessibilityLabel(title)
     }
 
     // MARK: - 路線図

@@ -12,6 +12,9 @@ struct MissionEditorView: View {
     /// 予定から開いたときの対象。**まだ始めていない旅のお題も書ける**ようにするためのもの。
     /// 省略すると、いま遊んでいるコース全体を対象にする
     var plan: MissionPlan?
+    /// 予定一覧から押し進んで開くとき。呼び出し側の `NavigationStack` にそのまま載せる。
+    /// 自前で包むと戻る手段が二重になり、予定へ戻るのに2回たたむことになる
+    var isPushed = false
     @Environment(\.dismiss) private var dismiss
 
     @State private var editing: MissionDraft?
@@ -34,34 +37,42 @@ struct MissionEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                mineSection
-                if sync.isJoined { preparationSection }
-            }
-            .navigationTitle(plan.map { "\($0.title) のお題" } ?? "お題を書く")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+        if isPushed {
+            list
+        } else {
+            NavigationStack { list }
+        }
+    }
+
+    private var list: some View {
+        List {
+            mineSection
+            if sync.isJoined { preparationSection }
+        }
+        .navigationTitle(plan.map { "\($0.title) のお題" } ?? "お題を書く")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isPushed {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        guard let free = firstFreeStation else { return }
-                        editing = MissionDraft(existing: nil, stationOrder: free)
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .disabled(firstFreeStation == nil)   // 全駅に書き終えたら追加できない
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    guard let free = firstFreeStation else { return }
+                    editing = MissionDraft(existing: nil, stationOrder: free)
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .disabled(firstFreeStation == nil)   // 全駅に書き終えたら追加できない
             }
-            .sheet(item: $editing) { draft in
-                MissionDraftView(store: store, draft: draft,
-                                 course: course, stations: stations)
-            }
-            .task { await refresh() }
-            .refreshable { await refresh() }
         }
+        .sheet(item: $editing) { draft in
+            MissionDraftView(store: store, draft: draft,
+                             course: course, stations: stations)
+        }
+        .task { await refresh() }
+        .refreshable { await refresh() }
     }
 
     // MARK: - 自分のお題

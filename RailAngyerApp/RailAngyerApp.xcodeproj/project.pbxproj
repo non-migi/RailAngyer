@@ -40,6 +40,7 @@
 		9CD1FD877E1C1FC1E87686F2 /* TurnFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A20C935B2EE85D434D111CF /* TurnFlowView.swift */; };
 		9D9146B1722AC58D18566EBE /* LapJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E2198C9E54DD1A80C0F4477 /* LapJourneyTests.swift */; };
 		A01CF141257F4AB4EBFD08E6 /* ResetJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C919B61790E7CEBDC4103AE /* ResetJourneyUITests.swift */; };
+		A0B3948D438B083B3CBEF079 /* LapRuleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C153F56C10A670455C8433 /* LapRuleUITests.swift */; };
 		A2CA329F835DA83F6CF6DB30 /* WalkTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = C69B58A5D87FA9234652A451 /* WalkTiming.swift */; };
 		B24B70BDD9288277D9B08F14 /* WalkTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5241C4F1484E4B126481D40B /* WalkTimingTests.swift */; };
 		B5E0CB7D0FBDB714DD495CCA /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EDA20B5E18F9B06DC90198 /* GameSessionStore.swift */; };
@@ -123,6 +124,7 @@
 		98F5289A8DF49229292880FD /* MasterSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterSeeder.swift; sourceTree = "<group>"; };
 		991D4D681568F3FE6A5E97E4 /* MissionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionEditorView.swift; sourceTree = "<group>"; };
 		A23AB8C2D3BC3C1C41272684 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		B6C153F56C10A670455C8433 /* LapRuleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LapRuleUITests.swift; sourceTree = "<group>"; };
 		B72B7C5332DE0B303385DB2B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B9E62126FFD3D29621A8632A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BC980FA50EF6D2BF43C9A954 /* JourneySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySummaryView.swift; sourceTree = "<group>"; };
@@ -267,6 +269,7 @@
 			isa = PBXGroup;
 			children = (
 				04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */,
+				B6C153F56C10A670455C8433 /* LapRuleUITests.swift */,
 				8C919B61790E7CEBDC4103AE /* ResetJourneyUITests.swift */,
 				257D88AD64F7FB5DE49EDF5C /* RestoreUITests.swift */,
 				56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */,
@@ -476,6 +479,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				389DA0D9ABC840A4ADD54710 /* ArrivalUITests.swift in Sources */,
+				A0B3948D438B083B3CBEF079 /* LapRuleUITests.swift in Sources */,
 				A01CF141257F4AB4EBFD08E6 /* ResetJourneyUITests.swift in Sources */,
 				6DAFF2B6642475CE585D1E79 /* RestoreUITests.swift in Sources */,
 				5D317FF6A05655153C649C2C /* ScheduleUITests.swift in Sources */,
