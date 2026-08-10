@@ -150,6 +150,17 @@ struct GameEngineTests {
         #expect(plan.allStops == [7])
     }
 
+    @Test("旅の1ターン目：スタート駅は数に入れず、出目1なら隣駅で止まる")
+    func firstTurnFromStart() {
+        let first = full.plan(from: full.startOrder, dice: 1)
+        #expect(first.landing == 2, "スタート（1）から出目1で隣の2へ")
+        #expect(first.passing.isEmpty)
+        #expect(first.allStops == [2])
+
+        // 出目のぶんだけ、いま立っている駅の次から1駅ずつ数える
+        #expect(full.plan(from: full.startOrder, dice: 3).allStops == [2, 3, 4])
+    }
+
     @Test("ゴールに届くターンは reachesGoal が真")
     func turnPlanReachesGoal() {
         let plan = full.plan(from: 12, dice: 5)

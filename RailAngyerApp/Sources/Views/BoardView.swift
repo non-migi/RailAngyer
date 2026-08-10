@@ -7,6 +7,7 @@ struct BoardView: View {
     @Binding var showingSettings: Bool
     @State private var selectedStation: StationSelection?
     @State private var showingSummary = false
+    @State private var showingCamera = false
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -26,6 +27,10 @@ struct BoardView: View {
         }
         .sheet(isPresented: $showingSummary) {
             JourneySummaryView(store: store)
+        }
+        .sheet(isPresented: $showingCamera) {
+            CameraPicker { store.attachPhoto($0) }
+                .ignoresSafeArea()
         }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
@@ -174,6 +179,7 @@ struct BoardView: View {
                     .controlSize(.large)
                     .frame(maxWidth: .infinity, minHeight: 48)
             } else {
+                stationAction
                 Button {
                     store.roll()
                 } label: {
@@ -188,6 +194,38 @@ struct BoardView: View {
         }
         .padding()
         .background(.ultraThinMaterial)
+    }
+
+    /// いま立っている駅でできること。
+    ///
+    /// **スタート駅も1駅目として扱う。** 旅の始めだけ「到着した」瞬間が無いと、
+    /// そこだけ写真を残せない駅になってしまう（R-17 / R-19）。
+    /// 一度記録したあとは、次を振るまでのあいだ何枚でも撮れる
+    @ViewBuilder
+    private var stationAction: some View {
+        if !store.hasStartedJourney {
+            Text("スタートの \(store.stationName(store.currentOrder)) も1駅目です")
+                .font(.caption).foregroundStyle(.secondary)
+            secondary("\(store.stationName(store.currentOrder)) に到着した",
+                      systemImage: "mappin.and.ellipse") {
+                store.startJourney()
+            }
+        } else if store.currentVisit != nil {
+            secondary(CameraPicker.isCameraAvailable ? "この駅で写真を撮る" : "この駅の写真を選ぶ",
+                      systemImage: "camera") {
+                showingCamera = true
+            }
+        }
+    }
+
+    private func secondary(_ title: String, systemImage: String,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, minHeight: 40)
+        }
+        .buttonStyle(.bordered)
     }
 }
 

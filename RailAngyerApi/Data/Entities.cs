@@ -149,6 +149,26 @@ public class Schedule
     public byte? DiceMax { get; set; }
     public Guid? CreatedBy { get; set; }
 
+    // --- 予定ごとに決める詳細設定（25_migration_v5_schedule_detail.sql）。
+    // NULL は「これまで通りの遊び方」。旧アプリからのリクエストは NULL のまま届く。
+
+    /// <summary>環状コースを一周する予定か。true のときスタートとゴールは同じ駅</summary>
+    public bool? IsLap { get; set; }
+    /// <summary>一周するときにまわる向き。1=通し番号が増える向き -1=減る向き</summary>
+    public short? LoopDirection { get; set; }
+    /// <summary>サイコロを使うか。false なら1駅ずつ順に歩くだけ</summary>
+    public bool? UsesDice { get; set; }
+    /// <summary>お題を使うか</summary>
+    public bool? UsesMissions { get; set; }
+    /// <summary>お題の見え方。0=全員に見える 1=着いた人だけ</summary>
+    public byte? MissionVisibility { get; set; }
+    /// <summary>到着判定の半径（メートル / 50〜320）</summary>
+    public double? ArrivalRadius { get; set; }
+    /// <summary>仲間と共有するか</summary>
+    public bool? IsShared { get; set; }
+    /// <summary>集合日時をどの土地の時計で読むか（例 Asia/Tokyo）。NULL は日本時間</summary>
+    public string? TimeZoneId { get; set; }
+
     public List<ScheduleAttendee> Attendees { get; set; } = [];
 }
 

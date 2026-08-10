@@ -6,6 +6,29 @@ import RailAngyerCore
 // サーバー側のテーブルとほぼ1対1にしてある（AD-01）。
 // 区分値は Int で保持し、計算プロパティで enum を返す（移行に強い形）。
 
+// MARK: - 時計
+
+// 集合日時は「その土地の時計」で読み書きする。同梱コースはすべて日本にあるため、
+// 既定は日本時間。コースに時間帯が入っていればそちらを使う（Course.timeZone）。
+
+extension TimeZone {
+    static let japanStandard = TimeZone(identifier: "Asia/Tokyo") ?? .gmt
+}
+
+extension Calendar {
+    /// 日本時間・日本語の暦。曜日は日曜始まり
+    static var japanStandard: Calendar { japan(in: .japanStandard) }
+
+    /// 指定した時間帯の日本語暦
+    static func japan(in timeZone: TimeZone) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "ja_JP")
+        calendar.timeZone = timeZone
+        calendar.firstWeekday = 1
+        return calendar
+    }
+}
+
 // MARK: - マスタ
 
 @Model
@@ -21,6 +44,10 @@ final class Course {
     /// 一周する向きの呼び名（通し番号が増える向き／減る向き）
     var forwardDirectionName: String?
     var backwardDirectionName: String?
+    /// この路線がある土地の時間帯（例 `Asia/Tokyo`）。
+    /// **nil は日本時間として扱う。** 海外のコースを足すときにここへ入れれば、
+    /// 集合日時の入力と表示がその土地の時計に切り替わる
+    var timeZoneIdentifier: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Station.course)
     var stations: [Station] = []
@@ -28,6 +55,11 @@ final class Course {
     init(name: String, lineColorHex: String? = nil) {
         self.name = name
         self.lineColorHex = lineColorHex
+    }
+
+    /// 集合日時を読み書きするときの時計。同梱コースはすべて日本時間
+    var timeZone: TimeZone {
+        timeZoneIdentifier.flatMap(TimeZone.init(identifier:)) ?? .japanStandard
     }
 }
 
@@ -83,6 +115,19 @@ final class MissionSet {
     /// このルームのルール計算器。区間と最大出目から作る
     /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
     var loopDirectionRaw: Int = 1
+
+    // --- 予定（詳細設定）から取り込む遊び方。既定はこれまで通り
+    /// サイコロを使うか。false なら1駅ずつ順に歩くだけ
+    var usesDice: Bool = true
+    /// お題を使うか。false なら駅に着いてもお題は出さない
+    var usesMissions: Bool = true
+    /// お題の見え方（`ScheduleMissionVisibility`）。既定は全員に見える
+    var missionVisibilityRaw: Int = ScheduleMissionVisibility.everyone.rawValue
+
+    /// お題を当日まで伏せる遊び方か
+    var hidesMissions: Bool {
+        missionVisibilityRaw == ScheduleMissionVisibility.landedOnly.rawValue
+    }
 
     /// 環状コースを一周する設定か（スタートとゴールが同じ駅）
     var isLap: Bool {
@@ -290,6 +335,27 @@ final class Schedule {
     var createdById: UUID?
     var syncStateRaw: Int = SyncState.localOnly.rawValue
 
+    // --- ここから下は予定ごとに決めるルール（詳細設定）。
+    // 既定値は「これまで通りの遊び方」に合わせてあるので、
+    // 値を持っていない古い予定でも見え方は変わらない。
+
+    /// 環状コースを一周する予定か。true のときスタートとゴールは同じ駅
+    var isLap: Bool = false
+    /// 一周するときにまわる向き。`1` で通し番号が増える向き、`-1` で減る向き
+    var loopDirectionRaw: Int = 1
+    /// サイコロを使うか。false なら1駅ずつ順に歩くだけ
+    var usesDice: Bool = true
+    /// お題を使うか。false なら駅に着いてもお題は出さない
+    var usesMissions: Bool = true
+    /// お題の見え方（`ScheduleMissionVisibility`）
+    var missionVisibilityRaw: Int = ScheduleMissionVisibility.everyone.rawValue
+    /// 到着判定の半径（メートル）。nil ならコース既定・端末設定にまかせる
+    var arrivalRadius: Double?
+    /// 仲間と共有するか。false ならこの予定は端末の中だけに置く
+    var isShared: Bool = true
+    /// 集合日時をどの土地の時計で読むか。nil は日本時間（`Course.timeZoneIdentifier` の写し）
+    var timeZoneIdentifier: String?
+
     var missionSet: MissionSet?
 
     @Relationship(deleteRule: .cascade, inverse: \Attendance.schedule)
@@ -299,6 +365,42 @@ final class Schedule {
         self.title = title
         self.startAt = startAt
         self.meetPlace = meetPlace
+    }
+
+    var missionVisibility: ScheduleMissionVisibility {
+        get { ScheduleMissionVisibility(rawValue: missionVisibilityRaw) ?? .everyone }
+        set { missionVisibilityRaw = newValue.rawValue }
+    }
+
+    /// 集合日時を読み書きするときの時計
+    var timeZone: TimeZone {
+        timeZoneIdentifier.flatMap(TimeZone.init(identifier:)) ?? .japanStandard
+    }
+
+    /// 終わった予定か。
+    ///
+    /// **集合日時を1分過ぎただけでは終わりにしない。** 集合してから歩くのが本番なので、
+    /// その日いっぱいは予定のまま残し、翌日になってから畳む
+    func isFinished(asOf now: Date = Date()) -> Bool {
+        let calendar = Calendar.japan(in: timeZone)
+        guard let nextDay = calendar.date(byAdding: .day, value: 1,
+                                          to: calendar.startOfDay(for: startAt)) else {
+            return startAt < now
+        }
+        return now >= nextDay
+    }
+}
+
+/// お題を誰に見せるか。0=全員 1=着いた人だけ（サーバーの `Schedule.MissionVisibility` と同じ値）
+enum ScheduleMissionVisibility: Int, CaseIterable {
+    case everyone = 0
+    case landedOnly = 1
+
+    var label: String {
+        switch self {
+        case .everyone:   return "全員に見える"
+        case .landedOnly: return "着いた人だけ"
+        }
     }
 }
 

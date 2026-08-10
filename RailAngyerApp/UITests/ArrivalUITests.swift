@@ -16,6 +16,20 @@ final class ArrivalUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
+
+        // 位置情報の許可を聞かれたら許す。**許可が無いと自動到着は起きない。**
+        // シミュレータで一度断った状態が残っていると、この確認そのものが出なくなる。
+        // そのときは端末側の記録を戻してから流す：
+        //   xcrun simctl privacy booted grant location-always com.non-migi.RailAngyerApp
+        addUIInterruptionMonitor(withDescription: "位置情報の許可") { alert in
+            for label in ["Appの使用中は許可", "常に許可", "1度だけ許可",
+                          "Allow While Using App", "Allow Once"] {
+                let button = alert.buttons[label]
+                if button.exists { button.tap(); return true }
+            }
+            return false
+        }
+
         app = XCUIApplication()
         app.launchEnvironment["RAILANGYER_FIXED_DICE"] = "1"   // 必ず1駅進む
         app.launchEnvironment["RAILANGYER_IN_MEMORY"] = "1"    // 毎回まっさらな状態から

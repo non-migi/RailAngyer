@@ -1,114 +1,32 @@
 import SwiftUI
-import RailAngyerCore
 
-/// 区間と最大出目の設定（SC-02 のローカル版）。
-/// プレイ開始後（ターンが1件でもある間）は変更できない（T-06）。
+/// アプリの設定（SC-02）。
+///
+/// **ここに置くのはシステム設定だけ。**
+/// 遊び方のルール（コース・区間・サイコロ・到着判定・お題の見え方・共有・一周）は
+/// 「その日どう歩くか」であって端末の設定ではないため、予定を立てる画面へ移した。
+/// 設定と予定にルールが二重にあると、どちらが効いているのか分からなくなる。
+///
+/// 呼び出し側（RootView）に合わせて名前と引数はそのまま残している。
 struct RuleSettingsView: View {
     @Bindable var store: GameSessionStore
     let sync: SyncService
     @Environment(\.dismiss) private var dismiss
 
-    @State private var startOrder = 1
-    @State private var goalOrder = 16
-    @State private var diceMax = 6
-    @State private var showResetConfirm = false
-    @AppStorage("arrivalRadius") private var arrivalRadius: Double = ArrivalRule.default.radius
-
-    private var allStations: [Station] {
-        (store.room?.course?.stations ?? []).sorted { $0.orderNo < $1.orderNo }
-    }
-    private var locked: Bool { !(store.room?.turns.isEmpty ?? true) }
-    private var sectionCount: Int { abs(goalOrder - startOrder) + 1 }
-    private var direction: String { goalOrder > startOrder ? "順方向" : "逆方向" }
-
-    /// 一周モードでは**スタートとゴールが同じ駅になるのが正しい**。
-    /// そこで弾くと「区間」を出していないぶん直す手立てがなく、
-    /// 最大出目を変えても保存できないまま消えてしまう
-    private var canSave: Bool {
-        guard !locked else { return false }
-        return store.room?.isLap == true || startOrder != goalOrder
-    }
-
     var body: some View {
         NavigationStack {
             Form {
-                if locked {
-                    Section {
-                        Label("プレイ中は変更できません。記録をリセットすると変更できます。",
-                              systemImage: "lock")
-                            .font(.footnote)
-                    }
-                }
-
                 Section {
-                    Picker("コース", selection: Binding(
-                        get: { store.room?.course?.name ?? "" },
-                        set: { name in
-                            guard let course = store.courses.first(where: { $0.name == name }) else { return }
-                            if store.updateCourse(course) {
-                                startOrder = course.stations.map(\.orderNo).min() ?? 1
-                                goalOrder = course.stations.map(\.orderNo).max() ?? 1
-                            }
-                        })) {
-                            ForEach(store.courses) { course in
-                                Text("\(course.name)（\(course.stations.count)駅）").tag(course.name)
-                            }
-                        }
-                } header: {
-                    Text("コース")
+                    NavigationLink {
+                        LanguageSettingsView()
+                    } label: {
+                        LabeledContent("言語", value: AppLanguage.current.label)
+                    }
+                    NavigationLink("募金") { DonationView() }
+                    NavigationLink("使い方とお約束") { GuideView() }
                 } footer: {
-                    Text("コースを変えると区間は両端に戻ります。"
-                         + "前のコースに書いたお題は消えず、そのコースを選んだときに使えます。")
+                    Text("歩き方のルールは、予定を立てるときに決めます。")
                 }
-                .disabled(locked)
-
-                if store.room?.course?.isLoop == true { loopSection }
-
-                if store.room?.isLap != true {
-                Section("区間") {
-                    Picker("スタート", selection: $startOrder) {
-                        ForEach(allStations) { Text($0.name).tag($0.orderNo) }
-                    }
-                    Picker("ゴール", selection: $goalOrder) {
-                        ForEach(allStations) { Text($0.name).tag($0.orderNo) }
-                    }
-                    if startOrder == goalOrder {
-                        Text("スタートとゴールは別の駅にしてください")
-                            .font(.caption).foregroundStyle(.red)
-                    } else {
-                        LabeledContent("区間", value: "\(sectionCount) 駅（\(direction)）")
-                    }
-                }
-                .disabled(locked)
-                }
-
-                Section("サイコロ") {
-                    Stepper("最大出目　\(diceMax)", value: $diceMax, in: 1...9)
-                    if diceMax == 1 {
-                        Text("毎ターン必ず1駅ずつ進むため、区間の全駅でミッションを行います")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    LabeledContent("1ターンの最大距離の目安",
-                                   value: String(format: "約 %.1f km", Double(diceMax) * 0.94))
-                    LabeledContent("着地回数の見込み",
-                                   value: "\(max(1, sectionCount / max(1, (diceMax + 1) / 2))) 回前後")
-                }
-                .disabled(locked)
-
-                Section("到着判定") {
-                    Stepper("半径　\(Int(arrivalRadius)) m",
-                            value: $arrivalRadius,
-                            in: ArrivalRule.radiusRange,
-                            step: 10)
-                    Text("南北線の最短駅間は約655m（大通〜すすきの）。"
-                         + "半径を大きくしすぎると隣の駅の圏内と重なるため、"
-                         + "\(Int(ArrivalRule.radiusRange.upperBound))m までに制限しています。")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text("札幌3路線は国土交通省の鉄道データ（JGD2011）に合わせた駅位置です。")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-
-                syncSection
 
                 Section("アプリ情報") {
                     HStack(spacing: 14) {
@@ -128,114 +46,15 @@ struct RuleSettingsView: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
-
-                Section {
-                    Button("記録を保存して新しい旅へ", role: .destructive) { showResetConfirm = true }
-                        .disabled(store.room?.turns.isEmpty ?? true)
-                } footer: {
-                    Text("現在の旅は「記録」に保存され、同じルールで新しい旅を始められます。")
-                }
             }
-            .navigationTitle("ルール設定")
+            .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") { save() }
-                        .disabled(!canSave)
-                }
-            }
-            .confirmationDialog("現在の旅を保存して、新しい旅を始めますか",
-                                isPresented: $showResetConfirm, titleVisibility: .visible) {
-                Button("保存して新しい旅へ", role: .destructive) { store.resetProgress() }
-            } message: {
-                Text("訪問記録と写真は過去の旅として残ります。")
-            }
-            .onAppear {
-                startOrder = store.room?.startStation?.orderNo ?? 1
-                goalOrder = store.room?.goalStation?.orderNo ?? allStations.last?.orderNo ?? 16
-                diceMax = store.room?.diceMax ?? 6
             }
         }
-    }
-
-    /// 環状のコースだけに出す。一周するか、どちらへまわるかを決める
-    @ViewBuilder
-    private var loopSection: some View {
-        let course = store.room?.course
-
-        Section {
-            Toggle("一周する", isOn: Binding(
-                get: { store.room?.isLap ?? false },
-                set: { on in
-                    if store.updateLap(on) {
-                        startOrder = store.room?.startStation?.orderNo ?? startOrder
-                        goalOrder = store.room?.goalStation?.orderNo ?? goalOrder
-                    }
-                }))
-
-            if store.room?.isLap == true {
-                Picker("まわる向き", selection: Binding(
-                    get: { store.room?.loopDirectionRaw ?? 1 },
-                    set: { _ = store.updateLoopDirection($0) })) {
-                        Text(course?.forwardDirectionName ?? "順まわり").tag(1)
-                        Text(course?.backwardDirectionName ?? "逆まわり").tag(-1)
-                    }
-                    .pickerStyle(.inline)
-
-                Picker("出発する駅", selection: Binding(
-                    get: { store.room?.startStation?.orderNo ?? 1 },
-                    set: { _ = store.updateLapStart(orderNo: $0) })) {
-                        ForEach(allStations) { Text($0.name).tag($0.orderNo) }
-                    }
-            }
-        } header: {
-            Text("環状線")
-        } footer: {
-            Text(store.room?.isLap == true
-                 ? "出発した駅に戻ってきたら一周です。区間の設定は使いません。"
-                 : "一周せず、区間を決めて歩くこともできます。")
-        }
-        .disabled(locked)
-    }
-
-    /// 未送信の状況（SC-20）。
-    /// 送れていなくてもプレイは続けられるので、**警告ではなく状態として見せる**。
-    /// 参加そのものはホームの「みんなで遊ぶ」から行う（入口は1か所にまとめる）
-    @ViewBuilder
-    private var syncSection: some View {
-        Section("共有") {
-            if sync.isJoined {
-                LabeledContent("ルーム", value: store.room?.name ?? "参加中")
-                LabeledContent("未送信", value: sync.pendingCount == 0
-                               ? "なし" : "\(sync.pendingCount) 件")
-                if let at = sync.lastSyncedAt {
-                    LabeledContent("最後に同期", value: at.formatted(date: .omitted, time: .shortened))
-                }
-                if let error = sync.lastError {
-                    Text(error).font(.caption).foregroundStyle(.secondary)
-                }
-                Button("いま送る") {
-                    Task {
-                        await sync.push()
-                        await sync.pull()
-                    }
-                }
-                .disabled(sync.isSyncing)
-            } else {
-                Text("この端末だけで遊んでいます。記録はサーバーに送られません。"
-                     + "ホームの「みんなで遊ぶ」から参加できます。")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private func save() {
-        let start = allStations.first { $0.orderNo == startOrder }
-        let goal = allStations.first { $0.orderNo == goalOrder }
-        if store.updateRule(start: start, goal: goal, diceMax: diceMax) { dismiss() }
     }
 
     private var versionText: String {
@@ -244,5 +63,166 @@ struct RuleSettingsView: View {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion")
             as? String ?? "—"
         return "バージョン \(version)（\(build)）"
+    }
+}
+
+// MARK: - 言語
+
+/// 表示に使う言葉。
+///
+/// いまは日本語だけを同梱している。**選べないものを選択肢として並べない**ため、
+/// 対応していない言語は「これから」として文章で伝える。
+enum AppLanguage: String, CaseIterable {
+    case japanese = "ja"
+
+    var label: String {
+        switch self {
+        case .japanese: return "日本語"
+        }
+    }
+
+    /// いま使っている言語。同梱が増えたらここを端末設定から決める形に変える
+    static var current: AppLanguage { .japanese }
+}
+
+private struct LanguageSettingsView: View {
+    var body: some View {
+        Form {
+            Section {
+                ForEach(AppLanguage.allCases, id: \.self) { language in
+                    LabeledContent(language.label) {
+                        if language == AppLanguage.current {
+                            Image(systemName: "checkmark").foregroundStyle(Theme.line)
+                        }
+                    }
+                }
+            } footer: {
+                Text("いまは日本語だけに対応しています。"
+                     + "英語など、ほかの言葉は用意ができしだい選べるようにします。")
+            }
+        }
+        .navigationTitle("言語")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - 募金
+
+/// 歩いた先の土地へ返す仕組み。**まだ口座も宛先も決まっていない。**
+/// 決まっていないものを「できる」ように見せると、押した人を裏切ることになるので、
+/// いまは考えていることだけを正直に置いておく。
+private struct DonationView: View {
+    var body: some View {
+        Form {
+            Section {
+                Text("レイルアンギャーは広告を出さず、課金もありません。")
+                Text("歩いて楽しかったぶんを、その土地や鉄道を守っている人たちへ"
+                     + "返せる形にできないかを考えています。")
+            } header: {
+                Text("このアプリについて")
+            }
+
+            Section {
+                Label("準備中です", systemImage: "hourglass")
+                    .foregroundStyle(.secondary)
+            } footer: {
+                Text("送り先が決まったら、ここに案内を出します。"
+                     + "いまのところ、このアプリからお金を受け取ることはありません。")
+            }
+
+            Section {
+                Text("いちばんの応援は、実際に歩いて、写真を残して、"
+                     + "だれかを誘ってもらうことです。")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle("募金")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - 使い方とお約束
+
+private struct GuideView: View {
+    var body: some View {
+        Form {
+            Section("遊び方") {
+                step(1, "予定を立てる",
+                     "コースと区間を決めて、集合の日時と場所を書きます。"
+                     + "サイコロやお題を使うかも、この予定ごとに決められます。")
+                step(2, "集まって歩き出す",
+                     "サイコロを振ると、その回に歩く駅数が決まります。"
+                     + "サイコロを使わない予定なら、1駅ずつ順に歩きます。")
+                step(3, "駅に着いたら記録する",
+                     "着いた駅で写真を撮ったり、お題をこなしたりします。"
+                     + "位置情報を許可していれば、到着は自動で拾います。")
+                step(4, "ゴールしたらふりかえる",
+                     "歩いた道のり・時間・写真は「記録」に残ります。"
+                     + "記録を保存すれば、同じルールで次の旅を始められます。")
+            }
+
+            Section {
+                promise("車と自転車に気をつける",
+                        "画面ではなく前を見て歩いてください。"
+                        + "サイコロも到着の操作も、立ち止まってから行えば間に合います。")
+                promise("駅と沿線の迷惑にならない",
+                        "改札の中や線路の敷地には入らないでください。"
+                        + "係の人や他のお客さんの通行をふさがないようにします。")
+                promise("写真に人を写しこまない",
+                        "知らない人の顔や、表札・車のナンバーが写らないようにします。"
+                        + "撮ってよいか迷う場所では撮らない、が安全です。")
+                promise("無理をしない",
+                        "体調・天気・日暮れを見て、途中でやめてかまいません。"
+                        + "記録は途中でも残ります。")
+            } header: {
+                Text("お約束")
+            } footer: {
+                Text("身内で歩くためのアプリです。"
+                     + "けがや事故について開発者は責任を負えないので、無理のない範囲で遊んでください。")
+            }
+
+            Section {
+                Text("進行記録・訪問した駅・写真は、まず端末の中に保存されます。")
+                Text("「みんなで遊ぶ」でルームに入っているあいだだけ、表示名・ルームの進行・"
+                     + "お題・予定・出欠・共有した写真がサーバーへ送られます。")
+                Text("端末の生のGPS座標は送りません。"
+                     + "位置情報は駅に着いたかを端末の中で判定するためだけに使い、"
+                     + "共有するのは到着した駅と時刻だけです。")
+                Text("広告は出さず、第三者へのトラッキングも情報の販売も行いません。")
+            } header: {
+                Text("あつかうデータ")
+            } footer: {
+                Text("端末の記録は「記録を保存して新しい旅へ」かアプリの削除で消せます。"
+                     + "サーバー側のルームの削除を希望するときは hikagebiyori@gmail.com まで、"
+                     + "ルーム名か招待コードを添えて連絡してください。")
+            }
+        }
+        .navigationTitle("使い方とお約束")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func step(_ number: Int, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("\(number)")
+                .font(.subheadline.bold().monospacedDigit())
+                .foregroundStyle(Theme.onLine)
+                .frame(width: 24, height: 24)
+                .background(Theme.line, in: Circle())
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.subheadline.weight(.semibold))
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func promise(_ title: String, _ detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Label(title, systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Text(detail).font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 2)
     }
 }

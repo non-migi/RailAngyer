@@ -124,6 +124,9 @@ final class GameSessionStore {
             ?? room.startStation?.orderNo ?? 1
     }
 
+    /// 旅が始まっているか。始点を記録した時点で始まったとみなす（R-17）
+    var hasStartedJourney: Bool { !(room?.visits.isEmpty ?? true) }
+
     /// 一度でも訪れた駅の数（再訪は重複して数えない。DV-06）
     var visitedCount: Int {
         Set(room?.visits.compactMap { $0.station?.orderNo } ?? []).count
@@ -177,11 +180,32 @@ final class GameSessionStore {
 
     // MARK: - 操作
 
+    /// スタート駅に着いたことを記録して旅を始める（R-17）。
+    ///
+    /// **スタート駅も1駅目として扱う。** 振ってからまとめて記録すると、
+    /// 出発する駅だけ「到着した」瞬間が無く、写真も残せなかった。
+    /// サイコロを振る前にここで訪問を1行作っておけば、他の駅と同じように写真を紐づけられる。
+    /// 何度押しても増えない（1回目だけ効く）
+    func startJourney() {
+        guard let room else { return }
+        autoApplyScheduleIfNeeded()
+        do {
+            try recordStartVisitIfNeeded(room)
+            try context.save()
+            enqueueForSync()
+        } catch {
+            lastError = String(describing: error)
+        }
+    }
+
     /// サイコロを振る（F-01）。振った時点で `Turn` を保存するので、
     /// アプリが落ちても出目と行き先が残る。
     func roll() {
+        autoApplyScheduleIfNeeded()
         guard let engine else { return }
-        roll(dice: TestHooks.fixedDice ?? engine.roll())
+        // サイコロを使わない予定では**いつも1**。1駅ずつ、そのまま歩くだけ
+        let dice = room?.usesDice == false ? 1 : (TestHooks.fixedDice ?? engine.roll())
+        roll(dice: dice)
     }
 
     /// 出目を指定して振る。テストで進行を再現するために分けてある
@@ -189,8 +213,10 @@ final class GameSessionStore {
         guard let room, let engine, activeTurn == nil else { return }
         do {
             pendingPassingStation = nil
-            try recordStartVisitIfNeeded(room)
+            try recordStartVisitIfNeeded(room)   // 押さずに振った場合もここで始点を残す
 
+            // 着地駅 = 現在位置 + 向き × 出目（R-04）。
+            // **いま立っている駅は数に入れず、次の1駅目から数える**ので、出目1なら隣駅で止まる
             let landing = engine.landingOrder(from: currentOrder, dice: dice)
             let nextNo = (room.turns.map(\.turnNo).max() ?? 0) + 1
 
@@ -260,6 +286,8 @@ final class GameSessionStore {
     /// （SwiftData の `_InvalidFutureBackingData`）。IDだけなら属性を読まずに比べられる。
     func missionCandidates(at order: Int) -> [Mission] {
         guard let room, let station = station(order) else { return [] }
+        // お題を使わない予定では候補を出さない。書いたお題は消さず、次の旅に残す
+        guard room.usesMissions else { return [] }
         let used = Set(room.turns.compactMap { $0.selectedMission?.persistentModelID })
         return room.missions.filter {
             $0.station?.id == station.id && !used.contains($0.persistentModelID)
@@ -417,13 +445,67 @@ final class GameSessionStore {
     /// 次に開催される予定。
     var nextSchedule: Schedule? { schedules.first { $0.startAt >= Date() } }
 
+    /// いまの旅に効かせている予定。旅をリセットしたら外れる
+    private(set) var activeSchedule: Schedule?
+
+    /// 予定のルール（コース・区間・一周・サイコロ・お題・見え方）をいまのルームに取り込む。
+    /// 歩き出す前だけ有効。始まってから入れ替えると、すでに進んだ盤面と食い違う。
+    /// - Returns: 適用できなければ理由
+    @discardableResult
+    func applySchedule(_ schedule: Schedule) -> String? {
+        guard let room else { return "ルームがありません" }
+        if hasStartedJourney || !room.turns.isEmpty {
+            return "旅の途中はルールを変えられません"
+        }
+
+        // コースは予定に決めたものへ切り替える。
+        // **サーバー未参加では serverId が無い**（同梱マスタは nil のまま）ので、名前でも引き当てる
+        let courses = (try? context.fetch(FetchDescriptor<Course>())) ?? []
+        let planned = schedule.courseServerId.flatMap { id in courses.first { $0.serverId == id } }
+            ?? (schedule.courseName.isEmpty ? nil : courses.first { $0.name == schedule.courseName })
+        if let planned, room.course !== planned { room.course = planned }
+
+        // 予定がコースを指しているのに手元で引き当てられなかったら、**区間は写さない**。
+        // いまのコースに別路線の駅番号を当てると、番号が重なって黙って取り違えるため
+        let mayApplySection = planned != nil || schedule.courseName.isEmpty
+        let stations = room.course?.stations ?? []
+        if mayApplySection,
+           let start = stations.first(where: { $0.orderNo == schedule.startOrder }) {
+            room.startStation = start
+            // 一周はスタートとゴールが同じ駅（MissionSet.isLap はこの一致で決まる）
+            room.goalStation = schedule.isLap
+                ? start
+                : stations.first { $0.orderNo == schedule.goalOrder } ?? room.goalStation
+        }
+        room.diceMax = min(max(schedule.diceMax, 1), 9)
+        room.loopDirectionRaw = schedule.loopDirectionRaw >= 0 ? 1 : -1
+        room.usesDice = schedule.usesDice
+        room.usesMissions = schedule.usesMissions
+        room.missionVisibilityRaw = schedule.missionVisibilityRaw
+        activeSchedule = schedule
+        save()
+        return nil
+    }
+
+    /// 歩き出す時点でまだ予定を取り込んでいなければ、直近の予定を自動で効かせる。
+    /// ホームの「旅をスタート」を通らず、盤面から直接始めた場合の取りこぼしを防ぐ
+    private func autoApplyScheduleIfNeeded() {
+        guard activeSchedule == nil, !hasStartedJourney,
+              let candidate = schedules.first(where: { !$0.isFinished() }) else { return }
+        applySchedule(candidate)
+    }
+
     /// 予定を立てる・書き換える。
     /// - Returns: 保存できなければ理由
     @discardableResult
     func saveSchedule(_ existing: Schedule?, title: String,
                       startAt: Date, meetPlace: String?,
                       course: Course? = nil, startOrder: Int? = nil,
-                      goalOrder: Int? = nil, diceMax: Int? = nil) -> String? {
+                      goalOrder: Int? = nil, diceMax: Int? = nil,
+                      isLap: Bool? = nil, loopDirection: Int? = nil,
+                      usesDice: Bool? = nil, usesMissions: Bool? = nil,
+                      missionVisibility: Int? = nil, arrivalRadius: Double? = nil,
+                      isShared: Bool? = nil, timeZoneIdentifier: String? = nil) -> String? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "予定の名前を入力してください" }
         if trimmed.count > 100 { return "予定の名前は100文字までです" }
@@ -438,7 +520,11 @@ final class GameSessionStore {
         let selectedStart = startOrder ?? room?.startStation?.orderNo ?? 0
         let selectedGoal = goalOrder ?? room?.goalStation?.orderNo ?? 0
         guard selectedCourse != nil else { return "コースを選んでください" }
-        if selectedStart == selectedGoal { return "スタートとゴールは別の駅にしてください" }
+        // 一周は出発した駅へ戻ってくる。ここだけスタート＝ゴールが正しい
+        let lapping = isLap ?? existing?.isLap ?? false
+        if !lapping && selectedStart == selectedGoal {
+            return "スタートとゴールは別の駅にしてください"
+        }
 
         let schedule = existing ?? Schedule(title: trimmed, startAt: startAt)
         schedule.title = trimmed
@@ -449,6 +535,17 @@ final class GameSessionStore {
         schedule.startOrder = selectedStart
         schedule.goalOrder = selectedGoal
         schedule.diceMax = min(max(diceMax ?? room?.diceMax ?? 6, 1), 9)
+        schedule.isLap = lapping
+        if let loopDirection { schedule.loopDirectionRaw = loopDirection >= 0 ? 1 : -1 }
+        if let usesDice { schedule.usesDice = usesDice }
+        if let usesMissions { schedule.usesMissions = usesMissions }
+        if let missionVisibility { schedule.missionVisibilityRaw = missionVisibility }
+        if let arrivalRadius {
+            schedule.arrivalRadius = min(max(arrivalRadius, ArrivalRule.radiusRange.lowerBound),
+                                         ArrivalRule.radiusRange.upperBound)
+        }
+        if let isShared { schedule.isShared = isShared }
+        schedule.timeZoneIdentifier = timeZoneIdentifier
 
         if existing == nil {
             schedule.missionSet = room
@@ -492,15 +589,25 @@ final class GameSessionStore {
     // MARK: - 写真
 
     /// いま写真を紐づけるべき訪問。
-    /// 進行中ターンの最後の訪問（＝いる駅）に付ける
+    /// 進行中ターンの最後の訪問（＝いる駅）に付ける。
+    ///
+    /// ターンの外や、振った直後でまだどこにも着いていないあいだは、
+    /// **最後に着いた駅の訪問**に付ける。こうするとスタート駅や、
+    /// ターンを終えて次を振るまでのあいだでも写真を残せる（R-19）
     var currentVisit: Visit? {
-        guard let turn = activeTurn else { return nil }
-        return turn.visits.max { $0.arrivedAt < $1.arrivedAt }
+        if let turn = activeTurn,
+           let latest = turn.visits.max(by: { $0.arrivedAt < $1.arrivedAt }) {
+            return latest
+        }
+        return room?.visits.max { $0.arrivedAt < $1.arrivedAt }
     }
 
     /// 撮った写真を保存し、いる駅の訪問に紐づける（F-05）
     func attachPhoto(_ image: UIImage) {
-        guard let visit = currentVisit, let room else { return }
+        guard let room else { return }
+        // スタート駅でまだ何も記録していなければ、ここで始点を作って紐づけ先にする
+        try? recordStartVisitIfNeeded(room)
+        guard let visit = currentVisit else { return }
         do {
             let fileName = try PhotoStore.save(image)
             let photo = Photo(localFileName: fileName)
@@ -508,6 +615,7 @@ final class GameSessionStore {
             photo.member = room.members.first { $0.isMe } ?? room.members.first
             context.insert(photo)
             try context.save()
+            enqueueForSync()      // 始点をここで作った場合に備えて積み直す
         } catch {
             lastError = String(describing: error)
         }
@@ -718,8 +826,8 @@ final class GameSessionStore {
         return true
     }
 
-    /// このコースでの到着判定の半径。路線ごとに決まっていればそれを使う
-    var arrivalRadius: Double? { room?.course?.arrivalRadius }
+    /// 到着判定の半径。**予定に決めた値 > 路線ごとの値**の順で、先に決まっているものを使う
+    var arrivalRadius: Double? { activeSchedule?.arrivalRadius ?? room?.course?.arrivalRadius }
 
     /// 区間と最大出目を変更する。進行中は変えられない（T-06）
     func updateRule(start: Station?, goal: Station?, diceMax: Int) -> Bool {

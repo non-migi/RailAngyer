@@ -183,7 +183,7 @@ private struct MainView: View {
                 store.arriveAtNextStop(expected: order)
                 notifyArrival(at: order)
             }
-            location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
+            location.rule = ArrivalRule(radius: effectiveArrivalRadius)
             syncTarget()
 
             // アプリもDBも寝ていることがある。**起こすのは待たずに裏で進める。**
@@ -217,7 +217,7 @@ private struct MainView: View {
             Task { await sync.push() }
         }
         .onChange(of: arrivalRadius) {
-            location.rule = ArrivalRule(radius: store.arrivalRadius ?? arrivalRadius)
+            location.rule = ArrivalRule(radius: effectiveArrivalRadius)
             syncTarget()
         }
         .onChange(of: selectedTab) {
@@ -226,9 +226,31 @@ private struct MainView: View {
     }
 
     private func startJourney() {
+        // 予定のルール（一周・向き・サイコロ・お題・区間）は**歩き出す前にだけ**取り込む。
+        // 始まってから入れ替えると、すでに進んだ盤面と食い違う
+        if !store.hasStartedJourney, let schedule = journeySchedule {
+            store.applySchedule(schedule)
+        }
         selectedTab = .journey
         prepareLocationIfNeeded()
+        // 予定を取り込むと区間も半径も変わりうるので、監視をやり直す
+        location.rule = ArrivalRule(radius: effectiveArrivalRadius)
+        syncTarget()
         // ここではサイコロを振らない。盤面の「サイコロを振る」を押して初めて開始する。
+    }
+
+    /// この旅に効かせる予定。
+    ///
+    /// **集合時刻を過ぎたら次の予定へ、とはしない。** 集合してから歩き出すので、
+    /// 過ぎた直後こそがその予定の本番になる。`Schedule.isFinished` は翌日まで false のまま
+    private var journeySchedule: Schedule? {
+        store.schedules.first { !$0.isFinished() }
+    }
+
+    /// 到着判定の半径。**予定 > コース > 端末の設定**の順で、先に決まっているものを使う。
+    /// 予定ごとに変えられるようにしたのは、駅前広場の広さが場所でだいぶ違うため
+    private var effectiveArrivalRadius: Double {
+        journeySchedule?.arrivalRadius ?? store.arrivalRadius ?? arrivalRadius
     }
 
     private func prepareLocationIfNeeded() {
@@ -306,9 +328,9 @@ private struct HomeDashboardView: View {
         ScrollView {
             VStack(spacing: 18) {
                 hero
+                roomCard
                 scheduleCard
                 recordsCard
-                roomCard
                 actions
             }
             .padding()
@@ -422,22 +444,78 @@ private struct HomeDashboardView: View {
         .buttonStyle(.plain)
     }
 
-    /// 仲間と遊ぶための入口。設定の奥に置くと、そもそも在ることに気づけない
+    /// 仲間と遊ぶための入口。設定の奥に置くと、そもそも在ることに気づけない。
+    ///
+    /// **いまどのルームにいるのかを、ホームの一番上で常に見せる。**
+    /// 参加していないことも同じ場所に出す。どちらの状態でも、
+    /// このカードを押せば参加・作成の画面（`RoomJoinView`）に行ける。
+    /// 未参加のときの見出しは、他の画面の案内文（ホームの「みんなで遊ぶ」から）と
+    /// 同じ言葉のままにしておく
     private var roomCard: some View {
         Button(action: showRoom) {
-            dashboardCard(title: "みんなで遊ぶ", icon: "person.2.fill") {
+            dashboardCard(title: sync.isJoined ? "いまのルーム" : "みんなで遊ぶ",
+                          icon: "person.2.fill") {
                 if sync.isJoined {
-                    Text(store.room?.name ?? "参加中").font(.headline)
-                    Text("\(store.room?.members.count ?? 1)人が参加しています")
-                        .font(.caption).foregroundStyle(.secondary)
+                    joinedRoomBody
                 } else {
-                    Text("この端末だけで遊んでいます")
-                    Text("招待コードで参加するか、新しくルームを作る")
-                        .font(.caption).foregroundStyle(.secondary)
+                    unjoinedRoomBody
                 }
             }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("roomCard")
+    }
+
+    private var joinedRoomBody: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(store.room?.name ?? "参加中")
+                .font(.title3.bold())
+                .lineLimit(2)
+            Text(roomSummary)
+                .font(.subheadline).foregroundStyle(Theme.line)
+            if !memberNames.isEmpty {
+                Text(memberNames)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            if let code = store.room?.inviteCode, !code.isEmpty {
+                Text("招待コード \(code)")
+                    .font(.caption.monospaced()).foregroundStyle(.secondary)
+                    .padding(.top, 1)
+            }
+        }
+    }
+
+    private var unjoinedRoomBody: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("ルーム未参加")
+                .font(.title3.bold())
+            Text("いまはこの端末だけで遊んでいます")
+                .font(.subheadline).foregroundStyle(.secondary)
+            Label("招待コードで参加、または新しく作る", systemImage: "person.badge.plus")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.onLine)
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Theme.line, in: Capsule())
+                .padding(.top, 3)
+        }
+    }
+
+    /// コース名は無いことがある。そのときは人数だけを出す
+    private var roomSummary: String {
+        let people = "\(max(store.room?.members.count ?? 1, 1))人が参加中"
+        guard let course = store.room?.course?.name, !course.isEmpty else { return people }
+        return "\(course)・\(people)"
+    }
+
+    /// 名前が多いとカードが伸びるので、先頭だけ出して残りは人数で示す
+    private var memberNames: String {
+        let names = (store.room?.members ?? [])
+            .sorted { $0.joinedAt < $1.joinedAt }
+            .map(\.displayName)
+        guard !names.isEmpty else { return "" }
+        if names.count <= 3 { return names.joined(separator: "・") }
+        return names.prefix(3).joined(separator: "・") + "・ほか\(names.count - 3)人"
     }
 
     private func dashboardCard<Content: View>(
@@ -461,6 +539,7 @@ private struct HomeDashboardView: View {
         HStack(spacing: 10) {
             actionButton("予定", "calendar.badge.plus", showSchedules)
             actionButton("お題", "square.and.pencil", showMissions)
+            actionButton("ルーム", "person.2.fill", showRoom)
             actionButton("過去の旅", "clock.arrow.circlepath", showRecords)
         }
     }
@@ -469,7 +548,9 @@ private struct HomeDashboardView: View {
         Button(action: action) {
             VStack(spacing: 7) {
                 Image(systemName: icon).font(.title3)
-                Text(title).font(.caption.weight(.semibold))
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1).minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, minHeight: 58)
         }

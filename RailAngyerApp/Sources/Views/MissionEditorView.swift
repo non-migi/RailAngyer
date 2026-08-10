@@ -4,7 +4,7 @@ import RailAngyerCore
 /// ミッションの自作（SC-12）。
 ///
 /// **駅ごとに、1メンバー1個まで**（企画仕様 / UQ-05）。
-/// 自分が書いたお題だけが見える。他人のぶんは件数しか出さない（当日の驚きを守るため）。
+/// お題は**既定でみんなに見える**。当日まで伏せたい予定だけ、件数だけの表示に切り替わる。
 struct MissionEditorView: View {
 
     @Bindable var store: GameSessionStore
@@ -12,6 +12,9 @@ struct MissionEditorView: View {
     /// 予定から開いたときの対象。**まだ始めていない旅のお題も書ける**ようにするためのもの。
     /// 省略すると、いま遊んでいるコース全体を対象にする
     var plan: MissionPlan?
+    /// お題の中身をみんなに見せるか。**既定は見せる。**
+    /// 予定から開いたときは、その予定の設定（`MissionPlan.sharesMissions`）が優先される
+    var sharesMissions = true
     /// 予定一覧から押し進んで開くとき。呼び出し側の `NavigationStack` にそのまま載せる。
     /// 自前で包むと戻る手段が二重になり、予定へ戻るのに2回たたむことになる
     var isPushed = false
@@ -22,6 +25,9 @@ struct MissionEditorView: View {
     @State private var isLoading = false
 
     private var course: Course? { plan?.course ?? store.room?.course }
+
+    /// いま開いている対象で、お題の中身を見せてよいか
+    private var missionsAreShared: Bool { plan?.sharesMissions ?? sharesMissions }
 
     /// 対象の駅。予定から開いたときは、その予定の区間だけに絞る
     private var stations: [Station] {
@@ -136,17 +142,44 @@ struct MissionEditorView: View {
             }
             ForEach(stations) { station in
                 if let row = summary.first(where: { $0.stationId == station.serverId }) {
-                    LabeledContent(station.name) {
-                        HStack(spacing: 8) {
-                            Text("\(row.count) 個")
-                        }
-                    }
+                    preparationRow(station, row)
                 }
             }
         } header: {
             Text("みんなの準備状況")
         } footer: {
-            Text("お題の中身は当日まで見えません。件数だけが共有されます。")
+            Text(missionsAreShared
+                 ? "お題はみんなに見えます。当日まで伏せたいときは、予定の設定で切り替えてください。"
+                 : "お題の中身は当日まで見えません。件数だけが共有されます。")
+        }
+    }
+
+    /// 1駅ぶんの準備状況。
+    /// 見せる設定なら中身と書いた人まで、伏せる設定なら件数だけを出す
+    @ViewBuilder
+    private func preparationRow(_ station: Station, _ row: MissionSummaryResponse) -> some View {
+        let shared = missionsAreShared ? (row.missions ?? []) : []
+        if shared.isEmpty {
+            LabeledContent(station.name) {
+                Text("\(row.count) 個")
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(station.name).font(.subheadline.bold())
+                    Spacer()
+                    Text("\(row.count) 個").font(.caption).foregroundStyle(.secondary)
+                }
+                ForEach(shared) { mission in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mission.content)
+                        Text(mission.createdByName)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.vertical, 2)
         }
     }
 
@@ -155,8 +188,9 @@ struct MissionEditorView: View {
         isLoading = true
         defer { isLoading = false }
         await sync.push()
-        await sync.pullMyMissions()
-        summary = await sync.missionSummary()
+        // 見せる設定なら、みんなのお題を端末にも取り込む（着地した駅で引く候補になる）
+        await sync.pullMissions(includeOthers: missionsAreShared)
+        summary = await sync.missionSummary(includeContent: missionsAreShared)
     }
 }
 
@@ -167,6 +201,8 @@ struct MissionPlan: Identifiable {
     let startOrder: Int
     let goalOrder: Int
     let title: String
+    /// お題の中身をみんなに見せるか。**既定は見せる**（予定側の設定で伏せられる）
+    var sharesMissions = true
 }
 
 /// 編集中のお題。新規と書き換えを同じ画面で扱う

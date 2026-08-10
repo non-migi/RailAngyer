@@ -181,6 +181,12 @@ final class SyncService {
                 // 400 のような「何度送っても同じ」失敗は捨てる。
                 // 残すとキューが永久に詰まり、以降の記録が一切送れなくなる
                 try? queue.remove(change)
+
+                // 同時にサイコロを振って負けた（409）。自分の一手は取り下げて、
+                // **勝った人の進行をすぐ取り込み、画面をみんなと合わせる**（§6）
+                if case .server(let status, _) = error, status == 409 {
+                    await pull()
+                }
             } catch {
                 lastError = String(describing: error)
                 break
@@ -256,13 +262,17 @@ final class SyncService {
 
     // MARK: - ミッション
 
-    /// 自分のお題を取り込む（機種変更や再インストールの後で書き直さずに済む）。
-    /// 他人のお題はサーバーが伏せるので、ここに降りてこない
+    /// お題を取り込む（機種変更や再インストールの後で書き直さずに済む）。
+    ///
+    /// **既定ではみんなのお題を取り込む。** 着地した駅で引く候補は端末の中で選ぶので、
+    /// 自分のぶんしか持っていないと、仲間が書いたお題が一度も引かれない。
+    /// 当日まで伏せる設定のときだけ `includeOthers: false` で自分のぶんに絞る
     @discardableResult
-    func pullMyMissions() async -> Bool {
+    func pullMissions(includeOthers: Bool = true) async -> Bool {
         guard let saved = credentials.load() else { return false }
         do {
-            let remote = try await client.missions(roomId: saved.roomId)
+            let remote = try await client.missions(roomId: saved.roomId,
+                                                   includeOthers: includeOthers)
             try applyMissions(remote, meId: saved.memberId)
             return true
         } catch let error as ApiError {
@@ -274,11 +284,16 @@ final class SyncService {
         }
     }
 
-    /// 駅ごとの準備状況。**内容は取らない**ので、当日まで中身は伏せたまま数だけ見せられる
-    func missionSummary() async -> [MissionSummaryResponse] {
+    /// 駅ごとの準備状況。
+    ///
+    /// **既定では中身も受け取る**（お題はみんなに見える）。
+    /// 伏せる設定のときは `includeContent: false` にして、件数だけを受け取る。
+    /// 画面で隠すだけにせず**そもそも取りに行かない**ことで、中身が端末に残らない
+    func missionSummary(includeContent: Bool = true) async -> [MissionSummaryResponse] {
         guard let saved = credentials.load() else { return [] }
         do {
-            return try await client.missionSummary(roomId: saved.roomId)
+            return try await client.missionSummary(roomId: saved.roomId,
+                                                   includeContent: includeContent)
         } catch let error as ApiError {
             lastError = error.message
             return []
@@ -292,7 +307,6 @@ final class SyncService {
         guard let room = try localRoom() else { return }
 
         let stations = room.course?.stations ?? []
-        let me = room.members.first { $0.id == meId }
 
         for incoming in remote {
             guard let station = stations.first(where: { $0.serverId == incoming.stationId }) else {
@@ -313,17 +327,34 @@ final class SyncService {
             mission.effectValue = nil
             mission.effectStation = nil
             mission.station = station
-            mission.member = me ?? mission.member
+            mission.member = author(of: incoming, meId: meId, in: room) ?? mission.member
             mission.syncStateRaw = SyncState.synced.rawValue
         }
 
         try context.save()
     }
 
+    /// お題を書いた人。
+    ///
+    /// **他人のお題も降りてくる**ので、名前ではなくIDで引き当てる。
+    /// まだ取り込んでいないメンバーなら名前だけの行を作る（誰が書いたか出せるように）。
+    /// IDを返さない古いサーバー相手では、自分のぶんしか返らないので自分として扱う
+    private func author(of incoming: MissionResponse, meId: UUID, in room: MissionSet) -> Member? {
+        let id = incoming.memberId ?? meId
+        if let existing = room.members.first(where: { $0.id == id }) { return existing }
+
+        let created = Member(displayName: incoming.createdByName, isMe: id == meId)
+        created.id = id
+        created.missionSet = room
+        context.insert(created)
+        return created
+    }
+
     // MARK: - 予定（フェーズ3）
 
-    /// 予定を積む
+    /// 予定を積む。**共有しない予定は送らない**（この端末の中だけに置く）
     func enqueueSchedule(_ schedule: Schedule) throws {
+        guard schedule.isShared else { return }
         guard let room = credentials.load()?.roomId else { return }
         let body = SaveScheduleBody(title: schedule.title,
                                     startAt: schedule.startAt,
@@ -332,7 +363,15 @@ final class SyncService {
                                     courseName: schedule.courseName,
                                     startOrder: schedule.startOrder,
                                     goalOrder: schedule.goalOrder,
-                                    diceMax: schedule.diceMax)
+                                    diceMax: schedule.diceMax,
+                                    isLap: schedule.isLap,
+                                    loopDirection: schedule.loopDirectionRaw,
+                                    usesDice: schedule.usesDice,
+                                    usesMissions: schedule.usesMissions,
+                                    missionVisibility: schedule.missionVisibilityRaw,
+                                    arrivalRadius: schedule.arrivalRadius,
+                                    isShared: schedule.isShared,
+                                    timeZoneId: schedule.timeZoneIdentifier)
         try enqueue(path: "/rooms/\(room.apiString)/schedules/\(schedule.id.apiString)", body: body)
     }
 
@@ -395,6 +434,18 @@ final class SyncService {
             if let startOrder = incoming.startOrder { schedule.startOrder = startOrder }
             if let goalOrder = incoming.goalOrder { schedule.goalOrder = goalOrder }
             if let diceMax = incoming.diceMax { schedule.diceMax = diceMax }
+            if let isLap = incoming.isLap { schedule.isLap = isLap }
+            if let direction = incoming.loopDirection {
+                schedule.loopDirectionRaw = direction >= 0 ? 1 : -1
+            }
+            if let usesDice = incoming.usesDice { schedule.usesDice = usesDice }
+            if let usesMissions = incoming.usesMissions { schedule.usesMissions = usesMissions }
+            if let visibility = incoming.missionVisibility {
+                schedule.missionVisibilityRaw = visibility
+            }
+            if let radius = incoming.arrivalRadius { schedule.arrivalRadius = radius }
+            if let isShared = incoming.isShared { schedule.isShared = isShared }
+            if let timeZoneId = incoming.timeZoneId { schedule.timeZoneIdentifier = timeZoneId }
             schedule.createdById = incoming.createdBy
             schedule.syncStateRaw = SyncState.synced.rawValue
 
@@ -545,6 +596,14 @@ private struct SaveScheduleBody: Encodable {
     let startOrder: Int
     let goalOrder: Int
     let diceMax: Int
+    let isLap: Bool
+    let loopDirection: Int
+    let usesDice: Bool
+    let usesMissions: Bool
+    let missionVisibility: Int
+    let arrivalRadius: Double?
+    let isShared: Bool
+    let timeZoneId: String?
 }
 
 private struct SaveAttendanceBody: Encodable {

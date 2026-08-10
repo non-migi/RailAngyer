@@ -11,21 +11,24 @@ public static class MissionEndpoints
         var group = app.MapGroup("/rooms/{roomId:guid}")
                        .AddEndpointFilter<RequireMemberFilter>();
 
-        // --- 自分のミッション ---------------------------------------------------
+        // --- ミッションの一覧 ---------------------------------------------------
 
+        // お題は**既定でみんなに見える**。当日まで伏せたいときだけ
+        // `includeOthers=false` を付けて、自分が書いたぶんだけを取る
         group.MapGet("/missions", async (Guid roomId, HttpContext http,
-                                         RailAngyerDbContext db, CancellationToken ct) =>
+                                         RailAngyerDbContext db, CancellationToken ct,
+                                         bool includeOthers = true) =>
         {
             var me = http.Member();
             if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
-            // 自分が書いたぶんだけ。他人のお題はプレイ前に見せない
             var missions = await db.Missions.AsNoTracking()
-                .Where(m => m.MissionSetId == roomId && m.MemberId == me.MemberId)
+                .Where(m => m.MissionSetId == roomId
+                         && (includeOthers || m.MemberId == me.MemberId))
                 .OrderBy(m => m.Station!.OrderNo)
                 .Select(m => new MissionDto(m.MissionId, m.StationId, m.Content,
                                             m.EffectType, m.EffectValue, m.EffectStationId,
-                                            me.DisplayName))
+                                            m.MemberId, m.Member!.DisplayName))
                 .ToListAsync(ct);
             return Results.Ok(missions);
         });
@@ -98,23 +101,45 @@ public static class MissionEndpoints
             return Results.NoContent();
         });
 
-        // --- 準備状況（件数だけ。内容は出さない） -------------------------------
+        // --- 準備状況 -----------------------------------------------------------
 
+        // 駅ごとの件数と、**既定では中身も**返す。
+        // 当日まで伏せる予定では `includeContent=false` を付ける。
+        // そのときは中身を端末へ送らない（画面で隠すだけでは覗けてしまう）
         group.MapGet("/missions/summary", async (Guid roomId, HttpContext http,
-                                                 RailAngyerDbContext db, CancellationToken ct) =>
+                                                 RailAngyerDbContext db, CancellationToken ct,
+                                                 bool includeContent = true) =>
         {
             var me = http.Member();
             if (me.MissionSetId != roomId) return ApiResults.Forbidden();
 
-            var rows = await db.Missions.AsNoTracking()
+            var missions = await db.Missions.AsNoTracking()
                 .Where(m => m.MissionSetId == roomId)
+                .OrderBy(m => m.Station!.OrderNo)
+                .Select(m => new
+                {
+                    m.MissionId,
+                    m.StationId,
+                    m.MemberId,
+                    m.Content,
+                    m.EffectType,
+                    DisplayName = m.Member!.DisplayName
+                })
+                .ToListAsync(ct);
+
+            // ルーム1件ぶんの件数なので、まとめはメモリ上で組み立てて構わない
+            var rows = missions
                 .GroupBy(m => m.StationId)
                 .Select(g => new MissionSummaryDto(
                     g.Key,
                     g.Count(),
                     g.Count(m => m.EffectType != 0),
-                    g.Count(m => m.EffectType == 2)))   // 戻るが多いと進まなくなる（E-08）
-                .ToListAsync(ct);
+                    g.Count(m => m.EffectType == 2),   // 戻るが多いと進まなくなる（E-08）
+                    includeContent
+                        ? g.Select(m => new MissionBriefDto(m.MissionId, m.MemberId,
+                                                            m.Content, m.DisplayName)).ToList()
+                        : []))
+                .ToList();
             return Results.Ok(rows);
         });
 
@@ -146,7 +171,7 @@ public static class MissionEndpoints
                 .Where(m => m.MissionSetId == roomId && m.StationId == stationId && !used.Contains(m.MissionId))
                 .Select(m => new MissionDto(m.MissionId, m.StationId, m.Content,
                                             m.EffectType, m.EffectValue, m.EffectStationId,
-                                            m.Member!.DisplayName))
+                                            m.MemberId, m.Member!.DisplayName))
                 .ToListAsync(ct);
             return Results.Ok(missions);
         });
@@ -195,5 +220,8 @@ public record SaveMissionRequest(int StationId, string Content, int EffectType,
                                  int? EffectValue, int? EffectStationId);
 public record MissionDto(Guid MissionId, int StationId, string Content,
                          byte EffectType, byte? EffectValue, int? EffectStationId,
-                         string CreatedByName);
-public record MissionSummaryDto(int StationId, int Count, int EffectCount, int BackEffectCount);
+                         Guid MemberId, string CreatedByName);
+/// <summary>準備状況に添える1件ぶん。伏せる設定のときは空になる</summary>
+public record MissionBriefDto(Guid MissionId, Guid MemberId, string Content, string CreatedByName);
+public record MissionSummaryDto(int StationId, int Count, int EffectCount, int BackEffectCount,
+                                IReadOnlyList<MissionBriefDto> Missions);

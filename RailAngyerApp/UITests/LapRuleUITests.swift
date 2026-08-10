@@ -5,6 +5,8 @@ import XCTest
 /// 一周は**スタートとゴールが同じ駅になるのが正しい**。
 /// これを「別の駅にしてください」の条件で弾いていたため、
 /// 一周モードでは最大出目を変えても保存できず、黙って元に戻っていた。
+///
+/// 遊び方のルールは端末の設定から予定へ移ったので、ここも予定を立てて確かめる。
 final class LapRuleUITests: XCTestCase {
 
     private var app: XCUIApplication!
@@ -20,7 +22,7 @@ final class LapRuleUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["startJourney"].waitForExistence(timeout: 15), "ホームが出ていない")
 
-        openSettings()
+        openScheduleDraft()
 
         // 環状のコースにしないと「一周する」が出ない
         let coursePicker = app.buttons.matching(
@@ -35,27 +37,107 @@ final class LapRuleUITests: XCTestCase {
         lap.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
         XCTAssertEqual(lap.value as? String, "1", "一周モードに入れていない")
 
-        // 最大出目を 6 → 7 に
-        let dice = app.steppers.element(boundBy: 0)
-        XCTAssertTrue(dice.waitForExistence(timeout: 5))
-        dice.buttons["Increment"].tap()
+        // 名前は先に入れる。詳細設定まで下ると、この欄は画面の外へ出てしまう
+        let titleField = app.textFields["南北線を歩く"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "予定の名前の欄が見つからない")
+        titleField.tap()
+        titleField.typeText("山手線を一周")
+        // **キーボードは必ず畳む。** 出したままだと、この先の指の動きを鍵盤が拾って
+        // 名前の欄に文字が入り続ける
+        titleField.typeText("\n")
+        XCTAssertEqual(titleField.value as? String, "山手線を一周", "名前の欄に余計な文字が入っている")
+
+        // 最大出目は「詳細設定」の中。決めなくても遊べるものは畳んである
+        expandDetailSection()
+        let dice = diceStepper()
+        XCTAssertTrue(scrollUntilUsable(dice), "最大出目の設定が見つからない")
+        dice.buttons["Increment"].tap()   // 6 → 7
 
         let save = app.buttons["保存"]
         XCTAssertTrue(save.isEnabled, "一周モードで保存できない（スタート＝ゴールで弾かれている）")
         save.tap()
 
-        // 盤面の見出しに、保存した最大出目が出ていること
-        app.buttons["旅"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["サイコロ 1〜7"].waitForExistence(timeout: 10),
-                      "最大出目が保存されていない")
+        // 一覧に、一周であることと保存した最大出目が出ていること。
+        // 弾かれていれば予定そのものが立たず、直っていなければ出目が元のまま出る
+        XCTAssertTrue(app.staticTexts["山手線を一周"].waitForExistence(timeout: 10),
+                      "一周の予定が立てられていない")
+        XCTAssertTrue(app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS 'から一周'")).firstMatch.exists,
+                      "一周として保存されていない")
+        XCTAssertTrue(app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS 'サイコロ1〜7'")).firstMatch.exists,
+                      "一周モードで最大出目が保存されていない")
     }
 
-    /// ホーム右上の歯車。ラベルが付いていない場合に備えて候補を順に探す
-    private func openSettings() {
-        for key in ["設定", "gearshape", "gear"] where app.buttons[key].firstMatch.exists {
-            app.buttons[key].firstMatch.tap()
-            return
+    // MARK: - 補助
+
+    /// ホームの「予定」から、新しい予定の入力を開く
+    private func openScheduleDraft() {
+        let schedules = app.buttons["予定"].firstMatch
+        XCTAssertTrue(schedules.waitForExistence(timeout: 10), "ホームに予定の入口が無い")
+        schedules.tap()
+        XCTAssertTrue(app.navigationBars["予定"].waitForExistence(timeout: 10), "予定が開いていない")
+
+        let plus = app.buttons["plus"]
+        if plus.exists {
+            plus.tap()
+        } else {
+            let bar = app.navigationBars["予定"]
+            bar.buttons.element(boundBy: bar.buttons.count - 1).tap()
         }
-        app.navigationBars.buttons.element(boundBy: app.navigationBars.buttons.count - 1).tap()
+        XCTAssertTrue(app.navigationBars["予定を立てる"].waitForExistence(timeout: 5),
+                      "予定の入力が開いていない")
+    }
+
+    /// 畳まれた「詳細設定」を開く。長い入力なので、見えるところまで下ってから押す
+    private func expandDetailSection() {
+        let insideDetail = app.switches["サイコロを使う"]
+        for _ in 0..<10 {
+            if insideDetail.exists { return }             // すでに開いている
+            let detail = detailDisclosure()
+            if scrollUntilUsable(detail, tries: 1) {
+                detail.tap()
+                if insideDetail.waitForExistence(timeout: 2) { return }
+            }
+            scrollDown()
+        }
+        XCTFail("詳細設定を開けない\n\(app.debugDescription)")
+    }
+
+    /// DisclosureGroup の見出し。ボタンとして出ないことがあるので文字でも探す
+    private func detailDisclosure() -> XCUIElement {
+        let button = app.buttons["詳細設定"]
+        return button.exists ? button : app.staticTexts["詳細設定"]
+    }
+
+    /// 画面の端に半分だけ出ている要素は押しても効かない。
+    /// **真ん中あたりに来るまで送ってから**触る
+    @discardableResult
+    private func scrollUntilUsable(_ element: XCUIElement, tries: Int = 8) -> Bool {
+        let height = app.frame.height
+        for _ in 0..<tries {
+            if element.exists && element.isHittable
+                && element.frame.minY > 100 && element.frame.maxY < height - 90 {
+                return true
+            }
+            scrollDown()
+        }
+        return element.exists && element.isHittable
+    }
+
+    /// 最大出目のステッパー。ラベルで引けないときは詳細設定の先頭を取りにいく
+    private func diceStepper() -> XCUIElement {
+        let labelled = app.steppers.matching(
+            NSPredicate(format: "label BEGINSWITH '最大出目'")).firstMatch
+        if labelled.exists { return labelled }
+        return app.steppers.element(boundBy: 0)
+    }
+
+    /// 入力を下へ送る。
+    /// 集合日時のカレンダーが縦の指の動きを吸うことがあるので、画面の下寄りから始める
+    private func scrollDown() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.92))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+        start.press(forDuration: 0.05, thenDragTo: end)
     }
 }

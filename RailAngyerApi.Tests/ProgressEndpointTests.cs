@@ -72,7 +72,7 @@ public class ProgressEndpointTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     [Fact]
-    public async Task 他人のお題は一覧に出ない()
+    public async Task 他人のお題も既定では一覧に出る()
     {
         var (hostClient, room) = await SetUpAsync("のん");
         var guest = await JoinAsync(room.InviteCode, "ケンタ");
@@ -83,7 +83,47 @@ public class ProgressEndpointTests(ApiFactory factory) : IClassFixture<ApiFactor
 
         var seen = await guestClient.GetFromJsonAsync<List<MissionDto>>($"/rooms/{room.RoomId}/missions");
 
+        var mission = Assert.Single(seen!);
+        Assert.Equal("のんのお題", mission.Content);
+        Assert.Equal("のん", mission.CreatedByName);
+    }
+
+    [Fact]
+    public async Task 伏せる設定なら自分のお題しか一覧に出ない()
+    {
+        var (hostClient, room) = await SetUpAsync("のん");
+        var guest = await JoinAsync(room.InviteCode, "ケンタ");
+        var guestClient = Authorized(guest.Token);
+
+        await hostClient.PutAsJsonAsync($"/rooms/{room.RoomId}/missions/{Guid.NewGuid()}",
+            new SaveMissionRequest(4, "のんのお題", 0, null, null));
+
+        var seen = await guestClient.GetFromJsonAsync<List<MissionDto>>(
+            $"/rooms/{room.RoomId}/missions?includeOthers=false");
+
         Assert.Empty(seen!);
+    }
+
+    [Fact]
+    public async Task 準備状況は既定で中身も返し_伏せる設定なら件数だけになる()
+    {
+        var (hostClient, room) = await SetUpAsync("のん");
+        var guest = await JoinAsync(room.InviteCode, "ケンタ");
+        var guestClient = Authorized(guest.Token);
+
+        await hostClient.PutAsJsonAsync($"/rooms/{room.RoomId}/missions/{Guid.NewGuid()}",
+            new SaveMissionRequest(4, "のんのお題", 0, null, null));
+
+        var shared = await guestClient.GetFromJsonAsync<List<MissionSummaryDto>>(
+            $"/rooms/{room.RoomId}/missions/summary");
+        var row = Assert.Single(shared!);
+        Assert.Equal(1, row.Count);
+        Assert.Equal("のんのお題", Assert.Single(row.Missions).Content);
+
+        var hidden = await guestClient.GetFromJsonAsync<List<MissionSummaryDto>>(
+            $"/rooms/{room.RoomId}/missions/summary?includeContent=false");
+        Assert.Equal(1, Assert.Single(hidden!).Count);
+        Assert.Empty(Assert.Single(hidden!).Missions);
     }
 
     [Fact]

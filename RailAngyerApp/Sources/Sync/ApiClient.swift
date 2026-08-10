@@ -71,16 +71,21 @@ final class ApiClient {
         return try decode(data)
     }
 
-    /// **自分のぶんだけ**返る。他人のお題はサーバーが伏せる
-    func missions(roomId: UUID) async throws -> [MissionResponse] {
+    /// お題の一覧。**既定では全員ぶん**が返る（お題はみんなに見えるのが既定）。
+    /// 当日まで伏せる設定では `includeOthers: false` にして、自分のぶんだけ取る
+    func missions(roomId: UUID, includeOthers: Bool = true) async throws -> [MissionResponse] {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/missions",
+                                     query: [.init(name: "includeOthers", value: String(includeOthers))],
                                      rawBody: nil, authorized: true)
         return try decode(data)
     }
 
-    /// 駅ごとの件数だけ。**内容は返らない**ので、当日の驚きが損なわれない
-    func missionSummary(roomId: UUID) async throws -> [MissionSummaryResponse] {
+    /// 駅ごとの準備状況。**既定では中身も返る**。
+    /// `includeContent: false` のときは件数だけで、中身は端末に降りてこない
+    func missionSummary(roomId: UUID,
+                        includeContent: Bool = true) async throws -> [MissionSummaryResponse] {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/missions/summary",
+                                     query: [.init(name: "includeContent", value: String(includeContent))],
                                      rawBody: nil, authorized: true)
         return try decode(data)
     }
@@ -130,8 +135,9 @@ final class ApiClient {
     }
 
     private func sendRaw(_ method: HTTPMethod, _ path: String,
+                         query: [URLQueryItem] = [],
                          rawBody: Data?, authorized: Bool) async throws -> Data {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path),
+        var request = URLRequest(url: url(path, query: query),
                                  timeoutInterval: Self.coldStartTimeout)
         request.httpMethod = method.rawValue
 
@@ -161,6 +167,18 @@ final class ApiClient {
                                   detail: try? decoder.decode(ApiErrorBody.self, from: data))
         }
         return data
+    }
+
+    /// 問い合わせ付きのURLを組み立てる。
+    /// **`appendingPathComponent` に `?` を渡すと `%3F` に化ける**ので、別々に組む
+    private func url(_ path: String, query: [URLQueryItem]) -> URL {
+        let base = baseURL.appendingPathComponent(path)
+        guard !query.isEmpty,
+              var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+            return base
+        }
+        components.queryItems = query
+        return components.url ?? base
     }
 }
 
@@ -267,6 +285,8 @@ struct MissionResponse: Codable {
     let effectType: Int
     let effectValue: Int?
     let effectStationId: Int?
+    /// 書いた人。**古いサーバーは返さない**ので省略可にしてある
+    let memberId: UUID?
     let createdByName: String
 }
 
@@ -275,6 +295,17 @@ struct MissionSummaryResponse: Codable {
     let count: Int
     let effectCount: Int
     let backEffectCount: Int
+    /// 中身。伏せる設定のときと、古いサーバーからは空で返る
+    let missions: [MissionBriefResponse]?
+}
+
+struct MissionBriefResponse: Codable, Identifiable {
+    let missionId: UUID
+    let memberId: UUID?
+    let content: String
+    let createdByName: String
+
+    var id: UUID { missionId }
 }
 
 struct ScheduleResponse: Codable {
@@ -288,6 +319,15 @@ struct ScheduleResponse: Codable {
     let goalOrder: Int?
     let diceMax: Int?
     let createdBy: UUID?
+    /// ここから詳細設定。**古いサーバーは返さない**ので、すべて省略可
+    let isLap: Bool?
+    let loopDirection: Int?
+    let usesDice: Bool?
+    let usesMissions: Bool?
+    let missionVisibility: Int?
+    let arrivalRadius: Double?
+    let isShared: Bool?
+    let timeZoneId: String?
     let attendees: [AttendeeResponse]
 }
 

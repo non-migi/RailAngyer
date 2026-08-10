@@ -120,6 +120,9 @@ struct TurnFlowView: View {
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
+
+            // 出発する駅でも写真を撮れる。**旅の1駅目（スタート駅）もここに含まれる**（R-19）
+            if store.currentVisit != nil { photoSection }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .task(id: turn.id) { diceSettled = false }
