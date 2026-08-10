@@ -123,8 +123,15 @@ final class ArrivalUITests: XCTestCase {
         let startButton = app.buttons["startJourney"]
         XCTAssertTrue(startButton.waitForExistence(timeout: 15), "ホームが出ていない")
         startButton.tap()
+
+        // 旅を始めると、アプリは「常に許可」への引き上げを聞くことがある
+        // （すでに「使用中のみ」が下りている場合。iOS は入れ直した直後などに出す）。
+        // **待つだけでは割り込みの監視は働かない。** 画面に一度触れて閉じさせる
         let rollButton = app.buttons["サイコロを振る"]
-        XCTAssertTrue(rollButton.waitForExistence(timeout: 15), "盤面が出ていない")
+        if !rollButton.waitForExistence(timeout: 10) {
+            app.tap()
+            XCTAssertTrue(rollButton.waitForExistence(timeout: 10), "盤面が出ていない")
+        }
         rollButton.tap()
     }
 
