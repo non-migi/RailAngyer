@@ -110,7 +110,7 @@ struct JourneySummaryTests {
         let result = try #require(summary.missionResults.first)
         #expect(result.content == "駅名標を撮る")
         #expect(result.stationName == store.stationName(4))
-        #expect(result.done)
+        #expect(result.outcome == .done)
     }
 
     @Test("途中でも歩いた時間が出る")

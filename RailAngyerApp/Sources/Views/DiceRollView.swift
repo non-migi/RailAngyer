@@ -8,18 +8,23 @@ import UIKit
 /// **出目は先に決まっている**（`GameEngine.roll()` の結果）ので、
 /// 演出は「決まった目に着地させる」だけ。乱数を演出側で引き直さない。
 ///
+/// **止めるのは遊ぶ人。** `isRolling` が真のあいだは転がり続け、
+/// 偽になった瞬間に、決まっている目へ収束して `onSettled` を呼ぶ。
+///
 /// 最大出目が7〜9のときは立方体で表せないため、数字が回る演出に切り替える。
 struct DiceRollView: View {
     let value: Int
+    /// 転がっている最中か。偽になると、決まっている目へ収束する
+    var isRolling = false
     /// 転がり終わったときに呼ばれる
     var onSettled: () -> Void = {}
 
     var body: some View {
         Group {
             if (1...6).contains(value) {
-                DiceSceneView(value: value, onSettled: onSettled)
+                DiceSceneView(value: value, isRolling: isRolling, onSettled: onSettled)
             } else {
-                NumericDiceView(value: value, onSettled: onSettled)
+                NumericDiceView(value: value, isRolling: isRolling, onSettled: onSettled)
             }
         }
         .frame(width: 140, height: 140)
@@ -30,6 +35,7 @@ struct DiceRollView: View {
 
 private struct DiceSceneView: UIViewRepresentable {
     let value: Int
+    let isRolling: Bool
     let onSettled: () -> Void
 
     func makeUIView(context: Context) -> SCNView {
@@ -39,17 +45,27 @@ private struct DiceSceneView: UIViewRepresentable {
         view.isOpaque = false
         view.antialiasingMode = .multisampling4X
         view.isUserInteractionEnabled = false
-        context.coordinator.roll(to: value)
+        // **これが無いと SCNAction が進まない。** 既定では場面が止まっていて、
+        // 転がし続ける動き（`startRolling`）が1コマも動かない
+        view.isPlaying = true
+        context.coordinator.startRolling()
+        if !isRolling { context.coordinator.settle(to: value) }
         return view
     }
 
-    func updateUIView(_ view: SCNView, context: Context) {}
+    func updateUIView(_ view: SCNView, context: Context) {
+        // 呼び出し側の閉包は描き直しのたびに作られる。**最新のものを持たせる**
+        context.coordinator.onSettled = onSettled
+        if !isRolling { context.coordinator.settle(to: value) }
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator(onSettled: onSettled) }
 
     final class Coordinator {
-        private let onSettled: () -> Void
+        var onSettled: () -> Void
         private let dice = SCNNode()
+        /// 収束は一度だけ。描き直しのたびに掛け直すと、目の前で回り直してしまう
+        private var didSettle = false
 
         init(onSettled: @escaping () -> Void) { self.onSettled = onSettled }
 
@@ -98,16 +114,34 @@ private struct DiceSceneView: UIViewRepresentable {
         /// 「まだ転がり切っていない」ように読める
         private static let restTilt: (x: Float, y: Float, z: Float) = (0.10, -0.13, 0)
 
-        /// 指定の目を手前に向けて止める
-        func roll(to value: Int) {
+        /// 止めるまで転がし続ける
+        func startRolling() {
+            dice.removeAllActions()
+            dice.runAction(.repeatForever(
+                .rotateBy(x: .pi * 2, y: .pi * 3, z: .pi, duration: 1.1)), forKey: "rolling")
+        }
+
+        /// 決まっている目を手前に向けて止める
+        func settle(to value: Int) {
+            guard !didSettle else { return }
+            didSettle = true
+
+            // **回している途中の見た目の姿勢を始点にする。**
+            // 動かしっぱなしのまま角度を書き換えると、止めた瞬間に跳ねて見える
+            let current = dice.presentation.eulerAngles
+            dice.removeAllActions()
+            SCNTransaction.begin()
+            SCNTransaction.animationDuration = 0
+            dice.eulerAngles = current
+            SCNTransaction.commit()
+
             let target = Self.orientation(for: value)
-            // 何回転か余分に回してから目的の姿勢へ収める
-            let spins = SCNVector3(target.x + .pi * 4 + Self.restTilt.x,
-                                   target.y + .pi * 6 + Self.restTilt.y,
-                                   .pi * 2 + Self.restTilt.z)
+            let spins = SCNVector3(Self.forward(from: current.x, to: target.x + Self.restTilt.x),
+                                   Self.forward(from: current.y, to: target.y + Self.restTilt.y),
+                                   Self.forward(from: current.z, to: Self.restTilt.z))
 
             SCNTransaction.begin()
-            SCNTransaction.animationDuration = 1.15
+            SCNTransaction.animationDuration = 0.6
             SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeOut)
             SCNTransaction.completionBlock = { [onSettled] in
                 DispatchQueue.main.async {
@@ -117,6 +151,14 @@ private struct DiceSceneView: UIViewRepresentable {
             }
             dice.eulerAngles = spins
             SCNTransaction.commit()
+        }
+
+        /// `to` と同じ向きのまま、`from` より必ず先にある角度。
+        /// 巻き戻して見えないよう、1回転の倍数だけ足して追い越す
+        private static func forward(from: Float, to: Float) -> Float {
+            var result = to
+            while result < from + .pi { result += .pi * 2 }
+            return result
         }
 
         /// その目の面を +Z（手前）に向けるための回転
@@ -139,10 +181,13 @@ private struct DiceSceneView: UIViewRepresentable {
 /// 立方体では表せない目のときの代替。数字が回って止まる
 private struct NumericDiceView: View {
     let value: Int
+    let isRolling: Bool
     let onSettled: () -> Void
 
     @State private var angle: Double = 0
     @State private var shown = 1
+    /// 収束は一度だけ
+    @State private var didSettle = false
 
     var body: some View {
         Text("\(shown)")
@@ -153,16 +198,26 @@ private struct NumericDiceView: View {
             .overlay(RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(Theme.ink.opacity(0.35), lineWidth: 2))
             .rotation3DEffect(.degrees(angle), axis: (x: 1, y: 0.4, z: 0))
-            .task {
-                withAnimation(.easeOut(duration: 1.1)) { angle = 1080 }
-                for _ in 0..<10 {
-                    try? await Task.sleep(for: .milliseconds(90))
-                    shown = Int.random(in: 1...9)
+            .task(id: isRolling) {
+                guard isRolling else { return settle() }
+                withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                    angle = 1080
                 }
-                shown = value
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                onSettled()
+                // 止められるまで数字を回し続ける
+                while !Task.isCancelled {
+                    shown = Int.random(in: 1...9)
+                    try? await Task.sleep(for: .milliseconds(90))
+                }
             }
+    }
+
+    private func settle() {
+        guard !didSettle else { return }
+        didSettle = true
+        withAnimation(.easeOut(duration: 0.45)) { angle = 1440 }
+        shown = value
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        onSettled()
     }
 }
 

@@ -40,6 +40,7 @@ final class ResetJourneyUITests: XCTestCase {
         XCTAssertTrue(app.state == .runningForeground, "アプリが落ちている")
 
         roll.tap()
+        stopDice()
         XCTAssertTrue(app.buttons["向かう"].waitForExistence(timeout: 10),
                       "リセット後に次の旅を始められない")
     }
@@ -137,6 +138,7 @@ final class ResetJourneyUITests: XCTestCase {
     /// 1ターンぶん歩いて盤面へ戻る（出目は1に固定してあるので隣の駅で止まる）
     private func walkOneTurn() {
         app.buttons["サイコロを振る"].tap()
+        stopDice()
 
         let proceed = app.buttons["向かう"]
         XCTAssertTrue(proceed.waitForExistence(timeout: 10))
@@ -151,6 +153,13 @@ final class ResetJourneyUITests: XCTestCase {
         let next = app.buttons["次へ"]
         XCTAssertTrue(next.waitForExistence(timeout: 5))
         next.tap()
+    }
+
+    /// 転がっているサイコロを止める（SC-05）
+    private func stopDice() {
+        let stop = app.buttons["サイコロを止める"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "サイコロを止めるボタンが無い")
+        stop.tap()
     }
 
     /// ホーム → 予定 →「記録を保存して新しい旅へ」。

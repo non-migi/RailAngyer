@@ -103,14 +103,26 @@ struct JourneySummaryView: View {
         }
     }
 
+    /// お題の結末の色。**進行中は「まだ途中」の色**にして、未達成の灰色と分ける
+    static func color(of outcome: MissionOutcome) -> Color {
+        switch outcome {
+        case .done:       Theme.line
+        case .inProgress: Theme.mission
+        case .missed:     .secondary
+        }
+    }
+
     private func missionRow(_ result: JourneySummary.MissionResult) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("\(result.turnNo)ターン目・\(result.stationName)")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Image(systemName: result.done ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(result.done ? Theme.line : .secondary)
+                // 判定前は「未達成」と区別して出す。決めていないだけで、失敗ではない
+                Label(result.outcome.label, systemImage: result.outcome.symbolName)
+                    .font(.caption)
+                    .labelStyle(.titleAndIcon)
+                    .foregroundStyle(Self.color(of: result.outcome))
             }
             Text(result.content)
             Text("\(result.authorName)のお題")
@@ -220,6 +232,11 @@ private struct SummaryCard: View {
                 if !summary.missionResults.isEmpty {
                     Label("お題 \(summary.achievedMissionCount) / \(summary.missionResults.count)",
                           systemImage: "checkmark.seal")
+                }
+                // まだ決めていないお題があることを、ここでも気づけるようにする
+                if summary.inProgressMissionCount > 0 {
+                    Label("進行中 \(summary.inProgressMissionCount)", systemImage: "hourglass")
+                        .foregroundStyle(Theme.mission)
                 }
                 if summary.isCleared {
                     Label("ゴール", systemImage: "flag.checkered")

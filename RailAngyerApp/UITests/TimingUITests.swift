@@ -29,6 +29,10 @@ final class TimingUITests: XCTestCase {
         XCTAssertTrue(roll.waitForExistence(timeout: 15))
         roll.tap()
 
+        let stop = app.buttons["サイコロを止める"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "サイコロを止めるボタンが無い")
+        stop.tap()
+
         let proceed = app.buttons["向かう"]
         XCTAssertTrue(proceed.waitForExistence(timeout: 10))
         let enabled = expectation(for: NSPredicate(format: "isEnabled == true"),

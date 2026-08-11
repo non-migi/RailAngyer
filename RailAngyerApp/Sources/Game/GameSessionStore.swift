@@ -436,6 +436,51 @@ final class GameSessionStore {
         enqueueForSync()
     }
 
+    /// お題の判定を後回しにして、そのままターンを終える。
+    ///
+    /// **現行ルールではお題に盤面の効果が無い**ので、達成できたかを決めないまま進めても
+    /// 進行は壊れない。歩きながら続けられるお題（「途中でパンを買う」など）のためのもの。
+    ///
+    /// 「まだ効果を決めていない」＝ `appliedEffectType` が空、を**判定前の印**として使う。
+    /// 済ませたターンは必ず効果まで決まっているので、この2つは取り違えられない
+    func deferMission() {
+        guard let turn = activeTurn, turn.selectedMission != nil else { return }
+        let landing = turn.landingPosition ?? turn.landingStation?.orderNo ?? currentOrder
+        do {
+            try complete(turn, at: landing)
+            enqueueForSync()
+        } catch {
+            lastError = String(describing: error)
+        }
+    }
+
+    /// 進行中のお題（引いたまま、まだ達成を決めていないもの）。引いた順。
+    /// 進行中のターンは画面のフローで扱っているので、終えたものだけを並べる
+    var unresolvedMissionTurns: [Turn] {
+        (room?.turns ?? [])
+            .filter { $0.completedAt != nil && $0.selectedMission != nil
+                      && MissionOutcome($0) == .inProgress }
+            .sorted { $0.rolledAt < $1.rolledAt }
+    }
+
+    /// 判定の済んだお題（新しい順）
+    var resolvedMissionTurns: [Turn] {
+        (room?.turns ?? [])
+            .filter { $0.selectedMission != nil && MissionOutcome($0) != .inProgress }
+            .sorted { $0.rolledAt > $1.rolledAt }
+    }
+
+    /// 進行中のお題に、あとから達成の可否を付ける。
+    /// ターンはもう終わっているので、駒は動かさず記録だけを直す
+    func resolveMission(_ turn: Turn, done: Bool) {
+        guard turn.selectedMission != nil, MissionOutcome(turn) == .inProgress else { return }
+        turn.missionDone = done
+        turn.appliedEffectType = .none
+        save()
+        // 直近のターンとは限らないので、このターンだけを名指しで積む
+        try? sync?.enqueueTurn(turn)
+    }
+
     /// ミッションを終える（F-08 → F-09）。
     /// 暫定では達成の可否にかかわらず効果を発動する（R-09 / Q-10）。
     func finishMission(done: Bool) {
@@ -742,8 +787,12 @@ final class GameSessionStore {
     }
 
     /// 記録を保存して最初からやり直す（SC-20）。
-    /// `archive` が true なら写真ファイルも履歴から参照するため残す。
-    func resetProgress(archive: Bool = true) {
+    ///
+    /// - Parameter archive: true なら写真ファイルも履歴から参照するため残す
+    /// - Parameter enqueue: サーバーの記録も消すか。
+    ///   **別のルームへ移るために畳むときは false。** 積んでしまうと、
+    ///   これから参加する先のルームの進行を消しに行ってしまう
+    func resetProgress(archive: Bool = true, enqueue: Bool = true) {
         guard let room else { return }
         do {
             if archive { try archiveCurrentJourney(room) }
@@ -792,7 +841,7 @@ final class GameSessionStore {
                 for fileName in photoFileNames { PhotoStore.delete(fileName) }
             }
 
-            try sync?.enqueueReset()
+            if enqueue { try sync?.enqueueReset() }
         } catch {
             lastError = String(describing: error)
         }
@@ -824,7 +873,13 @@ final class GameSessionStore {
         archive.isCleared = summary.isCleared
         archive.routeSummary = summary.stations.filter { $0.visitCount > 0 }
             .map(\.name).joined(separator: " → ")
-        archive.photoFileNamesText = summary.stations.flatMap(\.photoFileNames)
+        // **写真と駅名は同じ並びで書く。** 旅を畳むと訪問の行は消えるので、
+        // どの駅で撮った1枚なのかは、この2つの並びでしか辿れなくなる
+        let photographed = summary.stations.filter { !$0.photoFileNames.isEmpty }
+        archive.photoFileNamesText = photographed.flatMap(\.photoFileNames)
+            .joined(separator: "\n")
+        archive.photoStationNamesText = photographed
+            .flatMap { station in station.photoFileNames.map { _ in station.name } }
             .joined(separator: "\n")
         context.insert(archive)
     }

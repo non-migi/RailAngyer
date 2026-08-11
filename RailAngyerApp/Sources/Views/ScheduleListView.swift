@@ -58,7 +58,6 @@ struct ScheduleListView: View {
                 if !finished.isEmpty { finishedSection }
 
                 currentJourneySection
-                syncSection
             }
             .navigationTitle("予定")
             .navigationBarTitleDisplayMode(.inline)
@@ -185,9 +184,26 @@ struct ScheduleListView: View {
                     Label(place, systemImage: "mappin.and.ellipse")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                if isPending(schedule) {
+                    Label("みんなにはまだ届いていません", systemImage: "arrow.up.circle")
+                        .font(.caption2).foregroundStyle(.orange)
+                }
             }
         }
         .buttonStyle(.plain)
+    }
+
+    /// この予定が、まだ仲間のところへ届いていないか。
+    ///
+    /// **「未送信◯件」という数え方はやめた。** 何が送られていないのか分からず、
+    /// 直しようもないので不安だけが残る。届いていない予定そのものに印を付ける。
+    ///
+    /// ルームに参加していないときは出さない（送る先が無いのが正しい状態）。
+    /// 「共有しない」と決めた予定にも出さない（届かないのが決めたとおりの動き）。
+    private func isPending(_ schedule: Schedule) -> Bool {
+        sync.isJoined
+            && schedule.isShared
+            && schedule.syncStateRaw != SyncState.synced.rawValue
     }
 
     /// 集合日時。**コースのある土地の時計で読む。**
@@ -223,7 +239,9 @@ struct ScheduleListView: View {
         parts.append(schedule.usesMissions
                      ? "お題は\(schedule.missionVisibility.label)"
                      : "お題なし")
-        if !schedule.isShared { parts.append("共有しない") }
+        // 「共有しない」だと、送れていないのか送らない決めなのかが読み取れない。
+        // 決めたとおりに端末の中だけへ置いている、と分かる言い方にする
+        if !schedule.isShared { parts.append("この端末だけ") }
         return parts.joined(separator: "　")
     }
 
@@ -302,36 +320,10 @@ struct ScheduleListView: View {
         }
     }
 
-    /// 未送信の状況（SC-20）。
-    /// 送れていなくてもプレイは続けられるので、**警告ではなく状態として見せる**。
-    /// 参加そのものはホームの「みんなで遊ぶ」から行う（入口は1か所にまとめる）
-    @ViewBuilder
-    private var syncSection: some View {
-        Section("共有") {
-            if sync.isJoined {
-                LabeledContent("ルーム", value: store.room?.name ?? "参加中")
-                LabeledContent("未送信", value: sync.pendingCount == 0
-                               ? "なし" : "\(sync.pendingCount) 件")
-                if let at = sync.lastSyncedAt {
-                    LabeledContent("最後に同期", value: at.formatted(date: .omitted, time: .shortened))
-                }
-                if let error = sync.lastError {
-                    Text(error).font(.caption).foregroundStyle(.secondary)
-                }
-                Button("いま送る") {
-                    Task {
-                        await sync.push()
-                        await sync.pull()
-                    }
-                }
-                .disabled(sync.isSyncing)
-            } else {
-                Text("この端末だけで遊んでいます。記録はサーバーに送られません。"
-                     + "ホームの「みんなで遊ぶ」から参加できます。")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-        }
-    }
+    // 「共有」の常設セクション（ルーム名・未送信◯件・最後に同期・いま送る）は外した。
+    // **何が送られていないのか分からない数字**で、見た人が不安になるだけだった。
+    // ルームの状態と未送信件数はホームの「みんなで遊ぶ」に出ている。
+    // 送り直しはこの一覧を下へ引く（`refreshable`）と行われる。
 
     // MARK: - 読み込み
 

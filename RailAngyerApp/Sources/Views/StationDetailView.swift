@@ -111,9 +111,11 @@ struct StationDetailView: View {
                     HStack(spacing: 8) {
                         Text(mission.member?.displayName ?? "だれか")
                             .font(.caption).foregroundStyle(.secondary)
-                        Text(turn.missionDone ? "達成" : "未達成")
+                        // 判定前のお題は「未達成」ではなく「進行中」
+                        let outcome = MissionOutcome(turn)
+                        Text(outcome.label)
                             .font(.caption)
-                            .foregroundStyle(turn.missionDone ? Theme.line : .secondary)
+                            .foregroundStyle(JourneySummaryView.color(of: outcome))
                     }
                 }
             } else {

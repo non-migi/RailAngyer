@@ -264,6 +264,14 @@ final class SyncService {
         }
         room.syncStateRaw = SyncState.synced.rawValue
 
+        // **コースもサーバーに合わせる。** 別路線のルームに入ったとき、
+        // 駅の並びごと切り替えないと、区間の駅を引き当てられない
+        let courses = try context.fetch(FetchDescriptor<Course>())
+        if let course = courses.first(where: { $0.serverId == remote.courseId }),
+           room.course !== course {
+            room.course = course
+        }
+
         let stations = room.course?.stations ?? []
         room.startStation = stations.first { $0.serverId == remote.startStationId } ?? room.startStation
         room.goalStation = stations.first { $0.serverId == remote.goalStationId } ?? room.goalStation

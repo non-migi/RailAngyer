@@ -460,6 +460,10 @@ final class JourneyArchive {
     var routeSummary: String = ""
     /// Application Support 内のファイル名を改行区切りで保持する。
     var photoFileNamesText: String = ""
+    /// `photoFileNamesText` と**同じ並び**の駅名。
+    /// 旅を畳むと訪問の行は消えるので、どの駅で撮った写真かはここにしか残らない。
+    /// 古い記録には無いので、数が合わなければ駅名なしとして扱う
+    var photoStationNamesText: String = ""
 
     init(roomName: String, courseName: String, startedAt: Date, endedAt: Date) {
         self.roomName = roomName
@@ -470,6 +474,18 @@ final class JourneyArchive {
 
     var photoFileNames: [String] {
         photoFileNamesText.split(separator: "\n").map(String.init)
+    }
+
+    /// 写真1枚ずつの撮影駅。並びが崩れている古い記録では空を返す
+    var photoStationNames: [String] {
+        let names = photoStationNamesText.split(separator: "\n").map(String.init)
+        return names.count == photoFileNames.count ? names : []
+    }
+
+    /// 写真のファイル名と、撮った駅名の組（駅名が分からなければ nil）
+    var photos: [(fileName: String, stationName: String?)] {
+        let names = photoStationNames
+        return photoFileNames.enumerated().map { ($1, names.indices.contains($0) ? names[$0] : nil) }
     }
 }
 

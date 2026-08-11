@@ -1,10 +1,16 @@
 import SwiftUI
+import RailAngyerCore
 
 /// ルームへの参加とルーム作成（SC-19）。
 ///
 /// 招待コードだけで入れる軽さを保つ（`03_Azure構成と料金.md` §5）。
 /// 参加すると**区間と最大出目はサーバーのものに合わせる**（T-06）ため、
 /// 端末ごとに違う盤面で遊んでしまうことがない。
+///
+/// **参加したら、遊ぶ旅もそのルームの旅に切り替わる。**
+/// 端末で進めていた旅を残したまま取り込むと、自分の記録とルームの記録が
+/// ひとつの盤面に混ざる（訪問済みの駅もターン数も合わなくなる）。
+/// 参加の前に、いまの旅を「過去の旅」へ畳んでから切り替える。
 struct RoomJoinView: View {
 
     @Bindable var store: GameSessionStore
@@ -23,6 +29,10 @@ struct RoomJoinView: View {
     @State private var isWorking = false
     @State private var errorMessage: String?
     @State private var showingLeaveConfirm = false
+    @State private var showingSwitchConfirm = false
+
+    /// 端末で進めている旅があるか。参加すると盤面はルームのものに入れ替わる
+    private var hasLocalProgress: Bool { !(store.room?.turns.isEmpty ?? true) }
 
     private var canSubmit: Bool {
         guard !isWorking, !displayName.trimmed.isEmpty else { return false }
@@ -40,6 +50,7 @@ struct RoomJoinView: View {
                 } else {
                     modeSection
                     inputSection
+                    switchNoticeSection
                     submitSection
                 }
 
@@ -70,6 +81,12 @@ struct RoomJoinView: View {
             } message: {
                 Text("未送信の記録は送られないまま消えます。端末の記録は残ります。")
             }
+            .confirmationDialog("いまの旅を保存して参加しますか",
+                                isPresented: $showingSwitchConfirm, titleVisibility: .visible) {
+                Button("保存して参加する") { Task { await submit() } }
+            } message: {
+                Text("盤面はルームの旅に切り替わります。いま進めている旅は「過去の旅」に保存され、写真も残ります。")
+            }
         }
     }
 
@@ -77,13 +94,26 @@ struct RoomJoinView: View {
 
     @ViewBuilder
     private var joinedSection: some View {
-        Section("いま参加しているルーム") {
+        Section {
             LabeledContent("ルーム", value: store.room?.name ?? "-")
+            // どの旅をみんなで歩いているのかは、ルーム名だけでは分からない
+            LabeledContent("コース", value: store.room?.course?.name ?? "-")
+            LabeledContent("区間", value: rangeText)
             if let code = store.room?.inviteCode {
                 LabeledContent("招待コード", value: code)
                     .textSelection(.enabled)
             }
-            LabeledContent("未送信", value: sync.pendingCount == 0 ? "なし" : "\(sync.pendingCount) 件")
+            // **数字だけでは、放っておいていいのか分からない。**
+            // 中身はサイコロ・到着・写真・お題・予定が混ざった送信キューの残り
+            LabeledContent("送信待ちの記録",
+                           value: sync.pendingCount == 0 ? "なし" : "\(sync.pendingCount) 件")
+        } header: {
+            Text("いま参加しているルーム")
+        } footer: {
+            if sync.pendingCount > 0 {
+                Text("「送信待ちの記録」は、まだ仲間に届いていないサイコロ・到着・写真・お題・予定の数です。"
+                     + "電波が戻ればまとめて送られるので、このままで大丈夫です。")
+            }
         }
 
         Section("メンバー") {
@@ -154,10 +184,34 @@ struct RoomJoinView: View {
         return "\(start) → \(goal)"
     }
 
+    /// 参加すると盤面が入れ替わることを、押す前に伝える。
+    /// 押したあとで「進めていた旅が消えた」と見えるのがいちばん困る
+    @ViewBuilder
+    private var switchNoticeSection: some View {
+        if mode == .join, hasLocalProgress {
+            Section {
+                Label("参加すると、ルームの旅に切り替わります", systemImage: "arrow.triangle.swap")
+                    .font(.subheadline.weight(.semibold))
+                Text(switchNoticeText)
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var switchNoticeText: String {
+        let progress = "\(store.visitedCount)駅・\(DurationText.text(store.timing.elapsedSeconds))"
+        return "いま進めている旅（\(progress)）は「過去の旅」に保存されます。写真もそのまま残ります。"
+    }
+
     private var submitSection: some View {
         Section {
             Button {
-                Task { await submit() }
+                // 進めている旅があるときだけ、切り替わることを確かめてから進む
+                if mode == .join, hasLocalProgress {
+                    showingSwitchConfirm = true
+                } else {
+                    Task { await submit() }
+                }
             } label: {
                 HStack {
                     Text(mode == .join ? "参加する" : "作る")
@@ -184,8 +238,16 @@ struct RoomJoinView: View {
         do {
             switch mode {
             case .join:
+                // **畳むのは参加より先。** 参加したあとに畳むと、リセットが
+                // 参加先のルーム宛てに積まれ、みんなの記録をサーバーから消してしまう
+                // （`resetProgress` は `enqueueReset` を通す。未参加のときは何も積まれない）
+                if hasLocalProgress { store.resetProgress(archive: true) }
+
                 try await sync.join(inviteCode: inviteCode.trimmed.uppercased(),
                                     displayName: displayName.trimmed)
+                Telemetry.roomJoined()
+                // 予定はルームで共有される。参加したその場で一覧に出す
+                store.reloadSchedules()
             case .create:
                 // 作成には駅のサーバーIDが要る。まだ無ければ先にマスタを取りに行く
                 if store.room?.course?.serverId == nil { await sync.pullMaster() }
@@ -204,6 +266,8 @@ struct RoomJoinView: View {
                     goalStationId: goal,
                     diceMax: room.diceMax,
                     displayName: displayName.trimmed))
+                // 作る側は、いまの旅をそのままみんなの旅にする（切り替えは起きない）
+                store.reloadSchedules()
             }
             dismiss()
         } catch let error as ApiError {

@@ -49,6 +49,11 @@ final class RestoreUITests: XCTestCase {
         XCTAssertTrue(rollButton.waitForExistence(timeout: 15), "盤面が出ていない")
         rollButton.tap()
 
+        // サイコロは押して止める。止めるまで行き先は伏せられている
+        let stop = app.buttons["サイコロを止める"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "サイコロを止めるボタンが無い")
+        stop.tap()
+
         // 出目3なので 麻生(1) → 北18条(4)。通り道は 北34条・北24条
         XCTAssertTrue(app.staticTexts["北18条 まで"].waitForExistence(timeout: 10))
         let go = app.buttons["向かう"]

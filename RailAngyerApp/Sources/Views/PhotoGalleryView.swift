@@ -56,6 +56,35 @@ struct PhotoGalleryView: View {
         }
     }
 
+    /// 端末に残っている写真をぜんぶ、撮った順に。
+    ///
+    /// **いまの旅のぶんだけでは足りない。** 旅を保存すると訪問の行は消え、
+    /// 残るのは写真のファイルと `JourneyArchive.photoFileNames` だけになる。
+    /// いまの旅しか見ないギャラリーは、旅を保存した瞬間に空になってしまう
+    /// （ホームの「写真をまとめて見る」が何も出なかったのはこれ）。
+    ///
+    /// 保存した旅の写真は `JourneyArchive.photos` から駅名を引く。
+    /// 駅名を残していない古い記録では、代わりに旅の名前を添える
+    @MainActor
+    static func allItems(in store: GameSessionStore) -> [Item] {
+        let current = store.photoItems
+        var seen = Set(current.map(\.fileName))
+        var archived: [Item] = []
+
+        for archive in store.archives {
+            let label = archive.roomName.isEmpty ? archive.courseName : archive.roomName
+            let journeyName = label.isEmpty ? "過去の旅" : label
+            for photo in archive.photos
+            where !seen.contains(photo.fileName) && PhotoStore.exists(photo.fileName) {
+                seen.insert(photo.fileName)
+                archived.append(Item(fileName: photo.fileName,
+                                     stationName: photo.stationName ?? journeyName,
+                                     takenAt: archive.endedAt))
+            }
+        }
+        return (current + archived).sorted { $0.takenAt < $1.takenAt }
+    }
+
     private func thumbnail(_ item: Item) -> some View {
         ZStack(alignment: .bottomLeading) {
             if let image = PhotoStore.load(item.fileName) {
@@ -105,6 +134,18 @@ struct PhotoViewerView: View {
             .navigationTitle(current.stationName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // **端末の写真アプリへ持ち出せるようにする。**
+                // アプリの中だけに置いておくと、消したときに一緒に消えてしまう。
+                // 共有シートなら「画像を保存」も送信も同じ口で済み、追加の許可も要らない
+                ToolbarItem(placement: .topBarLeading) {
+                    if PhotoStore.exists(current.fileName) {
+                        ShareLink(item: PhotoStore.url(of: current.fileName)) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .accessibilityLabel("写真を保存・共有")
+                        .accessibilityIdentifier("sharePhoto")
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("閉じる") { dismiss() }
                 }

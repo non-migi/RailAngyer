@@ -46,11 +46,16 @@ final class ArrivalUITests: XCTestCase {
         // 盤面 → サイコロ
         rollFromBoard()
 
+        // **止めるまで行き先は分からない**（SC-05）。ここが今回の演出の主眼
+        XCTAssertFalse(app.staticTexts["北34条 まで"].exists,
+                       "サイコロを止める前から行き先が見えている")
+        stopDice()
+
         // 着地駅の告知（SC-06）。通り道が無いので「となりの駅です」
         XCTAssertTrue(app.staticTexts["北34条 まで"].waitForExistence(timeout: 10),
                       "着地駅の告知が出ていない")
         attach(name: "dice")   // 転がり終わったサイコロの目視確認用
-        proceedFromAnnouncement()
+        tapGo()
 
         // ナビ（SC-07）。現在地から目的地までの距離が出る
         XCTAssertTrue(app.staticTexts["北34条"].waitForExistence(timeout: 5))
@@ -136,14 +141,26 @@ final class ArrivalUITests: XCTestCase {
     }
 
     /// 着地駅の告知から先へ進む。
-    /// **サイコロが転がり終わるまで「向かう」は押せない**ので、
-    /// 存在ではなく有効になるのを待つ
+    /// **サイコロは押して止める**。止めてから、収まりきるのを待って「向かう」を押す
     private func proceedFromAnnouncement() {
+        stopDice()
+        tapGo()
+    }
+
+    /// 止めたあとの「向かう」。サイコロが収まりきるまで押せないので、有効になるのを待つ
+    private func tapGo() {
         let button = app.buttons["向かう"]
         XCTAssertTrue(button.waitForExistence(timeout: 10))
         let enabled = expectation(for: NSPredicate(format: "isEnabled == true"),
                                   evaluatedWith: button)
         wait(for: [enabled], timeout: 10)
         button.tap()
+    }
+
+    /// 転がっているサイコロを止める（SC-05）
+    private func stopDice() {
+        let stop = app.buttons["サイコロを止める"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "サイコロを止めるボタンが無い")
+        stop.tap()
     }
 }

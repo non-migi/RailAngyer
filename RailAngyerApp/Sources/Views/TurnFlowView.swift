@@ -18,6 +18,11 @@ struct TurnFlowView: View {
     @State private var routes = RouteProvider()
     /// サイコロが止まったか。止まるまで行き先を伏せる
     @State private var diceSettled = false
+    /// 「サイコロを止める」を押したか。押すまで転がり続ける
+    @State private var diceStopped = false
+
+    /// 押し忘れても旅が止まらないよう、これだけ経ったら自動で止める
+    private static let autoStopSeconds = 12.0
     /// 地図を全体で見るか。**選んだら憶えておく**（毎回切り替え直させない）
     @AppStorage("turnShowsWholeCourse") private var showsWholeCourse = false
 
@@ -129,11 +134,17 @@ struct TurnFlowView: View {
         return VStack(alignment: .leading, spacing: 20) {
             Text("\(store.stationName(from)) から").foregroundStyle(.secondary)
 
-            DiceRollView(value: turn.diceValue) {
+            DiceRollView(value: turn.diceValue, isRolling: !diceStopped) {
                 withAnimation(.easeOut(duration: 0.35)) { diceSettled = true }
             }
             .frame(maxWidth: .infinity, alignment: .center)
             .id(turn.id)   // ターンが変わったら振り直す
+
+            if !diceStopped {
+                Text("転がっています。下のボタンで止めてください")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
 
             if diceSettled {
                 VStack(alignment: .leading, spacing: 6) {
@@ -164,7 +175,13 @@ struct TurnFlowView: View {
             if store.currentVisit != nil { photoSection }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .task(id: turn.id) { diceSettled = false }
+        .task(id: turn.id) {
+            diceSettled = false
+            diceStopped = false
+            try? await Task.sleep(for: .seconds(Self.autoStopSeconds))
+            guard !Task.isCancelled else { return }
+            diceStopped = true          // 押し忘れても止まる
+        }
     }
 
     /// SC-07 ナビ
@@ -350,6 +367,10 @@ struct TurnFlowView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+
+                Text("すぐに決められないお題は「あとで」。歩きながら続けられます。"
+                     + "達成したかは、旅の画面の「旅のお題」から後で付けられます。")
+                    .font(.footnote).foregroundStyle(.secondary)
             } else {
                 Text("ミッションはありません").foregroundStyle(.secondary)
             }
@@ -404,10 +425,17 @@ struct TurnFlowView: View {
     @ViewBuilder
     private var action: some View {
         if store.showingAnnouncement {
-            // 転がり終わるまでは押させない
-            primary("向かう") { store.showingAnnouncement = false }
-                .disabled(!diceSettled)
-                .opacity(diceSettled ? 1 : 0.4)
+            if !diceStopped {
+                // 出目はもう決まっている。**止めるのは演出だけ**なので、いつ押してもよい
+                primary("サイコロを止める") {
+                    withAnimation(.easeOut(duration: 0.2)) { diceStopped = true }
+                }
+            } else {
+                // 収まりきるまでは押させない
+                primary("向かう") { store.showingAnnouncement = false }
+                    .disabled(!diceSettled)
+                    .opacity(diceSettled ? 1 : 0.4)
+            }
         } else {
             switch store.phase {
             case .walking(let next, _):
@@ -420,8 +448,15 @@ struct TurnFlowView: View {
             case .mission:
                 VStack(spacing: 8) {
                     primary("達成した") { store.finishMission(done: true) }
-                    Button("できなかった") { store.finishMission(done: false) }
-                        .font(.subheadline)
+                    HStack(spacing: 24) {
+                        Button("できなかった") { store.finishMission(done: false) }
+                        if store.activeTurn?.selectedMission != nil {
+                            // 歩きながら続けられるお題のための逃げ道。
+                            // 判定は旅の画面の「旅のお題」から後で付けられる
+                            Button("あとで") { store.deferMission() }
+                        }
+                    }
+                    .font(.subheadline)
                 }
             case .effectWalking(let next, _):
                 arrivalButton(next)

@@ -191,7 +191,9 @@ private struct MainView: View {
             RoomJoinView(store: store, sync: sync)
         }
         .sheet(isPresented: $showingPhotos) {
-            PhotoGalleryView(items: store.photoItems)
+            // ホームからは**端末に残っている写真をぜんぶ**見せる。
+            // いまの旅のぶんだけだと、旅を保存した時点で空になってしまう
+            PhotoGalleryView(items: PhotoGalleryView.allItems(in: store))
         }
         .sheet(item: $invitation) { invite in
             InviteAcceptView(invitation: invite, store: store, sync: sync)

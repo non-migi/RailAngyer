@@ -24,7 +24,11 @@ final class PhotoVisibleUITests: XCTestCase {
         app.buttons["startJourney"].tap()
         app.buttons["サイコロを振る"].tap()
 
-        // 振ったら向かい、着くまで手動で進める
+        // 振ったらサイコロを止め、向かって、着くまで手動で進める
+        let stop = app.buttons["サイコロを止める"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "サイコロを止めるボタンが無い")
+        stop.tap()
+
         let goButton = app.buttons["向かう"]
         XCTAssertTrue(goButton.waitForExistence(timeout: 10))
         // サイコロが止まるまで待つ

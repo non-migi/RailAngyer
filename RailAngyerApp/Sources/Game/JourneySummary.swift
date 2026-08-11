@@ -1,6 +1,40 @@
 import Foundation
 import RailAngyerCore
 
+/// お題の結末。
+///
+/// **「まだ決めていない」を「できなかった」と混ぜない。**
+/// 引いたお題は、その場で決めずに「あとで」にできる（歩きながら続けられるお題のため）。
+/// 判定前かどうかは**効果が決まっているか**で分かる。
+/// `finishMission` は必ず効果まで決めるので、済んだお題と取り違えられない
+enum MissionOutcome: Equatable {
+    /// 引いたまま、まだ達成を決めていない
+    case inProgress
+    case done
+    case missed
+
+    init(_ turn: Turn) {
+        guard turn.appliedEffectType != nil else { self = .inProgress; return }
+        self = turn.missionDone ? .done : .missed
+    }
+
+    var label: String {
+        switch self {
+        case .inProgress: "進行中"
+        case .done:       "達成"
+        case .missed:     "未達成"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .inProgress: "hourglass"
+        case .done:       "checkmark.circle.fill"
+        case .missed:     "circle"
+        }
+    }
+}
+
 /// ふりかえりの集計（SC-17 / フェーズ3）。
 ///
 /// **画面から切り離した値にしておく。** 見た目より先に「何を数えるか」が決まっていないと、
@@ -13,7 +47,8 @@ struct JourneySummary {
         let stationName: String
         let content: String
         let authorName: String
-        let done: Bool
+        /// 達成・未達成・進行中（判定前）
+        let outcome: MissionOutcome
         let effect: EffectType
         /// その駅で撮った写真。**やったことの証拠**なので、お題と並べて出す
         let photoFileNames: [String]
@@ -62,7 +97,11 @@ struct JourneySummary {
         return DurationText.text(elapsed)
     }
 
-    var achievedMissionCount: Int { missionResults.filter(\.done).count }
+    /// 達成できたお題の数。**進行中（判定前）は数えない**
+    var achievedMissionCount: Int { missionResults.filter { $0.outcome == .done }.count }
+
+    /// まだ達成を決めていないお題の数
+    var inProgressMissionCount: Int { missionResults.filter { $0.outcome == .inProgress }.count }
 
     /// 実際に歩いた距離（m）。**跡が残っていればその長さ、無ければ駅間の直線の合計**
     var walkedMeters: Double {
@@ -123,7 +162,7 @@ struct JourneySummary {
                                      stationName: turn.landingStation?.name ?? "-",
                                      content: mission?.content ?? "",
                                      authorName: mission?.member?.displayName ?? "-",
-                                     done: turn.missionDone,
+                                     outcome: MissionOutcome(turn),
                                      effect: turn.appliedEffectType ?? .none,
                                      photoFileNames: photos)
             }

@@ -10,6 +10,7 @@ struct BoardView: View {
     @State private var selectedStation: StationSelection?
     @State private var showingSummary = false
     @State private var showingCamera = false
+    @State private var showingJourneyMissions = false
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -33,6 +34,9 @@ struct BoardView: View {
         .sheet(isPresented: $showingCamera) {
             CameraPicker { store.attachPhoto($0) }
                 .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showingJourneyMissions) {
+            JourneyMissionsView(store: store)
         }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
@@ -113,6 +117,12 @@ struct BoardView: View {
     /// 予定とお題はホームから開く（同じ行き先のボタンを2か所に置かない）
     private var quickActions: some View {
         HStack(spacing: 8) {
+            // ホームの「お題」は**書く**ための入口。こちらは**この旅で引いたお題**を見るところで、
+            // 行き先が違うので同じ導線の重複にはならない
+            quickAction("旅のお題", systemImage: "checkmark.circle",
+                        badge: store.unresolvedMissionTurns.count) {
+                showingJourneyMissions = true
+            }
             quickAction("ふりかえり", systemImage: "book.closed") {
                 showingSummary = true
             }
@@ -123,20 +133,22 @@ struct BoardView: View {
         .padding(.top, 5)
     }
 
+    /// - Parameter badge: 0 より大きいときだけ数を添える（進行中のお題の件数）
     private func quickAction(
         _ title: String,
         systemImage: String,
+        badge: Int = 0,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Label(title, systemImage: systemImage)
+            Label(badge > 0 ? "\(title) \(badge)" : title, systemImage: systemImage)
                 .font(.caption.weight(.medium))
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: 32)
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle(radius: 10))
-        .accessibilityLabel(title)
+        .accessibilityLabel(badge > 0 ? "\(title)　進行中 \(badge) 件" : title)
     }
 
     // MARK: - 路線図
@@ -325,6 +337,96 @@ private struct StationRow: View {
             .padding(.horizontal, 6).padding(.vertical, 2)
             .background(Theme.line.opacity(0.15), in: Capsule())
             .foregroundStyle(Theme.line)
+    }
+}
+
+/// この旅で引いたお題の一覧。
+///
+/// **歩きながら続けられるお題のための画面。** 引いたその場で決めずに「あとで」にしたお題を
+/// ここに集め、達成したかを後から付けられるようにする（済んだぶんも並べて振り返れる）
+private struct JourneyMissionsView: View {
+    @Bindable var store: GameSessionStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if store.unresolvedMissionTurns.isEmpty && store.resolvedMissionTurns.isEmpty {
+                    Section {
+                        Text("まだお題を引いていません。駅に着地すると1つ引きます。")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+
+                if !store.unresolvedMissionTurns.isEmpty {
+                    Section {
+                        ForEach(store.unresolvedMissionTurns) { turn in
+                            unresolvedRow(turn)
+                        }
+                    } header: {
+                        Text("進行中　\(store.unresolvedMissionTurns.count) 件")
+                    } footer: {
+                        Text("歩きながら続けているお題です。終わったら達成を付けてください。")
+                    }
+                }
+
+                if !store.resolvedMissionTurns.isEmpty {
+                    Section("済んだお題") {
+                        ForEach(store.resolvedMissionTurns) { turn in
+                            resolvedRow(turn)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("旅のお題")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func unresolvedRow(_ turn: Turn) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            heading(turn)
+            Text(turn.selectedMission?.content ?? "")
+                .font(.body)
+            HStack(spacing: 10) {
+                Button("達成した") { store.resolveMission(turn, done: true) }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.line)
+                Button("できなかった") { store.resolveMission(turn, done: false) }
+                    .buttonStyle(.bordered)
+            }
+            .font(.subheadline)
+            .buttonBorderShape(.roundedRectangle(radius: 10))
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func resolvedRow(_ turn: Turn) -> some View {
+        let outcome = MissionOutcome(turn)
+        return HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: outcome.symbolName)
+                .foregroundStyle(JourneySummaryView.color(of: outcome))
+            VStack(alignment: .leading, spacing: 4) {
+                heading(turn)
+                Text(turn.selectedMission?.content ?? "")
+                    .font(.subheadline)
+                    .foregroundStyle(outcome == .done ? .primary : .secondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    /// 何駅目の、誰が書いたお題か
+    private func heading(_ turn: Turn) -> some View {
+        let station = turn.landingPosition ?? turn.landingStation?.orderNo
+        let author = turn.selectedMission?.member?.displayName ?? "だれか"
+        return Text("\(station.map(store.stationName) ?? "-")　\(author) が書いた")
+            .font(.caption).foregroundStyle(.secondary)
     }
 }
 
