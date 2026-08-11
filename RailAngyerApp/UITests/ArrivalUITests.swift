@@ -82,6 +82,33 @@ final class ArrivalUITests: XCTestCase {
                       "半径に入っても到着にならない")
     }
 
+    /// 「サイコロを止める」を押し忘れても、12秒でひとりでに止まる（SC-05）。
+    ///
+    /// **止まらないと、そこから先へ進めなくなる。** 主操作は常に1つで、
+    /// 「止める」が「向かう」に変わるまで旅を続ける道が無い。
+    /// 押し方が分からない人・置いたまま歩き出した人の救済なので、消えていないかを見る
+    func testDiceStopsByItselfWithoutTapping() {
+        setLocation(asabu)
+        app.launch()
+
+        rollFromBoard()
+
+        // 押さずに待つ。止まるまでは行き先を伏せたまま
+        XCTAssertTrue(app.buttons["サイコロを止める"].waitForExistence(timeout: 5),
+                      "サイコロを止めるボタンが無い")
+        XCTAssertFalse(app.staticTexts["北34条 まで"].exists,
+                       "止まる前から行き先が見えている")
+
+        // 自動停止は12秒。演出が収まるぶんを見て長めに待つ
+        XCTAssertTrue(app.staticTexts["北34条 まで"].waitForExistence(timeout: 25),
+                      "押し忘れてもサイコロが止まらない（先へ進めなくなる）")
+
+        // 止まったあとは、押して止めたときと同じように先へ進める
+        tapGo()
+        XCTAssertTrue(app.buttons["北34条 に到着した"].waitForExistence(timeout: 10),
+                      "ひとりでに止まったあと、先へ進めない")
+    }
+
     /// 位置情報が無くても、手動で到着させれば進行が止まらない（E-01）
     func testManualArrivalWorks() {
         setLocation(asabu)
