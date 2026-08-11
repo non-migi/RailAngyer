@@ -147,6 +147,17 @@ final class MissionSet {
     /// お題を使うか。false なら駅に着いてもお題は出さない
     var usesMissions: Bool = true
 
+    /// お題への取り組み方。**既定はチームで1つ**（これまでの動き）
+    var missionStyleRaw: Int = MissionStyle.team.rawValue
+    /// めいめいで取り組むとき、自分の書いたお題を自分の抽選に含めるか。
+    /// **チームで取り組むときは効かない**（誰か1人がやるので、書いた本人に当たるのは普通のこと）
+    var includesOwnMissions: Bool = true
+
+    var missionStyle: MissionStyle {
+        get { MissionStyle(rawValue: missionStyleRaw) ?? .team }
+        set { missionStyleRaw = newValue.rawValue }
+    }
+
     /// お題の見え方。**既定はみんなに見える。**
     /// 変えるとサーバーが他人のお題を伏せるようになるので、**ルームの取り決め**として持つ。
     /// ⚠️ ここは**サーバーの `MissionSet.MissionVisibility` と同じ値**（0=伏せる 1=見える）。
@@ -381,6 +392,11 @@ final class Schedule {
     var usesMissions: Bool = true
     /// お題の見え方（`ScheduleMissionVisibility`）
     var missionVisibilityRaw: Int = ScheduleMissionVisibility.everyone.rawValue
+    /// お題への取り組み方（`MissionStyle`）。0=チームで1つ 1=めいめいで
+    var missionStyleRaw: Int = MissionStyle.team.rawValue
+    /// めいめいで取り組むとき、自分の書いたお題も抽選に含めるか。
+    /// **チームで1つのときは使わない**（全員で同じお題をやるので、誰の作かは関係ない）
+    var includesOwnMissions: Bool = true
     /// 到着判定の半径（メートル）。nil ならコース既定・端末設定にまかせる
     var arrivalRadius: Double?
     /// 仲間と共有するか。false ならこの予定は端末の中だけに置く
@@ -402,6 +418,13 @@ final class Schedule {
     var missionVisibility: ScheduleMissionVisibility {
         get { ScheduleMissionVisibility(rawValue: missionVisibilityRaw) ?? .everyone }
         set { missionVisibilityRaw = newValue.rawValue }
+    }
+
+    /// お題への取り組み方。ルーム側（`MissionSet.missionStyle`）と**同じ値**なので、
+    /// 予定から写すときはそのまま渡してよい（見え方の enum と違い、0と1の意味は逆になっていない）
+    var missionStyle: MissionStyle {
+        get { MissionStyle(rawValue: missionStyleRaw) ?? .team }
+        set { missionStyleRaw = newValue.rawValue }
     }
 
     /// 集合日時を読み書きするときの時計
@@ -557,6 +580,40 @@ final class TrackPoint {
 ///
 /// **遊び方が変わる。** 伏せれば当日の驚きが残り、見せれば
 /// 「あの駅で何をするのか」を見ながら予定を組める。どちらが良いかは集まり次第。
+/// お題への取り組み方。0=チームで1つ 1=めいめい（`Schedule` とルームで同じ値）
+enum MissionStyle: Int, CaseIterable, Identifiable {
+    /// みんなで1つのお題に取り組む（これまでの動き）
+    case team = 0
+    /// 着いた駅で、めいめいが自分のお題を引く
+    case individual = 1
+
+    var id: Int { rawValue }
+
+    var label: String {
+        switch self {
+        case .team:       return "みんなで1つ"
+        case .individual: return "めいめいで"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .team:
+            return "着いた駅でお題を1つ引いて、みんなで一緒に取り組みます。"
+        case .individual:
+            return "着いた駅で、めいめいが自分のお題を引きます。引いたお題はその人の端末に残ります。"
+        }
+    }
+
+    /// 画面の上部などに出す一言。**どちらの遊び方なのかを必ず伝える**
+    var notice: String {
+        switch self {
+        case .team:       return "みんなで1つのお題に取り組みます"
+        case .individual: return "めいめいで取り組みます（ここに出るのはあなたのぶん）"
+        }
+    }
+}
+
 enum MissionVisibility: Int, CaseIterable, Identifiable {
     /// 当日までのお楽しみ。他人のお題は件数しか見えない（これまでの動き）
     case surprise = 0

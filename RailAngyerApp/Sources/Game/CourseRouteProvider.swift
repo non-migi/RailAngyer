@@ -15,8 +15,13 @@ import MapKit
 @MainActor
 final class CourseRouteProvider {
 
-    /// 駅と駅の間ひとつぶん
+    /// 駅と駅の間ひとつぶん。
+    ///
+    /// **コースを必ず含める。** 駅の通し番号はコースごとに1から振り直されるので、
+    /// 番号だけを鍵にすると別の路線の道なりを取り違える
+    /// （南北線の1→2の形が、東西線の1→2として出てしまう）
     struct LegKey: Hashable {
+        let course: String
         let from: Int
         let to: Int
     }
@@ -31,20 +36,27 @@ final class CourseRouteProvider {
     /// 一度に取りにいく上限。歩いているうちに続きを取る
     private static let batch = 6
 
-    func coordinates(from: Int, to: Int) -> [CLLocationCoordinate2D]? {
-        routes[LegKey(from: from, to: to)] ?? routes[LegKey(from: to, to: from)]?.reversed()
+    func coordinates(from: Int, to: Int, course: String) -> [CLLocationCoordinate2D]? {
+        routes[LegKey(course: course, from: from, to: to)]
+            ?? routes[LegKey(course: course, from: to, to: from)]?.reversed()
+    }
+
+    /// 憶えている形を捨てる。コースを変えたときに呼ぶ
+    func reset() {
+        routes = [:]
+        failed = []
     }
 
     /// 並んだ駅の隣どうしについて、足りないぶんを取る。
     /// **手前から順に**取るので、いま歩いているところが先に埋まる
-    func load(stations: [Station]) async {
+    func load(stations: [Station], course: String) async {
         guard !isLoading, stations.count >= 2 else { return }
         isLoading = true
         defer { isLoading = false }
 
         var fetched = 0
         for (from, to) in zip(stations, stations.dropFirst()) {
-            let key = LegKey(from: from.orderNo, to: to.orderNo)
+            let key = LegKey(course: course, from: from.orderNo, to: to.orderNo)
             if routes[key] != nil || failed.contains(key) { continue }
             if fetched >= Self.batch { return }
 

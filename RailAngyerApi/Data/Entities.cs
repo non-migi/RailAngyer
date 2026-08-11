@@ -171,6 +171,10 @@ public class Schedule
     public double? ArrivalRadius { get; set; }
     /// <summary>仲間と共有するか</summary>
     public bool? IsShared { get; set; }
+    /// <summary>お題への取り組み方。0=みんなで1つ 1=めいめいで</summary>
+    public byte? MissionStyle { get; set; }
+    /// <summary>めいめいで取り組むとき、自分の書いたお題も抽選に含めるか</summary>
+    public bool? IncludesOwnMissions { get; set; }
     /// <summary>集合日時をどの土地の時計で読むか（例 Asia/Tokyo）。NULL は日本時間</summary>
     public string? TimeZoneId { get; set; }
 

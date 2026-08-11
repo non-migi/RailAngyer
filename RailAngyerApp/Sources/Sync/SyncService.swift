@@ -91,15 +91,20 @@ final class SyncService {
         guard let from = turn.fromStation?.serverId,
               let landing = turn.landingStation?.serverId else { return }
 
+        // **めいめいで取り組む旅では、引いたお題を送らない。**
+        // ターン1件にお題は1つしか持てないので、各自の引きを送ると上書きし合う。
+        // 盤面（どこからどこへ動いたか）は共有したいので、そこだけを送る
+        let individual = (try? localRoom())?.missionStyle == .individual
+
         let body = SaveTurnBody(
             fromStationId: from,
             diceValue: turn.diceValue,
             landingStationId: landing,
             rolledAt: turn.rolledAt,
             arrivedAt: turn.arrivedAt,
-            selectedMissionId: turn.selectedMission?.id,
-            missionDone: turn.missionDone,
-            appliedEffectType: turn.appliedEffectType?.rawValue,
+            selectedMissionId: individual ? nil : turn.selectedMission?.id,
+            missionDone: individual ? nil : turn.missionDone,
+            appliedEffectType: individual ? nil : turn.appliedEffectType?.rawValue,
             endStationId: turn.endStation?.serverId,
             completedAt: turn.completedAt)
 
@@ -139,6 +144,17 @@ final class SyncService {
         try queue.enqueue(PendingChange(method: "DELETE",
                                         path: "/rooms/\(room.apiString)/missions/\(missionId.apiString)",
                                         payload: nil))
+        pendingCount = try queue.count()
+    }
+
+    /// 写真の削除を積む。
+    /// **実体は消したそばから端末から消える**ので、送信は後追いでよい
+    func enqueuePhotoDelete(photoId: UUID) throws {
+        guard let room = credentials.load()?.roomId else { return }
+        try queue.enqueue(PendingChange(
+            method: "DELETE",
+            path: "/rooms/\(room.apiString)/photos/\(photoId.apiString)",
+            payload: nil))
         pendingCount = try queue.count()
     }
 
@@ -202,8 +218,213 @@ final class SyncService {
         }
 
         pendingCount = (try? queue.count()) ?? 0
+
+        // **記録を送り終えてから写真を上げる。** 訪問がサーバーに無いうちは
+        // 写真の登録が弾かれる（写真は訪問にぶら下がる）
+        sent += await pushPhotos()
+
         if sent > 0 { lastSyncedAt = Date() }
         return sent
+    }
+
+    // MARK: - 写真（11_API設計.md §5 / G-6）
+
+    /// このプロセスのあいだ、諦めた写真。
+    ///
+    /// **「何度やっても同じ」失敗を延々と繰り返さない。**
+    /// 400 のような失敗は次の取り込みでも同じ結果になるので、
+    /// 開くたびに同じ1枚で時間を使わせないために覚えておく。
+    /// **起動し直せば消える**ので、原因が直れば次の起動で拾い直せる
+    private var skippedPhotoIds: Set<UUID> = []
+
+    /// 削除待ちの写真。
+    ///
+    /// **消した写真を取り込みで蘇らせない。** 消した直後はサーバーにまだ残っているので、
+    /// 先に一覧を取りに行くと戻ってきてしまう（送信キューが流れるまでのあいだ）
+    private func photoIdsPendingDeletion() -> Set<UUID> {
+        let pending = (try? queue.pending()) ?? []
+        return Set(pending.compactMap { change -> UUID? in
+            guard change.method == "DELETE", change.path.contains("/photos/"),
+                  let last = change.path.split(separator: "/").last else { return nil }
+            return UUID(uuidString: String(last))
+        })
+    }
+
+    /// まだ上げていない自分の写真を、Blobへ上げてメタを登録する。
+    ///
+    /// 手順は **①SASをもらう → ②端末がBlobへ直接PUT → ③メタを登録** の3段（G-6）。
+    /// 実体は普通の送信キューに載せない。中身が大きく、
+    /// 途中で失敗したときに「同じものをもう一度」で済ませたいため、ここで1枚ずつ面倒を見る。
+    ///
+    /// - Returns: 上げ終えた枚数
+    @discardableResult
+    func pushPhotos() async -> Int {
+        guard let saved = credentials.load(), let room = try? localRoom() else { return 0 }
+
+        var sent = 0
+        for photo in pendingPhotos(in: room, meId: saved.memberId) {
+            guard let visitId = photo.visit?.id,
+                  let data = PhotoStore.data(of: photo.localFileName) else { continue }
+
+            do {
+                let ticket = try await client.photoUploadUrl(roomId: saved.roomId,
+                                                             photoId: photo.id,
+                                                             visitId: visitId)
+                guard let url = URL(string: ticket.uploadUrl) else { continue }
+                try await client.uploadBlob(data, to: url)
+                try await client.savePhotoMeta(roomId: saved.roomId,
+                                               photoId: photo.id,
+                                               visitId: visitId,
+                                               takenAt: photo.takenAt)
+                photo.blobUrl = ticket.blobPath        // 上がった印
+                photo.syncStateRaw = SyncState.synced.rawValue
+                try context.save()
+                sent += 1
+                lastError = nil
+            } catch let error as ApiError {
+                lastError = error.message
+                // 圏外や、写真置き場が未設定（503）なら、残りも同じ結果になる
+                if error.isRetryable { break }
+                // 何度上げても同じ失敗（400 など）。この起動のあいだは諦めて先へ進む
+                skippedPhotoIds.insert(photo.id)
+                continue
+            } catch {
+                lastError = String(describing: error)
+                break
+            }
+        }
+        return sent
+    }
+
+    /// ルームの写真を取り込む（**仲間が撮ったぶんも**）。
+    ///
+    /// **一覧（軽い）と実体（重い）を分けて扱う。**
+    /// 先に一覧だけを写して「その写真がある」ことを記録し、実体は後から埋める。
+    /// こうすると、まだ落ちてきていない写真も枠として並べられる。
+    /// 全部落ちるまで画面を止めると、サーバーが寝ている間は
+    /// 「ギャラリーが開かない」ように見えてしまう。
+    ///
+    /// **30秒ごとの取り込みには混ぜない**（`pull()` から呼ばない）。
+    /// 写真は重く、歩いている最中に電池と通信量を使う理由が無い。
+    /// ギャラリーを開いたとき・引っ張ったとき・復帰したときに呼ぶ。
+    ///
+    /// - Parameter fetchBodies: 実体まで落とすか。枠だけ先に欲しいときは false
+    /// - Returns: 新しく分かった枚数（実体の有無は問わない）
+    @discardableResult
+    func pullPhotos(fetchBodies: Bool = true) async -> Int {
+        guard let saved = credentials.load() else { return 0 }
+        do {
+            let remote = try await client.photos(roomId: saved.roomId)
+            let added = try applyPhotos(remote)
+            if fetchBodies { await fetchPhotoBodies(from: remote) }
+            return added
+        } catch let error as ApiError {
+            lastError = error.message
+            return 0
+        } catch {
+            lastError = String(describing: error)
+            return 0
+        }
+    }
+
+    /// まだ上げていない自分の写真。
+    ///
+    /// 撮った人が分からない古い記録は自分のものとして扱う。
+    /// **誰の写真かはサーバーがトークンから決める**ので、送って困ることはない
+    private func pendingPhotos(in room: MissionSet, meId: UUID) -> [Photo] {
+        room.visits
+            .flatMap(\.photos)
+            .filter { $0.blobUrl == nil && ($0.member?.id ?? meId) == meId }
+            .filter { !skippedPhotoIds.contains($0.id) }
+            .sorted { $0.takenAt < $1.takenAt }
+    }
+
+    /// 一覧を端末の記録に写す。**実体はまだ落とさない。**
+    /// 実体を持っていない写真は `localFileName` が空のまま置かれる
+    private func applyPhotos(_ remote: [PhotoResponse]) throws -> Int {
+        guard let room = try localRoom() else { return 0 }
+        var known = Set(room.visits.flatMap(\.photos).map(\.id))
+        // 消したばかりの写真はまだサーバーに残っている。取り込みで蘇らせない
+        known.formUnion(photoIdsPendingDeletion())
+
+        var added = 0
+        for incoming in remote where !known.contains(incoming.photoId) {
+            // 訪問がまだ端末に無ければ見送る。次の取り込みで訪問ごと揃う
+            guard let visit = room.visits.first(where: { $0.id == incoming.visitId }) else {
+                continue
+            }
+            let photo = Photo(localFileName: "")      // 実体はこれから
+            photo.id = incoming.photoId
+            photo.takenAt = incoming.takenAt
+            photo.blobUrl = blobReference(incoming.url)
+            photo.visit = visit
+            photo.member = photographer(of: incoming, in: room)
+            photo.syncStateRaw = SyncState.synced.rawValue
+            context.insert(photo)
+            added += 1
+        }
+
+        if added > 0 { try context.save() }
+        return added
+    }
+
+    /// 一度に落とす上限。残りは次に開いたときに埋まる。
+    /// **待たせ続けないため**の区切りで、枠は先に出ている
+    private static let photoBodyBatch = 20
+
+    /// 実体をまだ持っていない写真を落として、端末に保存する。
+    ///
+    /// **1枚ごとに保存する。** まとめて最後に書くと、途中で切れたときに全部やり直しになり、
+    /// 画面にも1枚も出ないまま待たせることになる
+    private func fetchPhotoBodies(from remote: [PhotoResponse]) async {
+        guard let room = try? localRoom() else { return }
+        let urls = Dictionary(remote.map { ($0.photoId, $0.url) }, uniquingKeysWith: { first, _ in first })
+
+        let missing = room.visits.flatMap(\.photos)
+            .filter { $0.localFileName.isEmpty && !skippedPhotoIds.contains($0.id) }
+            .sorted { $0.takenAt > $1.takenAt }       // 新しいものから埋める
+            .prefix(Self.photoBodyBatch)
+
+        for photo in missing {
+            guard let text = urls[photo.id], let url = URL(string: text) else { continue }
+            do {
+                let data = try await client.downloadBlob(from: url)
+                photo.localFileName = try PhotoStore.save(data: data)
+                try context.save()
+            } catch let error as ApiError {
+                lastError = error.message
+                if error.isRetryable { break }        // 圏外。残りも落ちてこない
+                // 何度取っても同じ失敗。この起動のあいだは枠のままにして先へ進む
+                skippedPhotoIds.insert(photo.id)
+                continue
+            } catch {
+                lastError = String(describing: error)
+                break
+            }
+        }
+    }
+
+    /// 署名を落とした在り処。
+    ///
+    /// **署名付きURLをそのまま持たない**（期限が切れて意味を失う）。
+    /// `blobUrl` は「サーバーに実体がある」印として使うだけなので、
+    /// 上げたときはコンテナ内のパス、取り込んだときはこの形になる
+    private func blobReference(_ signedUrl: String) -> String? {
+        guard var components = URLComponents(string: signedUrl) else { return nil }
+        components.query = nil
+        return components.url?.absoluteString
+    }
+
+    /// 撮った人。まだ取り込んでいないメンバーなら、名前だけの行を作る
+    private func photographer(of incoming: PhotoResponse, in room: MissionSet) -> Member? {
+        if let existing = room.members.first(where: { $0.id == incoming.takenBy }) {
+            return existing
+        }
+        let created = Member(displayName: incoming.takenByName)
+        created.id = incoming.takenBy
+        created.missionSet = room
+        context.insert(created)
+        return created
     }
 
     // MARK: - ルーム
@@ -291,10 +512,17 @@ final class SyncService {
         }
 
         // フェーズ1で作った「じぶん」は、参加後は本人のメンバーに置き換わる。
-        // ただしお題を書いた人は消さない（書いた人が辿れなくなる）
+        //
+        // **書いた人・撮った人は消さない。**
+        // `Mission.member` も `Photo.member` も inverse の無い一方向の参照なので、
+        // メンバーの行だけ消すと**消えた行を指したまま**になる。
+        // そのあと属性（名前など）を読んだ瞬間に落ちる（`_InvalidFutureBackingData`）。
+        // 退室した人の写真が一覧に出るだけで落ちていた
         let serverIds = Set(remote.members.map(\.memberId))
-        let authors = Set(room.missions.compactMap { $0.member?.id })
-        for stale in room.members where !serverIds.contains(stale.id) && !authors.contains(stale.id) {
+        var keep = Set(room.missions.compactMap { $0.member?.id })
+        keep.formUnion(room.visits.flatMap(\.photos).compactMap { $0.member?.id })
+
+        for stale in room.members where !serverIds.contains(stale.id) && !keep.contains(stale.id) {
             context.delete(stale)
         }
 
@@ -422,6 +650,8 @@ final class SyncService {
                                     usesDice: schedule.usesDice,
                                     usesMissions: schedule.usesMissions,
                                     missionVisibility: schedule.missionVisibilityRaw,
+                                    missionStyle: schedule.missionStyleRaw,
+                                    includesOwnMissions: schedule.includesOwnMissions,
                                     arrivalRadius: schedule.arrivalRadius,
                                     isShared: schedule.isShared,
                                     timeZoneId: schedule.timeZoneIdentifier)
@@ -496,6 +726,14 @@ final class SyncService {
             if let visibility = incoming.missionVisibility {
                 schedule.missionVisibilityRaw = visibility
             }
+            // お題の取り組み方。**古いサーバーは返さない**ので、来たときだけ書く
+            // （返らない＝既定のまま＝みんなで1つ）
+            if let missionStyle = incoming.missionStyle {
+                schedule.missionStyleRaw = missionStyle
+            }
+            if let includesOwnMissions = incoming.includesOwnMissions {
+                schedule.includesOwnMissions = includesOwnMissions
+            }
             if let radius = incoming.arrivalRadius { schedule.arrivalRadius = radius }
             if let isShared = incoming.isShared { schedule.isShared = isShared }
             if let timeZoneId = incoming.timeZoneId { schedule.timeZoneIdentifier = timeZoneId }
@@ -538,6 +776,8 @@ final class SyncService {
         do {
             let state = try await client.state(roomId: room)
             try apply(state)
+            // **写真はここでは取らない。** 30秒ごとに実体まで落とすと、
+            // 歩いている最中に電池と通信量を使う。見たいとき（ギャラリー）に取りに行く
             lastSyncedAt = Date()
             lastError = nil
             return true
@@ -685,6 +925,8 @@ private struct SaveScheduleBody: Encodable {
     let usesDice: Bool
     let usesMissions: Bool
     let missionVisibility: Int
+    let missionStyle: Int
+    let includesOwnMissions: Bool
     let arrivalRadius: Double?
     let isShared: Bool
     let timeZoneId: String?

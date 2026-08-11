@@ -97,6 +97,70 @@ final class ApiClient {
         return try decode(data)
     }
 
+    // MARK: - 写真（11_API設計.md §5 / G-6）
+
+    /// アップロード用のSASをもらう。
+    /// **実体はAPIを通さない**ので、これで場所と鍵だけを受け取る
+    func photoUploadUrl(roomId: UUID, photoId: UUID,
+                        visitId: UUID) async throws -> UploadUrlResponse {
+        try await send(.post, "/rooms/\(roomId.apiString)/photos/upload-url",
+                       body: UploadUrlRequest(photoId: photoId, visitId: visitId))
+    }
+
+    /// メタを登録する。**Blobへ上げ終えてから呼ぶ**（先に呼ぶと実体の無い行が残る）
+    func savePhotoMeta(roomId: UUID, photoId: UUID, visitId: UUID, takenAt: Date) async throws {
+        _ = try await sendRaw(.put, "/rooms/\(roomId.apiString)/photos/\(photoId.apiString)",
+                              rawBody: try encoder.encode(SavePhotoBody(visitId: visitId,
+                                                                        takenAt: takenAt)),
+                              authorized: true)
+    }
+
+    /// ルームの写真一覧（表示用SAS付き）。**仲間が撮ったぶんも返る**
+    func photos(roomId: UUID) async throws -> [PhotoResponse] {
+        let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/photos",
+                                     rawBody: nil, authorized: true)
+        return try decode(data)
+    }
+
+    /// 写真を消す（撮影者本人のみ）。実体も一緒に消える
+    func deletePhoto(roomId: UUID, photoId: UUID) async throws {
+        _ = try await sendRaw(.delete, "/rooms/\(roomId.apiString)/photos/\(photoId.apiString)",
+                              rawBody: nil, authorized: true)
+    }
+
+    /// Blobへ実体を上げる。**APIを通らない**ので、baseURL もトークンも使わない
+    func uploadBlob(_ data: Data, to url: URL) async throws {
+        var request = URLRequest(url: url, timeoutInterval: Self.coldStartTimeout)
+        request.httpMethod = HTTPMethod.put.rawValue
+        // **Azure Blob は種別の指定が要る。** 無いと 400 で弾かれる
+        request.setValue("BlockBlob", forHTTPHeaderField: "x-ms-blob-type")
+        request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+
+        let response: URLResponse
+        do {
+            (_, response) = try await session.upload(for: request, from: data)
+        } catch {
+            throw ApiError.offline(underlying: error)
+        }
+        try check(response)
+    }
+
+    /// Blobから実体を取る
+    func downloadBlob(from url: URL) async throws -> Data {
+        var request = URLRequest(url: url, timeoutInterval: Self.coldStartTimeout)
+        request.httpMethod = HTTPMethod.get.rawValue
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw ApiError.offline(underlying: error)
+        }
+        try check(response)
+        return data
+    }
+
     func schedules(roomId: UUID) async throws -> [ScheduleResponse] {
         let data = try await sendRaw(.get, "/rooms/\(roomId.apiString)/schedules",
                                      rawBody: nil, authorized: true)
@@ -166,14 +230,20 @@ final class ApiClient {
             throw ApiError.offline(underlying: error)
         }
 
+        try check(response, body: data)
+        return data
+    }
+
+    /// 応答が成功かを見る。失敗なら本文からサーバーの言い分を読む
+    private func check(_ response: URLResponse, body: Data? = nil) throws {
         guard let http = response as? HTTPURLResponse else {
             throw ApiError.malformedResponse(underlying: nil)
         }
         guard (200..<300).contains(http.statusCode) else {
-            throw ApiError.server(status: http.statusCode,
-                                  detail: try? decoder.decode(ApiErrorBody.self, from: data))
+            throw ApiError.server(
+                status: http.statusCode,
+                detail: body.flatMap { try? decoder.decode(ApiErrorBody.self, from: $0) })
         }
-        return data
     }
 
     /// 問い合わせ付きのURLを組み立てる。
@@ -327,6 +397,39 @@ struct MissionBriefResponse: Codable, Identifiable {
     var id: UUID { missionId }
 }
 
+// MARK: - 写真
+
+private struct UploadUrlRequest: Encodable {
+    let photoId: UUID
+    let visitId: UUID
+}
+
+private struct SavePhotoBody: Encodable {
+    let visitId: UUID
+    let takenAt: Date
+}
+
+struct UploadUrlResponse: Codable {
+    let photoId: UUID
+    /// コンテナ内のパス。**署名付きURLではない**ので、記録として持てる
+    let blobPath: String
+    /// 期限付きの書き込み先
+    let uploadUrl: String
+    let expiresAt: Date
+}
+
+struct PhotoResponse: Codable {
+    let photoId: UUID
+    let visitId: UUID
+    let stationId: Int
+    let takenBy: UUID
+    let takenByName: String
+    let takenAt: Date
+    /// 期限付きの読み取り先。**そのまま保存しない**（切れると意味を失う）
+    let url: String
+    let urlExpiresAt: Date
+}
+
 struct ScheduleResponse: Codable {
     let scheduleId: UUID
     let title: String
@@ -347,6 +450,9 @@ struct ScheduleResponse: Codable {
     let arrivalRadius: Double?
     let isShared: Bool?
     let timeZoneId: String?
+    /// お題の取り組み方（0=みんなで1つ 1=めいめい）。古いサーバーは返さない
+    let missionStyle: Int?
+    let includesOwnMissions: Bool?
     let attendees: [AttendeeResponse]
 }
 

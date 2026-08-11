@@ -47,7 +47,14 @@ struct JourneySummaryView: View {
                 ShareSheet(items: [shared.image])
             }
             .sheet(isPresented: $showingPhotos) {
-                PhotoGalleryView(items: store.photoItems)
+                // **ここは「この旅」のふりかえり。** ホームの一覧と違い、
+                // 過去の旅の写真まで混ぜると、その日の記録ではなくなる。
+                // 消す操作だけはここからも効かせる（見ている場で直せるように）
+                PhotoGalleryView(items: store.photoItems,
+                                 title: "この旅の写真",
+                                 onDelete: { item in
+                                     if let id = item.photoId { store.deletePhoto(id: id) }
+                                 })
             }
         }
     }

@@ -323,6 +323,11 @@ struct TurnFlowView: View {
                  : "この駅にミッションはありません")
                 .font(.subheadline)
                 .foregroundStyle(count > 0 ? Theme.mission : .secondary)
+            // 引く前に、みんなでやるのか自分でやるのかを伝える
+            if count > 0, let style = store.room?.missionStyle {
+                Text(style.notice)
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
             photoSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -367,6 +372,15 @@ struct TurnFlowView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+
+                // **どちらの遊び方なのかを必ず伝える。**
+                // 「自分ひとりでやるのか、みんなでやるのか」が分からないまま
+                // 駅に着くと、その場で相談から始めることになる
+                if let style = store.room?.missionStyle {
+                    Label(style.notice, systemImage: style == .team ? "person.3" : "person")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Theme.mission)
+                }
 
                 Text("すぐに決められないお題は「あとで」。歩きながら続けられます。"
                      + "達成したかは、旅の画面の「旅のお題」から後で付けられます。")

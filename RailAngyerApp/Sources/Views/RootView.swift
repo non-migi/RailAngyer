@@ -192,8 +192,18 @@ private struct MainView: View {
         }
         .sheet(isPresented: $showingPhotos) {
             // ホームからは**端末に残っている写真をぜんぶ**見せる。
-            // いまの旅のぶんだけだと、旅を保存した時点で空になってしまう
-            PhotoGalleryView(items: PhotoGalleryView.allItems(in: store))
+            // いまの旅のぶんだけだと、旅を保存した時点で空になってしまう。
+            // 開いたときと引っ張ったときに、仲間の写真を取りに行く
+            PhotoGalleryView(items: PhotoGalleryView.allItems(in: store),
+                             onRefresh: {
+                                 // **送ってから取りに行く。** 消したことを先に届けないと、
+                                 // サーバーにまだ残っている写真を取り直して生き返る
+                                 await sync.push()
+                                 _ = await sync.pullPhotos()
+                             },
+                             onDelete: { item in
+                                 if let id = item.photoId { store.deletePhoto(id: id) }
+                             })
         }
         .sheet(item: $invitation) { invite in
             InviteAcceptView(invitation: invite, store: store, sync: sync)
@@ -268,7 +278,13 @@ private struct MainView: View {
         }
         .onChange(of: scenePhase) {
             guard scenePhase == .active else { return }
-            Task { await exchange() }
+            Task {
+                await exchange()
+                // 写真は**一覧だけ**軽く拾う。実体はギャラリーを開いたときに落とす。
+                // 歩いている最中に重い通信をさせない（電池と通信量の話）。
+                // 一覧が入れば、地図のピンやふりかえりには仲間の写真の存在が出る
+                _ = await sync.pullPhotos(fetchBodies: false)
+            }
         }
         .onChange(of: store.showingAnnouncement) {
             // 新しくサイコロを振ったら、しまっていても前に出す
@@ -519,22 +535,36 @@ private struct HomeDashboardView: View {
                     in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
+    /// **歩いている最中は、いまの旅を先に出す。**
+    /// 過去のアーカイブを優先していたせいで、別のコースで遊んだ古い記録の
+    /// 日付と駅数がホームに出て、「別の旅が進行中」に見えていた。
+    /// 過去のものを出すときは、終わった旅だと分かる言葉を必ず添える
+    /// （並びは記録画面（`JourneyHistoryView`）の「進行中」→「これまでの旅」に合わせる）
     private var recordsSummary: some View {
         Button(action: showRecords) {
-            dashboardCard(title: "最近の旅", icon: "chart.line.uptrend.xyaxis") {
-                if let archive = store.archives.first {
+            dashboardCard(title: hasProgress ? "進行中の旅" : "最近の旅",
+                          icon: "chart.line.uptrend.xyaxis") {
+                if hasProgress {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(DurationText.text(store.timing.elapsedSeconds)).font(.title2.bold())
+                        Spacer()
+                        Text("\(store.visitedCount)駅訪問")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Text("いま歩いている旅です")
+                        .font(.caption).foregroundStyle(Theme.line)
+                    if let archive = store.archives.first {
+                        Text("ひとつ前の旅：\(dateText(archive.endedAt))・\(archive.visitedCount)駅")
+                            .font(.caption2).foregroundStyle(.tertiary)
+                    }
+                } else if let archive = store.archives.first {
                     HStack(alignment: .firstTextBaseline) {
                         Text(DurationText.text(archive.elapsedSeconds)).font(.title2.bold())
                         Spacer()
                         Text("\(archive.visitedCount)駅・写真\(archive.photoCount)枚")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    Text(archive.endedAt.formatted(
-                        .dateTime.locale(Locale(identifier: "ja_JP")).year().month().day()))
-                        .font(.caption).foregroundStyle(.secondary)
-                } else if hasProgress {
-                    Text("進行中の旅").font(.headline)
-                    Text("\(store.visitedCount)駅訪問・\(DurationText.text(store.timing.elapsedSeconds))")
+                    Text("\(dateText(archive.endedAt))に終わった旅")
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
                     Text("歩いた旅はここに積み重なります")
@@ -543,6 +573,10 @@ private struct HomeDashboardView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private func dateText(_ date: Date) -> String {
+        date.formatted(.dateTime.locale(Locale(identifier: "ja_JP")).year().month().day())
     }
 
     /// 仲間と遊ぶための入口。設定の奥に置くと、そもそも在ることに気づけない。

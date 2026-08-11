@@ -72,6 +72,54 @@ struct DanglingReferenceTests {
         #expect(turns.allSatisfy { $0.selectedMission == nil })
     }
 
+    /// **ルームの取り込みが、名簿から消えた人の行を消していた**（退室・再参加でIDが変わる）。
+    /// いまは撮った人を保護しているが、それ以前に壊れた記録が端末に残っている。
+    /// 写真の一覧は撮った人の名前を読むので、直さないと踏んだ瞬間に落ちる
+    @Test("起動時に、消えたメンバーを指した写真とお題の参照が外れる")
+    func prepareRepairsDanglingMembers() throws {
+        let room = try #require(store.room)
+        let gone = Member(displayName: "ケンタ")
+        gone.missionSet = room
+        context.insert(gone)
+
+        store.roll(dice: 1)
+        while case .walking = store.phase { store.arriveAtNextStop() }
+        let visit = try #require(store.currentVisit)
+
+        let photo = Photo(localFileName: "kenta.jpg")
+        photo.visit = visit
+        photo.member = gone
+        context.insert(photo)
+
+        let mission = Mission(content: "ケンタのお題")
+        mission.missionSet = room
+        mission.member = gone
+        mission.station = store.station(3)
+        context.insert(mission)
+        try context.save()
+
+        context.delete(gone)                   // 参照を外さずにメンバーだけ消す
+        try context.save()
+
+        // 起動し直しに相当
+        let reopenedContext = ModelContext(container)
+        let reopened = GameSessionStore(context: reopenedContext)
+        reopened.prepare(sampleMissions: false)
+
+        #expect(reopened.repairedReferenceCount >= 2)
+        #expect(reopened.lastError == nil)
+
+        // 読み直しても、撮った人・書いた人をたどらない形になっている
+        let photos = try reopenedContext.fetch(FetchDescriptor<Photo>())
+        #expect(photos.allSatisfy { $0.member == nil })
+        let missions = try reopenedContext.fetch(FetchDescriptor<Mission>())
+        #expect(missions.allSatisfy { $0.member == nil })
+
+        // ここが落ちどころだった。名前を読んでも落ちない
+        _ = reopened.galleryPhotos
+        _ = reopened.myMissions
+    }
+
     @Test("お題を消すと、掴んでいたターンの参照がその場で外れる")
     func deleteMissionClearsReference() throws {
         store.saveMission(nil, station: 2, content: "消すお題",

@@ -79,6 +79,27 @@ final class GameSessionStore {
                 }
             }
 
+            // 「書いた人」「撮った人」も同じように消えた行を指したまま残る。
+            //
+            // **ルームの取り込みが、名簿から消えた人の行を消していた**（退室・再参加でIDが変わる）。
+            // いまは撮った人・書いた人を保護しているが、**それ以前に壊れた記録が端末に残っている**。
+            // 写真の一覧は撮った人の名前を読むので、踏むと落ちる
+            let members = Set(try context.fetch(FetchDescriptor<Member>())
+                .map(\.persistentModelID))
+
+            for photo in try context.fetch(FetchDescriptor<Photo>()) {
+                if let id = photo.member?.persistentModelID, !members.contains(id) {
+                    photo.member = nil                  // 撮った人が消えている
+                    repaired += 1
+                }
+            }
+            for mission in try context.fetch(FetchDescriptor<Mission>()) {
+                if let id = mission.member?.persistentModelID, !members.contains(id) {
+                    mission.member = nil                // 書いた人が消えている
+                    repaired += 1
+                }
+            }
+
             // ターンが消えているのに残った訪問・写真も、読まれれば同じように落ちる。
             // 進行の記録としても意味を失っているので、行ごと消す
             for visit in try context.fetch(FetchDescriptor<Visit>()) {
@@ -329,8 +350,18 @@ final class GameSessionStore {
         // お題を使わない予定では候補を出さない。書いたお題は消さず、次の旅に残す
         guard room.usesMissions else { return [] }
         let used = Set(room.turns.compactMap { $0.selectedMission?.persistentModelID })
-        return room.missions.filter {
-            $0.station?.id == station.id && !used.contains($0.persistentModelID)
+
+        // めいめいで取り組む旅で「自分のは引かない」設定なら、自分が書いたお題を外す。
+        // **外した結果0件なら「お題なし」**として扱う（R-08 と同じ道）。
+        // 自分のお題を自分に引かせる救済はしない。外した意図に反するため
+        let excludesMine = room.missionStyle == .individual && !room.includesOwnMissions
+        let meId = me?.id
+
+        return room.missions.filter { mission in
+            guard mission.station?.id == station.id,
+                  !used.contains(mission.persistentModelID) else { return false }
+            if excludesMine, let meId, mission.member?.id == meId { return false }
+            return true
         }
     }
 
@@ -570,6 +601,9 @@ final class GameSessionStore {
         room.loopDirectionRaw = schedule.loopDirectionRaw >= 0 ? 1 : -1
         room.usesDice = schedule.usesDice
         room.usesMissions = schedule.usesMissions
+        // お題の取り組み方は**予定とルームで同じ値**。見え方と違って読み替えは要らない
+        room.missionStyleRaw = schedule.missionStyleRaw
+        room.includesOwnMissions = schedule.includesOwnMissions
         // **選んだ予定の名前を旅の名前にする。** 盤面の見出しがルーム名のままだと、
         // どの予定で歩いているのかが画面から分からない
         room.name = schedule.title
@@ -603,7 +637,9 @@ final class GameSessionStore {
                       goalOrder: Int? = nil, diceMax: Int? = nil,
                       isLap: Bool? = nil, loopDirection: Int? = nil,
                       usesDice: Bool? = nil, usesMissions: Bool? = nil,
-                      missionVisibility: Int? = nil, arrivalRadius: Double? = nil,
+                      missionVisibility: Int? = nil,
+                      missionStyle: Int? = nil, includesOwnMissions: Bool? = nil,
+                      arrivalRadius: Double? = nil,
                       isShared: Bool? = nil, timeZoneIdentifier: String? = nil) -> String? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "予定の名前を入力してください" }
@@ -645,6 +681,8 @@ final class GameSessionStore {
         if let usesDice { schedule.usesDice = usesDice }
         if let usesMissions { schedule.usesMissions = usesMissions }
         if let missionVisibility { schedule.missionVisibilityRaw = missionVisibility }
+        if let missionStyle { schedule.missionStyleRaw = missionStyle }
+        if let includesOwnMissions { schedule.includesOwnMissions = includesOwnMissions }
         if let arrivalRadius {
             schedule.arrivalRadius = min(max(arrivalRadius, ArrivalRule.radiusRange.lowerBound),
                                          ArrivalRule.radiusRange.upperBound)
@@ -725,6 +763,12 @@ final class GameSessionStore {
             context.insert(photo)
             try context.save()
             enqueueForSync()      // 始点をここで作った場合に備えて積み直す
+
+            // **撮ったその場で仲間へ送る。** 実体は送信キューに載せられない（中身が大きい）ので、
+            // ここから直に上げにいく。失敗しても次の送信で拾われるので、待たずに画面へ戻す
+            if let sync {
+                Task { await sync.pushPhotos() }
+            }
         } catch {
             lastError = String(describing: error)
         }
@@ -911,17 +955,82 @@ final class GameSessionStore {
         return true
     }
 
-    /// この旅で撮った写真を、撮った順に。**どこからでも見られるようにするため**
-    var photoItems: [PhotoGalleryView.Item] {
-        (room?.visits ?? [])
+    // MARK: - 写真の見せ方（ルーム内で見せ合う。11_API設計.md §5）
+
+    /// ギャラリーに渡す写真1枚ぶん。
+    ///
+    /// **実体がまだ端末に無い状態を表せる形にしてある。**
+    /// 仲間の写真は「あることは分かっているが、まだ落ちてきていない」時間があり、
+    /// そこを待たせずに枠として出せないと、サーバーが寝ている間はギャラリーが
+    /// 開かないように見える。落ちてきていないあいだは `localFileName` が nil
+    struct PhotoItem: Identifiable, Hashable {
+        /// 消すときにサーバーへ渡す（`DELETE /photos/{photoId}`）
+        let photoId: UUID
+        /// 端末にある実体。**まだ落ちてきていなければ nil**
+        let localFileName: String?
+        let stationName: String?
+        let takenAt: Date
+        let authorName: String
+        /// 自分が撮ったか。**名前ではなくメンバーIDで決める**
+        /// （同じ名前で入り直した人と取り違えないため）
+        let isMine: Bool
+
+        var id: UUID { photoId }
+    }
+
+    /// この旅の写真を、撮った順に。**仲間が撮ったぶんも含む**
+    var galleryPhotos: [PhotoItem] {
+        let meId = me?.id
+        return (room?.visits ?? [])
             .flatMap { visit in
                 visit.photos.map { photo in
-                    PhotoGalleryView.Item(fileName: photo.localFileName,
-                                          stationName: visit.station?.name ?? "-",
-                                          takenAt: photo.takenAt)
+                    let author = photo.member
+                    return PhotoItem(photoId: photo.id,
+                                     localFileName: photo.localFileName.nilIfEmpty,
+                                     stationName: visit.station?.name,
+                                     takenAt: photo.takenAt,
+                                     authorName: author?.displayName ?? "だれか",
+                                     isMine: author == nil || author?.id == meId)
                 }
             }
             .sorted { $0.takenAt < $1.takenAt }
+    }
+
+    /// 自分が撮った写真を消す。実体・記録・サーバーの順に落とす。
+    /// **他人の写真は消せない**（サーバーでも撮影者だけに絞っている）
+    func deletePhoto(id: UUID) {
+        guard let room,
+              let photo = room.visits.flatMap(\.photos).first(where: { $0.id == id }),
+              photo.member == nil || photo.member?.id == me?.id else { return }
+
+        let fileName = photo.localFileName
+        photo.visit = nil
+        photo.member = nil
+        context.delete(photo)
+        save()
+        PhotoStore.delete(fileName)
+        try? sync?.enqueuePhotoDelete(photoId: id)
+    }
+
+    /// **この旅**で撮った写真を、撮った順に。ふりかえりの画面が使う。
+    ///
+    /// 仲間の写真には撮った人を添え、自分の写真だけ消せるようにしてある。
+    /// まだ落ちてきていない写真も**枠として並べる**（実体は後から埋まる）。
+    ///
+    /// - Note: ホームの一覧（`PhotoGalleryView.allItems`）は**過去の旅も混ぜる**ので別物。
+    ///   ふりかえりは「その日の記録」を出す場なので、こちらは今の旅だけに絞っている
+    var photoItems: [PhotoGalleryView.Item] {
+        galleryPhotos.map { photo in
+            PhotoGalleryView.Item(photoId: photo.photoId,
+                                  // **まだ落ちてきていない写真も枠として出す**（nil のまま）。
+                                  // 落ちるのを待って一覧ごと止めると、
+                                  // サーバーが寝ている間は開かないように見える
+                                  fileName: photo.localFileName,
+                                  stationName: photo.stationName ?? "-",
+                                  takenAt: photo.takenAt,
+                                  photographer: photo.isMine ? nil : photo.authorName,
+                                  isMine: photo.isMine)
+        }
     }
 
     /// このターンで通る駅（着地は含まない）。

@@ -236,9 +236,13 @@ struct ScheduleListView: View {
     private func ruleText(_ schedule: Schedule) -> String {
         var parts: [String] = []
         parts.append(schedule.usesDice ? "サイコロ1〜\(schedule.diceMax)" : "サイコロなし")
-        parts.append(schedule.usesMissions
-                     ? "お題は\(schedule.missionVisibility.label)"
-                     : "お題なし")
+        if schedule.usesMissions {
+            // 取り組み方は当日の動きがいちばん変わるところなので、見え方より先に出す
+            parts.append("お題は\(schedule.missionStyle.label)")
+            parts.append(schedule.missionVisibility.label)
+        } else {
+            parts.append("お題なし")
+        }
         // 「共有しない」だと、送れていないのか送らない決めなのかが読み取れない。
         // 決めたとおりに端末の中だけへ置いている、と分かる言い方にする
         if !schedule.isShared { parts.append("この端末だけ") }
@@ -390,6 +394,8 @@ private struct ScheduleDraftView: View {
     @State private var diceMax: Int
     @State private var usesMissions: Bool
     @State private var missionVisibility: ScheduleMissionVisibility
+    @State private var missionStyle: MissionStyle
+    @State private var includesOwnMissions: Bool
     @State private var arrivalRadius: Double
     @State private var isShared: Bool
 
@@ -428,6 +434,9 @@ private struct ScheduleDraftView: View {
         _diceMax = State(initialValue: existing?.diceMax ?? store.room?.diceMax ?? 6)
         _usesMissions = State(initialValue: existing?.usesMissions ?? true)
         _missionVisibility = State(initialValue: existing?.missionVisibility ?? .everyone)
+        // 既定は「みんなで1つ」。これまでどおりの遊び方から変えない
+        _missionStyle = State(initialValue: existing?.missionStyle ?? .team)
+        _includesOwnMissions = State(initialValue: existing?.includesOwnMissions ?? true)
         _isShared = State(initialValue: existing?.isShared ?? true)
 
         // 予定に決めた値 → コース既定 → いま端末が使っている値 の順に拾う。
@@ -674,6 +683,29 @@ private struct ScheduleDraftView: View {
 
                 Toggle("お題を使う", isOn: $usesMissions)
                 if usesMissions {
+                    Picker("お題の取り組み方", selection: $missionStyle) {
+                        ForEach(MissionStyle.allCases) { Text($0.label).tag($0) }
+                    }
+                    Text(missionStyle.detail)
+                        .font(.caption).foregroundStyle(.secondary)
+
+                    // 自分の書いたお題を引くかどうかは、**めいめいで取り組むときだけの話**。
+                    // みんなで1つのときは誰か1人が引いて全員でやるので、作者は関係ない
+                    if missionStyle == .individual {
+                        // **選ぶ時点で割り切りを伝える。** めいめいの結果は端末の中だけに持つ作りなので、
+                        // 後から「仲間の画面に出ない」と気づくのでは遅い
+                        Label("引いたお題と結果はこの端末に記録されます。仲間の画面には出ません。",
+                              systemImage: "iphone")
+                            .font(.caption).foregroundStyle(.secondary)
+
+                        Toggle("自分のお題も抽選に含める", isOn: $includesOwnMissions)
+                        Text(includesOwnMissions
+                             ? "自分で書いたお題が自分に当たることがあります。"
+                             : "自分で書いたお題は自分には当たりません。人数ぶんのお題が足りないと、"
+                               + "お題なしで進む駅が出ます。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+
                     Picker("お題の見え方", selection: $missionVisibility) {
                         ForEach(ScheduleMissionVisibility.allCases, id: \.self) {
                             Text($0.label).tag($0)
@@ -700,7 +732,9 @@ private struct ScheduleDraftView: View {
         } footer: {
             Text("決めなくても遊べます。"
                  + "サイコロもお題も使わない、そのまま歩くだけの予定にもできます。"
-                 + "半径を大きくしすぎると隣の駅の圏内と重なるため、"
+                 + "\nお題は既定で「みんなで1つ」です。着いた駅で引いた1つのお題に、"
+                 + "全員で同じように取り組みます。"
+                 + "\n半径を大きくしすぎると隣の駅の圏内と重なるため、"
                  + "\(Int(ArrivalRule.radiusRange.upperBound))m までにしています。")
         }
     }
@@ -719,6 +753,8 @@ private struct ScheduleDraftView: View {
                                           usesDice: usesDice,
                                           usesMissions: usesMissions,
                                           missionVisibility: missionVisibility.rawValue,
+                                          missionStyle: missionStyle.rawValue,
+                                          includesOwnMissions: includesOwnMissions,
                                           arrivalRadius: arrivalRadius,
                                           isShared: isShared,
                                           timeZoneIdentifier: selectedCourse?.timeZoneIdentifier)

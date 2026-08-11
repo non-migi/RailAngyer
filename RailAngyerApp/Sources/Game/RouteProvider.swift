@@ -16,8 +16,23 @@ final class RouteProvider {
     private(set) var isLoading = false
     private(set) var didFail = false
 
-    /// いま経路を持っている駅。区間が変わったら取り直す
-    private var loadedFor: Int?
+    /// いま経路を持っている行き先。区間が変わったら取り直す。
+    ///
+    /// **駅の通し番号だけでは足りない。** 番号はコースごとに1から振られるので、
+    /// 別のコースへ移ると同じ番号が違う場所を指す。座標まで見て取り直す
+    private struct Destination: Equatable {
+        let orderNo: Int
+        let latitude: Double
+        let longitude: Double
+
+        init(_ target: LocationService.Target) {
+            orderNo = target.orderNo
+            latitude = target.latitude
+            longitude = target.longitude
+        }
+    }
+
+    private var loadedFor: Destination?
     /// 経路を取ったときの出発地点。ここから離れたら取り直す
     private var origin: CLLocation?
 
@@ -45,7 +60,8 @@ final class RouteProvider {
     /// 必要なら経路を取る。すでに持っていて出発地点も近ければ何もしない
     func ensureRoute(from current: CLLocation?, to target: LocationService.Target) async {
         guard let current else { return }
-        if loadedFor == target.orderNo, let origin, current.distance(from: origin) < Self.refreshDistance {
+        if loadedFor == Destination(target), let origin,
+           current.distance(from: origin) < Self.refreshDistance {
             return
         }
         guard !isLoading else { return }
@@ -63,7 +79,7 @@ final class RouteProvider {
         do {
             let response = try await MKDirections(request: request).calculate()
             route = response.routes.first
-            loadedFor = target.orderNo
+            loadedFor = Destination(target)
             origin = current
         } catch {
             // 圏外・地下などで取れないことがある。直線距離の表示で進行を続ける

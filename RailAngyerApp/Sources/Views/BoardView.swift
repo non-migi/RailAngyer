@@ -358,6 +358,18 @@ private struct JourneyMissionsView: View {
                     }
                 }
 
+                // **どちらの遊び方なのかを一覧の頭で伝える。**
+                // 引いたお題が「みんなのぶん」なのか「自分のぶん」なのかで、
+                // ここに並ぶものの意味が変わる
+                if let style = store.room?.missionStyle {
+                    Section {
+                        Label(style.notice,
+                              systemImage: style == .team ? "person.3" : "person")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 if !store.unresolvedMissionTurns.isEmpty {
                     Section {
                         ForEach(store.unresolvedMissionTurns) { turn in

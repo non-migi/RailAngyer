@@ -120,6 +120,48 @@ struct MissionAuthoringTests {
         #expect(store.myMissions.map(\.content) == ["自分のお題"])
     }
 
+    // MARK: - 取り組み方（チームで1つ / めいめいで）
+
+    @Test("めいめいで取り組む旅で「自分のは引かない」なら、候補から自分のお題が外れる")
+    func individualStyleCanExcludeOwnMissions() throws {
+        let room = try #require(store.room)
+        let other = Member(displayName: "ケンタ")
+        other.missionSet = room
+        context.insert(other)
+
+        let theirs = Mission(content: "ケンタのお題")
+        theirs.missionSet = room
+        theirs.member = other
+        theirs.station = store.station(4)
+        context.insert(theirs)
+        store.saveMission(nil, station: 4, content: "自分のお題",
+                          effect: .none, value: nil, jumpTo: nil)
+
+        // チームで取り組むあいだは、書いた本人に当たることも普通に起こる
+        #expect(store.missionCandidates(at: 4).count == 2)
+
+        room.missionStyle = .individual
+        room.includesOwnMissions = false
+        try context.save()
+
+        #expect(store.missionCandidates(at: 4).map(\.content) == ["ケンタのお題"])
+    }
+
+    /// **救済しない。** 自分のお題を自分に引かせるのは、外した意図に反する。
+    /// 候補0件は「お題なし」として、これまでどおりターンを終える（R-08）
+    @Test("自分のお題しか無い駅は、外した結果お題なしになる")
+    func excludingOwnMissionsCanLeaveNone() throws {
+        let room = try #require(store.room)
+        store.saveMission(nil, station: 4, content: "自分のお題",
+                          effect: .none, value: nil, jumpTo: nil)
+
+        room.missionStyle = .individual
+        room.includesOwnMissions = false
+        try context.save()
+
+        #expect(store.missionCandidates(at: 4).isEmpty)
+    }
+
     @Test("予定の段階で、まだ始めていないコースにもお題を書ける")
     func writesMissionForAnotherCourse() throws {
         let tozai = try #require(store.courses.first { $0.name == "東西線" })

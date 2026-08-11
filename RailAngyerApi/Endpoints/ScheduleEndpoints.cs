@@ -33,6 +33,7 @@ public static class ScheduleEndpoints
                     s.CourseId, s.CourseName, s.StartOrder, s.GoalOrder, s.DiceMax, s.CreatedBy,
                     s.IsLap, s.LoopDirection, s.UsesDice, s.UsesMissions,
                     s.MissionVisibility, s.ArrivalRadius, s.IsShared, s.TimeZoneId,
+                    s.MissionStyle, s.IncludesOwnMissions,
                     s.Attendees.Select(a => new AttendeeDto(a.MemberId, a.Member!.DisplayName, a.Status))
                                .ToList()))
                 .ToListAsync(ct);
@@ -87,6 +88,10 @@ public static class ScheduleEndpoints
             {
                 return ApiResults.BadRequest("invalid_radius", "到着判定の半径は50〜320mです");
             }
+            if (req.MissionStyle is < 0 or > 1)
+            {
+                return ApiResults.BadRequest("invalid_mission_style", "お題の取り組み方の値が不正です");
+            }
             if (req.TimeZoneId is { Length: > 64 })
             {
                 return ApiResults.BadRequest("time_zone_too_long", "タイムゾーン名が長すぎます");
@@ -132,6 +137,8 @@ public static class ScheduleEndpoints
             schedule.ArrivalRadius = req.ArrivalRadius;
             schedule.IsShared = req.IsShared;
             schedule.TimeZoneId = req.TimeZoneId;
+            schedule.MissionStyle = req.MissionStyle is { } style ? (byte)style : null;
+            schedule.IncludesOwnMissions = req.IncludesOwnMissions;
 
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
@@ -215,7 +222,8 @@ public record SaveScheduleRequest(string Title, DateTime StartAt, string? MeetPl
                                   bool? IsLap = null, int? LoopDirection = null,
                                   bool? UsesDice = null, bool? UsesMissions = null,
                                   int? MissionVisibility = null, double? ArrivalRadius = null,
-                                  bool? IsShared = null, string? TimeZoneId = null);
+                                  bool? IsShared = null, string? TimeZoneId = null,
+                                  int? MissionStyle = null, bool? IncludesOwnMissions = null);
 public record SaveAttendanceRequest(int Status);
 
 public record ScheduleDto(Guid ScheduleId, string Title, DateTime StartAt, string? MeetPlace,
@@ -224,5 +232,6 @@ public record ScheduleDto(Guid ScheduleId, string Title, DateTime StartAt, strin
                           bool? IsLap, short? LoopDirection, bool? UsesDice, bool? UsesMissions,
                           byte? MissionVisibility, double? ArrivalRadius, bool? IsShared,
                           string? TimeZoneId,
+                          byte? MissionStyle, bool? IncludesOwnMissions,
                           List<AttendeeDto> Attendees);
 public record AttendeeDto(Guid MemberId, string DisplayName, byte Status);

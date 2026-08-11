@@ -46,6 +46,21 @@ enum PhotoStore {
         return fileName
     }
 
+    /// すでにJPEGになっているデータを、そのまま保存する。
+    /// **仲間から取り込んだ写真用。** 上げる側で縮小済みなので、ここでは触らない
+    @discardableResult
+    static func save(data: Data) throws -> String {
+        let fileName = "\(UUID().uuidString).jpg"
+        try data.write(to: directory.appending(path: fileName), options: .atomic)
+        return fileName
+    }
+
+    /// 保存してある実体。上げるときに読む
+    static func data(of fileName: String) -> Data? {
+        guard !fileName.isEmpty else { return nil }
+        return try? Data(contentsOf: url(of: fileName))
+    }
+
     static func load(_ fileName: String) -> UIImage? {
         guard !fileName.isEmpty else { return nil }
         // **URLから直接読む。** パスを文字列に落とすとエンコードの扱いで取りこぼす

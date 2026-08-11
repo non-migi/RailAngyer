@@ -30,6 +30,15 @@ struct BoardMapView: View {
 
     private var stations: [Station] { store.stationsInOrder }
 
+    /// どのコースを映しているか。**駅の通し番号だけでは別のコースと見分けられない**
+    private var courseKey: String { store.room?.course?.name ?? "" }
+
+    /// 経路を取り直す単位。コースと駅の並びの組
+    private struct RouteRequest: Hashable {
+        let course: String
+        let orders: [Int]
+    }
+
     var body: some View {
         Map(position: $camera) {
             UserAnnotation()
@@ -67,7 +76,12 @@ struct BoardMapView: View {
         .mapControls { MapUserLocationButton() }
         .safeAreaInset(edge: .bottom) { legend }
         .onAppear(perform: fitToSection)
-        .onChange(of: stations.count, fitToSection)
+        // **駅数ではなく駅の並びで見る。** 同じ駅数の別コースへ移ったとき、
+        // 数だけを見ているとカメラが前のコースに置き去りになる
+        .onChange(of: stations.map(\.orderNo), fitToSection)
+        // コースが変わったら経路の憶えを捨てる。**駅の通し番号はコースごとに1から**振られ、
+        // 別のコースと必ずぶつかる。作り直さないと前の路線の道なりが残る
+        .onChange(of: courseKey) { routes = CourseRouteProvider() }
         .onMapCameraChange(frequency: .onEnd) { context in
             // **寄ったときだけ文字を出す。** 路線全体が入る縮尺で全駅に出すと、
             // 吹き出しどうしと駅名が重なって、かえって何も読めなくなる
@@ -75,9 +89,9 @@ struct BoardMapView: View {
                 isZoomedIn = context.region.span.latitudeDelta < Self.labelZoomThreshold
             }
         }
-        .task(id: stations.map(\.orderNo)) {
+        .task(id: RouteRequest(course: courseKey, orders: stations.map(\.orderNo))) {
             // 道路沿いの形を、手前の区間から少しずつ取る。取れなくても直線で描ける
-            await routes.load(stations: stations)
+            await routes.load(stations: stations, course: courseKey)
         }
     }
 
@@ -191,7 +205,7 @@ struct BoardMapView: View {
     /// **道路沿いの形が取れていればそれを、無ければ直線を**使う
     private var plannedLegs: [Leg] {
         zip(stations, stations.dropFirst()).map { from, to in
-            let line = routes.coordinates(from: from.orderNo, to: to.orderNo)
+            let line = routes.coordinates(from: from.orderNo, to: to.orderNo, course: courseKey)
                 ?? [coordinate(from), coordinate(to)]
             return Leg(id: "\(from.orderNo)-\(to.orderNo)", points: line)
         }

@@ -159,6 +159,37 @@ struct SyncServiceTests {
         #expect(room.members.filter(\.isMe).map(\.displayName) == ["のん"])
     }
 
+    /// `Photo.member` は inverse の無い一方向の参照なので、メンバーの行だけ消すと
+    /// **消えた行を指したまま**になり、名前を読んだ瞬間に落ちる。
+    /// 退室した人の写真が一覧に出るだけでクラッシュしていた
+    @Test("退室した人でも、撮った写真があればメンバーの行を消さない")
+    func pullRoomKeepsPhotographers() async throws {
+        let meId = try #require(credentials.load()?.memberId)
+        let gone = Member(displayName: "ケンタ")
+        gone.missionSet = room
+        context.insert(gone)
+
+        let visit = makeVisit(turn: makeTurn())
+        let photo = Photo(localFileName: "kenta.jpg")
+        photo.visit = visit
+        photo.member = gone
+        context.insert(photo)
+        try context.save()
+
+        // サーバーの名簿からケンタが消えた（退室した）
+        let service = makeService(.json("""
+        {"roomId":"\(UUID().apiString)","name":"ツアー","courseId":1,
+         "startStationId":1,"goalStationId":16,"diceMax":6,"inviteCode":"ABC123",
+         "members":[{"memberId":"\(meId.apiString)","displayName":"のん",
+                     "joinedAt":"2026-07-30T05:00:00Z"}]}
+        """))
+
+        #expect(await service.pullRoom())
+
+        #expect(room.members.contains { $0.id == gone.id }, "撮った人の行が消えている")
+        #expect(photo.member?.displayName == "ケンタ", "写真から撮った人をたどれない")
+    }
+
     @Test("本物のサーバーが返したJSONでルームを取り込める")
     func pullRoomAcceptsRealResponse() async throws {
         // 実際の GET /rooms/{id} の応答。**日時に Z が付かない**（SQLの DATETIME2 をそのまま返すため）。
@@ -265,6 +296,177 @@ struct SyncServiceTests {
         StubURLProtocol.behavior = .json("{}")
         #expect(await service.push() == 1)
         #expect(service.pendingCount == 0)
+    }
+
+    /// めいめいで取り組む旅では、引いたお題は**その端末のもの**。
+    /// ターン1件にお題は1つしか持てないので、送ると各自の引きで上書きし合う
+    @Test("めいめいで取り組む旅では、引いたお題を送らない")
+    func individualStyleKeepsMissionLocal() throws {
+        room.missionStyle = .individual
+        let mission = Mission(content: "駅名標を撮る")
+        mission.missionSet = room
+        mission.station = station(4)
+        context.insert(mission)
+
+        let turn = makeTurn()
+        turn.selectedMission = mission
+        turn.missionDone = true
+        turn.appliedEffectType = .none
+        try context.save()
+
+        let service = makeService()
+        try service.enqueueTurn(turn)
+
+        let payload = try #require(try SyncQueue(context: context).pending().first?.payload)
+        let json = try #require(try JSONSerialization.jsonObject(with: payload) as? [String: Any])
+        #expect(json["selectedMissionId"] == nil, "自分の引きを送ってしまっている")
+        #expect(json["missionDone"] == nil)
+        #expect(json["appliedEffectType"] == nil)
+        // 盤面（どこからどこへ動いたか）は共有する
+        #expect(json["fromStationId"] as? Int == 1)
+        #expect(json["landingStationId"] as? Int == 4)
+    }
+
+    @Test("チームで取り組む旅では、これまで通り引いたお題も送る")
+    func teamStyleSendsMission() throws {
+        let mission = Mission(content: "駅名標を撮る")
+        mission.missionSet = room
+        mission.station = station(4)
+        context.insert(mission)
+
+        let turn = makeTurn()
+        turn.selectedMission = mission
+        turn.missionDone = true
+        try context.save()
+
+        let service = makeService()
+        try service.enqueueTurn(turn)
+
+        let payload = try #require(try SyncQueue(context: context).pending().first?.payload)
+        let json = try #require(try JSONSerialization.jsonObject(with: payload) as? [String: Any])
+        #expect(json["selectedMissionId"] as? String == mission.id.uuidString)
+        #expect(json["missionDone"] as? Bool == true)
+    }
+
+    // MARK: - 写真（§5 / G-6）
+
+    @Test("写真は SAS → Blob → メタ登録 の順で上がり、上げた印が付く")
+    func pushPhotosFollowsThreeSteps() async throws {
+        let visit = makeVisit(turn: makeTurn())
+        let photo = Photo(localFileName: try PhotoStore.save(data: Data("jpeg".utf8)))
+        photo.visit = visit
+        context.insert(photo)
+        try context.save()
+        defer { PhotoStore.delete(photo.localFileName) }
+
+        let ticket = """
+        {"photoId":"\(photo.id.apiString)","blobPath":"room/visit/photo.jpg",
+         "uploadUrl":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+         "expiresAt":"2026-08-11T12:00:00Z"}
+        """
+        let service = makeService(.bodies([(match: "upload-url", body: ticket)]))
+
+        #expect(await service.pushPhotos() == 1)
+        #expect(photo.blobUrl == "room/visit/photo.jpg", "上げた印が付いていない")
+
+        let paths = StubURLProtocol.recordedPaths
+        #expect(paths.count == 3)
+        #expect(paths.first?.contains("/photos/upload-url") == true)
+        // 実体は**APIを通らない**でBlobへ直接
+        #expect(paths[1] == "/room/visit/photo.jpg")
+        #expect(paths.last?.contains("/photos/\(photo.id.apiString)") == true,
+                "メタの登録は実体を上げ終えた後")
+    }
+
+    @Test("上げ終えた写真は二度と上げ直さない")
+    func pushPhotosSkipsUploaded() async throws {
+        let visit = makeVisit(turn: makeTurn())
+        let photo = Photo(localFileName: try PhotoStore.save(data: Data("jpeg".utf8)))
+        photo.visit = visit
+        photo.blobUrl = "room/visit/photo.jpg"
+        context.insert(photo)
+        try context.save()
+        defer { PhotoStore.delete(photo.localFileName) }
+
+        let service = makeService(.recordingPaths)
+
+        #expect(await service.pushPhotos() == 0)
+        #expect(StubURLProtocol.recordedPaths.isEmpty)
+    }
+
+    @Test("仲間の写真を取り込み、実体を端末に保存して訪問に紐づける")
+    func pullPhotosSavesOthersPhotos() async throws {
+        let visit = makeVisit(turn: makeTurn())
+        try context.save()
+
+        let photoId = UUID()
+        let takenBy = UUID()
+        let list = """
+        [{"photoId":"\(photoId.apiString)","visitId":"\(visit.id.apiString)","stationId":2,
+          "takenBy":"\(takenBy.apiString)","takenByName":"ケンタ",
+          "takenAt":"2026-08-11T09:30:00Z",
+          "url":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+          "urlExpiresAt":"2026-08-11T12:00:00Z"}]
+        """
+        let service = makeService(.bodies([(match: "/photos", body: list)]))
+
+        #expect(await service.pullPhotos() == 1)
+
+        let saved = try #require(visit.photos.first)
+        defer { PhotoStore.delete(saved.localFileName) }
+        #expect(saved.id == photoId)
+        #expect(saved.member?.displayName == "ケンタ", "撮った人が分かる")
+        #expect(PhotoStore.exists(saved.localFileName), "実体が端末に残っていない")
+        // 期限付きの署名は持たない。切れると意味を失うため
+        #expect(saved.blobUrl?.contains("sig=") == false)
+
+        // 二度目は取りに行かない（同じ写真を何枚も増やさない）
+        #expect(await service.pullPhotos() == 0)
+        #expect(visit.photos.count == 1)
+    }
+
+    /// 消した直後はサーバーにまだ残っている。**取り込みで蘇らせない**
+    @Test("削除待ちの写真は取り込みで戻ってこない")
+    func pullPhotosSkipsPendingDeletions() async throws {
+        let visit = makeVisit(turn: makeTurn())
+        try context.save()
+
+        let photoId = UUID()
+        let list = """
+        [{"photoId":"\(photoId.apiString)","visitId":"\(visit.id.apiString)","stationId":2,
+          "takenBy":"\(UUID().apiString)","takenByName":"ケンタ",
+          "takenAt":"2026-08-11T09:30:00Z",
+          "url":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+          "urlExpiresAt":"2026-08-11T12:00:00Z"}]
+        """
+        let service = makeService(.bodies([(match: "/photos", body: list)]))
+        try service.enqueuePhotoDelete(photoId: photoId)   // 消した。まだ送れていない
+
+        #expect(await service.pullPhotos() == 0)
+        #expect(visit.photos.isEmpty, "消した写真が戻ってきている")
+    }
+
+    /// **一覧と実体を分けて扱う。** 実体が落ちてくる前でも「その写真がある」ことは分かるので、
+    /// ギャラリーは枠を先に出せる（全部落ちるまで開かない作りにしない）
+    @Test("実体を落とす前でも、写真があることは先に分かる")
+    func pullPhotosRecordsBeforeDownloading() async throws {
+        let visit = makeVisit(turn: makeTurn())
+        try context.save()
+
+        let list = """
+        [{"photoId":"\(UUID().apiString)","visitId":"\(visit.id.apiString)","stationId":2,
+          "takenBy":"\(UUID().apiString)","takenByName":"ケンタ",
+          "takenAt":"2026-08-11T09:30:00Z",
+          "url":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+          "urlExpiresAt":"2026-08-11T12:00:00Z"}]
+        """
+        let service = makeService(.bodies([(match: "/photos", body: list)]))
+
+        #expect(await service.pullPhotos(fetchBodies: false) == 1)
+
+        let saved = try #require(visit.photos.first)
+        #expect(saved.localFileName.isEmpty, "実体を落とさない約束なのに落としている")
+        #expect(StubURLProtocol.recordedPaths.count == 1, "一覧のほかに叩いている")
     }
 
     @Test("送る順序は操作した順になる")
@@ -594,6 +796,9 @@ final class StubURLProtocol: URLProtocol {
         case recordingPaths
         /// 1件目だけ失敗させる
         case failFirstThenSucceed(status: Int)
+        /// URLの一部ごとに本文を返す。どれにも当たらなければ 200 の `{}`。
+        /// 写真のように**行き先ごとに違う応答**が要る手順で使う
+        case bodies([(match: String, body: String)])
     }
 
     nonisolated(unsafe) private static var _behavior: Behavior = .offline
@@ -613,9 +818,12 @@ final class StubURLProtocol: URLProtocol {
 
     override func startLoading() {
         let path = request.url?.path ?? ""
+        let fullURL = request.url?.absoluteString ?? ""
         let outcome: (status: Int, body: String)? = Self.lock.withLock {
             Self._paths.append(path)
             switch Self._behavior {
+            case .bodies(let table):
+                return (200, table.first { fullURL.contains($0.match) }?.body ?? "{}")
             case .offline:
                 return nil
             case .json(let body):
