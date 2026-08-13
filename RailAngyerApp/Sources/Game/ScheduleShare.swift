@@ -14,20 +14,20 @@ enum ScheduleShare {
     ///   渡すと**アプリを開いて参加できるリンク**が付く
     static func text(for schedule: Schedule, course: Course?,
                      room: MissionSet? = nil, now: Date = Date()) -> String {
-        var lines: [String] = ["【レイルアンギャー】\(schedule.title)"]
+        var lines: [String] = [appLocalized("【レイルアンギャー】\(schedule.title)")]
 
         lines.append("🗓 \(dateText(schedule.startAt, timeZone: schedule.timeZone))")
         if let place = schedule.meetPlace, !place.isEmpty {
-            lines.append("📍 集合　\(place)")
+            lines.append(appLocalized("📍 集合　\(place)"))
         }
 
         if !schedule.courseName.isEmpty {
             lines.append("🚉 \(courseText(schedule, course: course))")
-            lines.append("🎲 サイコロ 1〜\(schedule.diceMax)")
+            lines.append(appLocalized("🎲 サイコロ 1〜\(schedule.diceMax)"))
         }
 
         if let estimate = estimate(schedule, course: course) {
-            lines.append("🚶 歩く目安　\(estimate.distanceText)（\(estimate.durationText)）")
+            lines.append(appLocalized("🚶 歩く目安　\(estimate.distanceText)（\(estimate.durationText)）"))
         }
 
         if let going = attendanceText(schedule) {
@@ -64,7 +64,7 @@ enum ScheduleShare {
             .sorted { ($0.station?.orderNo ?? 0) < ($1.station?.orderNo ?? 0) }
         guard !missions.isEmpty else { return nil }
 
-        var lines = ["📝 お題　\(missions.count)個"]
+        var lines = [appLocalized("📝 お題　\(missions.count)個")]
         for mission in missions {
             let station = mission.station?.name ?? "?"
             let author = mission.member?.displayName.nilIfEmpty
@@ -78,21 +78,22 @@ enum ScheduleShare {
     /// **コードも文字で残す**（アプリを入れていない相手にはリンクが効かないため）
     static func inviteText(_ room: MissionSet?) -> String? {
         guard let room, let code = room.inviteCode?.nilIfEmpty else { return nil }
-        var lines = ["🚃 アプリで開くと、そのまま参加できます"]
+        var lines = [appLocalized("🚃 アプリで開くと、そのまま参加できます")]
         if let url = InviteLink.url(inviteCode: code, roomName: room.name) {
             lines.append(url.absoluteString)
         }
-        lines.append("（アプリの「みんなで遊ぶ」＞招待コード：\(code) からでも入れます）")
+        lines.append(appLocalized("（アプリの「みんなで遊ぶ」＞招待コード：\(code) からでも入れます）"))
         return lines.joined(separator: "\n")
     }
 
-    /// 「8月9日(土) 9:00」。海外のコースは**その土地の時計**で書く
+    /// 「8月9日(土) 9:00」。海外のコースは**その土地の時計**で書く。
+    /// 言葉（月・曜日）はアプリの言語設定に追随させる
     static func dateText(_ date: Date, timeZone: TimeZone = .japanStandard) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.timeZone = timeZone
-        formatter.dateFormat = "M月d日(E) H:mm"
-        return formatter.string(from: date)
+        let style = Date.FormatStyle(locale: AppLanguage.currentLocale,
+                                     calendar: .japan(in: timeZone),
+                                     timeZone: timeZone)
+            .month().day().weekday().hour().minute()
+        return date.formatted(style)
     }
 
     /// 「南北線（北海道）　麻生 → 真駒内　16駅」
@@ -103,10 +104,10 @@ enum ScheduleShare {
         }
         let stations = sectionStations(schedule, course: course)
         if schedule.isLap, let start = stations.first {
-            text += "　\(start.name) から一周　\(stations.count)駅"
+            text += "　" + appLocalized("\(start.name) から一周　\(stations.count)駅")
         } else if let start = stations.first, let goal = stations.last,
                   start.orderNo != goal.orderNo {
-            text += "　\(start.name) → \(goal.name)　\(stations.count)駅"
+            text += "　" + appLocalized("\(start.name) → \(goal.name)　\(stations.count)駅")
         }
         return text
     }
@@ -138,8 +139,8 @@ enum ScheduleShare {
         let going = schedule.attendees.filter { $0.status == .going }.count
         let notGoing = schedule.attendees.filter { $0.status == .notGoing }.count
         guard going + notGoing > 0 else { return nil }
-        var parts = ["参加 \(going)人"]
-        if notGoing > 0 { parts.append("不参加 \(notGoing)人") }
+        var parts = [appLocalized("参加 \(going)人")]
+        if notGoing > 0 { parts.append(appLocalized("不参加 \(notGoing)人")) }
         return parts.joined(separator: "・")
     }
 

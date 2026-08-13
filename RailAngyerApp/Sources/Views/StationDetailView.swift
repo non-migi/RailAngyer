@@ -68,7 +68,8 @@ struct StationDetailView: View {
     private func missionRow(_ mission: Mission) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(mission.content).font(.subheadline)
-            Text(mission.member?.displayName.nilIfEmpty.map { "\($0)のお題" } ?? "だれかのお題")
+            Text(mission.member?.displayName.nilIfEmpty.map { appLocalized("\($0)のお題") }
+                 ?? appLocalized("だれかのお題"))
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)

@@ -130,7 +130,7 @@ struct MapPlaceDetailView: View {
 
     private var categoryLabel: String? {
         guard let category = place.category ?? resolved?.pointOfInterestCategory else { return nil }
-        return Self.labels[category]
+        return Self.labels[category].map { appLocalized($0) }
     }
 
     private var categorySymbol: String {
@@ -146,8 +146,9 @@ struct MapPlaceDetailView: View {
     }
 
     /// 歩いているときに探しがちなものだけ日本語にする。
-    /// 網羅はしない（訳が無ければ分類の行を出さないだけ）
-    private static let labels: [MKPointOfInterestCategory: String] = [
+    /// 網羅はしない（訳が無ければ分類の行を出さないだけ）。
+    /// 値はカタログのキー。表示するときに `appLocalized` で選択言語に解決する
+    private static let labels: [MKPointOfInterestCategory: String.LocalizationValue] = [
         .restroom: "トイレ",
         .cafe: "カフェ",
         .restaurant: "飲食店",

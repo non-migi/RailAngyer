@@ -91,9 +91,7 @@ struct RuleSettingsView: View {
                 } header: {
                     Text("使い方とお約束")
                 } footer: {
-                    Text("実際の道を歩く遊びです。歩きながら画面を操作しないでください。"
-                         + "\n歩き方のルール（コース・区間・サイコロ・お題・共有）は、"
-                         + "予定を立てるときに決めます。")
+                    Text("実際の道を歩く遊びです。歩きながら画面を操作しないでください。\n歩き方のルール（コース・区間・サイコロ・お題・共有）は、予定を立てるときに決めます。")
                 }
 
                 Section("アプリ情報") {
@@ -138,6 +136,6 @@ struct RuleSettingsView: View {
             as? String ?? "—"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion")
             as? String ?? "—"
-        return "バージョン \(version)（\(build)）"
+        return appLocalized("バージョン \(version)（\(build)）")
     }
 }

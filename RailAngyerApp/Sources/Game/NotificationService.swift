@@ -26,22 +26,24 @@ enum NotificationService {
     /// 通り道の駅に着いた
     @MainActor
     static func notifyPassingArrival(station: String) {
-        post(title: "\(station) に到着", body: "写真を撮ったら、次の駅へ進みましょう")
+        post(title: appLocalized("\(station) に到着"),
+             body: appLocalized("写真を撮ったら、次の駅へ進みましょう"))
     }
 
     /// 着地駅に着いた（ミッションを引く駅）
     @MainActor
     static func notifyLanding(station: String, missionCount: Int) {
-        post(title: "\(station) に到着",
+        post(title: appLocalized("\(station) に到着"),
              body: missionCount > 0
-                 ? "ミッション \(missionCount) 個から1つ引きます"
-                 : "この駅にミッションはありません")
+                 ? appLocalized("ミッション \(missionCount) 個から1つ引きます")
+                 : appLocalized("この駅にミッションはありません"))
     }
 
     /// ゴールした
     @MainActor
     static func notifyCleared(station: String) {
-        post(title: "ゴール！", body: "\(station) に到達しました。おつかれさまでした")
+        post(title: appLocalized("ゴール！"),
+             body: appLocalized("\(station) に到達しました。おつかれさまでした"))
     }
 
     @MainActor

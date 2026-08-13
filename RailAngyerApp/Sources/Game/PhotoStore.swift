@@ -16,7 +16,7 @@ enum PhotoStore {
         case encodingFailed
         var description: String {
             switch self {
-            case .encodingFailed: "写真を保存できませんでした"
+            case .encodingFailed: appLocalized("写真を保存できませんでした")
             }
         }
     }

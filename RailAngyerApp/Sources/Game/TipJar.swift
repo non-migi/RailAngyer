@@ -26,10 +26,10 @@ final class TipJar {
         /// 「コーヒー1杯ぶん」のような言い方。金額だけだと選びにくい
         var caption: String {
             switch product.id {
-            case TipJar.productIDs[0]: "コーヒー1杯ぶん"
-            case TipJar.productIDs[1]: "ランチ1回ぶん"
-            case TipJar.productIDs[2]: "しっかり応援"
-            default: "応援する"
+            case TipJar.productIDs[0]: appLocalized("コーヒー1杯ぶん")
+            case TipJar.productIDs[1]: appLocalized("ランチ1回ぶん")
+            case TipJar.productIDs[2]: appLocalized("しっかり応援")
+            default: appLocalized("応援する")
             }
         }
     }

@@ -17,9 +17,16 @@ struct RoomJoinView: View {
     let sync: SyncService
     @Environment(\.dismiss) private var dismiss
 
-    private enum Mode: String, CaseIterable {
-        case join = "招待コードで参加"
-        case create = "新しく作る"
+    private enum Mode: CaseIterable {
+        case join, create
+
+        /// 切り替えに出す名前。rawValue で持つと訳せないので、引くたびに文言を解決する
+        var label: String {
+            switch self {
+            case .join:   appLocalized("招待コードで参加")
+            case .create: appLocalized("新しく作る")
+            }
+        }
     }
 
     @State private var mode: Mode = .join
@@ -72,7 +79,7 @@ struct RoomJoinView: View {
                     displayName = store.room?.members.first { $0.isMe }?.displayName ?? ""
                 }
                 if roomName.isEmpty, let course = store.room?.course?.name {
-                    roomName = "\(course)ツアー"
+                    roomName = appLocalized("\(course)ツアー")
                 }
             }
             .confirmationDialog("このルームから抜けますか",
@@ -106,13 +113,14 @@ struct RoomJoinView: View {
             // **数字だけでは、放っておいていいのか分からない。**
             // 中身はサイコロ・到着・写真・お題・予定が混ざった送信キューの残り
             LabeledContent("送信待ちの記録",
-                           value: sync.pendingCount == 0 ? "なし" : "\(sync.pendingCount) 件")
+                           value: sync.pendingCount == 0
+                               ? appLocalized("なし")
+                               : appLocalized("\(sync.pendingCount) 件"))
         } header: {
             Text("いま参加しているルーム")
         } footer: {
             if sync.pendingCount > 0 {
-                Text("「送信待ちの記録」は、まだ仲間に届いていないサイコロ・到着・写真・お題・予定の数です。"
-                     + "電波が戻ればまとめて送られるので、このままで大丈夫です。")
+                Text("「送信待ちの記録」は、まだ仲間に届いていないサイコロ・到着・写真・お題・予定の数です。電波が戻ればまとめて送られるので、このままで大丈夫です。")
             }
         }
 
@@ -145,7 +153,7 @@ struct RoomJoinView: View {
     private var modeSection: some View {
         Section {
             Picker("", selection: $mode) {
-                ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                ForEach(Mode.allCases, id: \.self) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -199,8 +207,7 @@ struct RoomJoinView: View {
     }
 
     private var switchNoticeText: String {
-        let progress = "\(store.visitedCount)駅・\(DurationText.text(store.timing.elapsedSeconds))"
-        return "いま進めている旅（\(progress)）は「過去の旅」に保存されます。写真もそのまま残ります。"
+        appLocalized("いま進めている旅（\(store.visitedCount)駅・\(DurationText.text(store.timing.elapsedSeconds))）は「過去の旅」に保存されます。写真もそのまま残ります。")
     }
 
     private var submitSection: some View {
@@ -256,7 +263,7 @@ struct RoomJoinView: View {
                       let courseId = room.course?.serverId,
                       let start = room.startStation?.serverId,
                       let goal = room.goalStation?.serverId else {
-                    errorMessage = "駅マスタを取得できませんでした。通信を確かめてください。"
+                    errorMessage = appLocalized("駅マスタを取得できませんでした。通信を確かめてください。")
                     return
                 }
                 _ = try await sync.createRoom(CreateRoomRequest(
@@ -280,9 +287,12 @@ struct RoomJoinView: View {
     private func message(for error: ApiError) -> String {
         if case .server(let status, let detail) = error {
             switch detail?.error {
-            case "invalid_invite_code": return "招待コードが違います"
-            case "display_name_taken":  return "その名前はすでに使われています。別の名前にしてください"
-            default: return detail?.message ?? "サーバーエラー（\(status)）"
+            case "invalid_invite_code":
+                return appLocalized("招待コードが違います")
+            case "display_name_taken":
+                return appLocalized("その名前はすでに使われています。別の名前にしてください")
+            default:
+                return detail?.message ?? appLocalized("サーバーエラー（\(status)）")
             }
         }
         return error.message

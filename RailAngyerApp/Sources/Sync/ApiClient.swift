@@ -283,10 +283,11 @@ enum ApiError: Error {
 
     var message: String {
         switch self {
-        case .offline: return "通信できませんでした"
-        case .notJoined: return "ルームに参加していません"
-        case .malformedResponse: return "応答を読み取れませんでした"
-        case .server(let status, let detail): return detail?.message ?? "サーバーエラー（\(status)）"
+        case .offline: return appLocalized("通信できませんでした")
+        case .notJoined: return appLocalized("ルームに参加していません")
+        case .malformedResponse: return appLocalized("応答を読み取れませんでした")
+        case .server(let status, let detail):
+            return detail?.message ?? appLocalized("サーバーエラー（\(status)）")
         }
     }
 }

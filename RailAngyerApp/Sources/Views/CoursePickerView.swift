@@ -97,9 +97,11 @@ struct CoursePickerView: View {
 
     private func courseDetail(_ course: Course) -> String {
         let stations = course.stationsInOrder
-        var parts = ["\(stations.count)駅"]
+        var parts = [appLocalized("\(stations.count)駅")]
         if let first = stations.first, let last = stations.last {
-            parts.append(course.isLoop ? "\(first.name)から一周" : "\(first.name) 〜 \(last.name)")
+            parts.append(course.isLoop
+                         ? appLocalized("\(first.name)から一周")
+                         : appLocalized("\(first.name) 〜 \(last.name)"))
         }
         if course.regionNamesForDisplay.count > 1 {
             parts.append(CourseDirectory.regionText(course))

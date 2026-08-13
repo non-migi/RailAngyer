@@ -30,7 +30,7 @@ struct InviteAcceptView: View {
             Form {
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(invitation.roomName ?? "レイルアンギャー")
+                        Text(invitation.roomName ?? appLocalized("レイルアンギャー"))
                             .font(.headline)
                         Text("招待コード　\(invitation.inviteCode)")
                             .font(.subheadline.monospaced()).foregroundStyle(.secondary)
@@ -52,10 +52,11 @@ struct InviteAcceptView: View {
                     } header: {
                         Text("あなたの名前")
                     } footer: {
-                        Text("ルームの中で表示されます。"
-                             + (sync.isJoined
-                                ? "\n**いま参加しているルームからは抜けます。**この端末の記録は残ります。"
-                                : ""))
+                        if sync.isJoined {
+                            Text("ルームの中で表示されます。\n**いま参加しているルームからは抜けます。**この端末の記録は残ります。")
+                        } else {
+                            Text("ルームの中で表示されます。")
+                        }
                     }
                 }
 
@@ -101,7 +102,7 @@ struct InviteAcceptView: View {
         } catch let error as ApiError {
             errorMessage = message(for: error)
         } catch {
-            errorMessage = "参加できませんでした。電波の届くところで試してください。"
+            errorMessage = appLocalized("参加できませんでした。電波の届くところで試してください。")
         }
     }
 
@@ -109,9 +110,9 @@ struct InviteAcceptView: View {
         if case .server(_, let detail) = error {
             switch detail?.error {
             case "invalid_invite_code":
-                return "招待コードが違います。リンクが古いかもしれません。"
+                return appLocalized("招待コードが違います。リンクが古いかもしれません。")
             case "display_name_taken":
-                return "その名前はすでに使われています。別の名前にしてください"
+                return appLocalized("その名前はすでに使われています。別の名前にしてください")
             default:
                 return detail?.message ?? error.message
             }

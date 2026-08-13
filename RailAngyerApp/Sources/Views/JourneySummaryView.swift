@@ -9,6 +9,8 @@ struct JourneySummaryView: View {
 
     @Bindable var store: GameSessionStore
     @Environment(\.dismiss) private var dismiss
+    /// 共有画像の描画に流す。`ImageRenderer` は画面の環境を継いでくれない
+    @Environment(\.locale) private var locale
     @State private var sharedImage: ShareableImage?
     @State private var showingPhotos = false
 
@@ -51,7 +53,7 @@ struct JourneySummaryView: View {
                 // 過去の旅の写真まで混ぜると、その日の記録ではなくなる。
                 // 消す操作だけはここからも効かせる（見ている場で直せるように）
                 PhotoGalleryView(items: store.photoItems,
-                                 title: "この旅の写真",
+                                 title: appLocalized("この旅の写真"),
                                  onDelete: { item in
                                      if let id = item.photoId { store.deletePhoto(id: id) }
                                  })
@@ -178,13 +180,16 @@ struct JourneySummaryView: View {
         .padding(.vertical, 2)
     }
 
-    /// 共有画像を作る。`ImageRenderer` に同じカードを描かせるので、画面と食い違わない
+    /// 共有画像を作る。`ImageRenderer` に同じカードを描かせるので、画面と食い違わない。
+    /// **言語は明示して渡す。** `ImageRenderer` は環境の `\.locale` を継がないため、
+    /// 付けないと画像だけ端末の言語で書き出されてしまう
     @MainActor
     private func render(_ summary: JourneySummary) -> ShareableImage? {
         let renderer = ImageRenderer(content:
             SummaryCard(summary: summary, forExport: true)
                 .frame(width: 600)
-                .background(Color(.systemBackground)))
+                .background(Color(.systemBackground))
+                .environment(\.locale, locale))
         renderer.scale = 3
         guard let image = renderer.uiImage else { return nil }
         return ShareableImage(image: image)
@@ -312,6 +317,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 /// 現在の旅と保存済みの旅をまとめて見る一覧。
 struct JourneyHistoryView: View {
     @Bindable var store: GameSessionStore
+    @Environment(\.locale) private var locale
     @State private var showingCurrent = false
 
     var body: some View {
@@ -362,7 +368,7 @@ struct JourneyHistoryView: View {
                 }
             }
             Text(archive.endedAt.formatted(
-                .dateTime.locale(Locale(identifier: "ja_JP")).year().month().day().weekday()))
+                .dateTime.locale(locale).year().month().day().weekday()))
                 .font(.caption).foregroundStyle(.secondary)
             HStack(spacing: 14) {
                 Label(DurationText.text(archive.elapsedSeconds), systemImage: "clock")
@@ -379,6 +385,7 @@ struct JourneyHistoryView: View {
 
 private struct JourneyArchiveDetailView: View {
     let archive: JourneyArchive
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ScrollView {
@@ -387,7 +394,7 @@ private struct JourneyArchiveDetailView: View {
                     Text(archive.courseName.nilIfEmpty ?? archive.roomName)
                         .font(.largeTitle.bold())
                     Text(archive.endedAt.formatted(
-                        .dateTime.locale(Locale(identifier: "ja_JP"))
+                        .dateTime.locale(locale)
                             .year().month().day().weekday().hour().minute()))
                         .foregroundStyle(.secondary)
                 }
@@ -423,7 +430,7 @@ private struct JourneyArchiveDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func archiveStat(_ title: String, _ value: String) -> some View {
+    private func archiveStat(_ title: LocalizedStringKey, _ value: String) -> some View {
         VStack(spacing: 5) {
             Text(value).font(.title3.bold()).minimumScaleFactor(0.7)
             Text(title).font(.caption).foregroundStyle(.secondary)

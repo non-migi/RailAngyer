@@ -55,7 +55,7 @@ struct StartFromScheduleView: View {
                 }
             }
         }
-        .environment(\.locale, Locale(identifier: "ja_JP"))
+        // 時計は日本時間のまま（場所の属性）。言葉はアプリの言語設定に任せる
         .environment(\.timeZone, .japanStandard)
     }
 
@@ -80,17 +80,17 @@ struct StartFromScheduleView: View {
         let course = store.courses.first { $0.name == schedule.courseName }
         let start = course?.stations.first { $0.orderNo == schedule.startOrder }?.name ?? "—"
         if schedule.isLap {
-            return "\(schedule.courseName)　\(start) から一周　サイコロ1〜\(schedule.diceMax)"
+            return appLocalized("\(schedule.courseName)　\(start) から一周　サイコロ1〜\(schedule.diceMax)")
         }
         let goal = course?.stations.first { $0.orderNo == schedule.goalOrder }?.name ?? "—"
-        return "\(schedule.courseName)　\(start) → \(goal)　サイコロ1〜\(schedule.diceMax)"
+        return appLocalized("\(schedule.courseName)　\(start) → \(goal)　サイコロ1〜\(schedule.diceMax)")
     }
 
     private var currentRuleText: String {
         guard let room = store.room, let course = room.course else { return "" }
         let start = room.startStation?.name ?? "—"
         let goal = room.goalStation?.name ?? "—"
-        return "いまの設定：\(course.name)　\(start) → \(goal)　サイコロ1〜\(room.diceMax)"
+        return appLocalized("いまの設定：\(course.name)　\(start) → \(goal)　サイコロ1〜\(room.diceMax)")
     }
 
     private func choose(_ schedule: Schedule) {

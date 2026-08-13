@@ -155,8 +155,7 @@ struct TurnFlowView: View {
                         Text("となりの駅です")
                             .font(.footnote).foregroundStyle(.secondary)
                     } else {
-                        Text("途中の " + passing.map(store.stationName).joined(separator: "・")
-                             + " も1駅ずつ歩いて訪れます")
+                        Text("途中の \(passing.map(store.stationName).joined(separator: "・")) も1駅ずつ歩いて訪れます")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     if store.engine?.isCleared(landing) == true {
@@ -273,8 +272,8 @@ struct TurnFlowView: View {
             } else if let distance = location.distanceToTarget {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(distance >= 1000
-                         ? String(format: "直線 約 %.1f km", distance / 1000)
-                         : String(format: "直線 約 %.0f m", distance))
+                         ? appLocalized("直線 約 \(String(format: "%.1f", distance / 1000)) km")
+                         : appLocalized("直線 約 \(Int(distance.rounded())) m"))
                         .font(.title3.monospacedDigit().weight(.semibold))
                     if routes.isLoading {
                         ProgressView().controlSize(.small)
@@ -382,8 +381,7 @@ struct TurnFlowView: View {
                         .foregroundStyle(Theme.mission)
                 }
 
-                Text("すぐに決められないお題は「あとで」。歩きながら続けられます。"
-                     + "達成したかは、旅の画面の「旅のお題」から後で付けられます。")
+                Text("すぐに決められないお題は「あとで」。歩きながら続けられます。達成したかは、旅の画面の「旅のお題」から後で付けられます。")
                     .font(.footnote).foregroundStyle(.secondary)
             } else {
                 Text("ミッションはありません").foregroundStyle(.secondary)
@@ -499,10 +497,10 @@ struct TurnFlowView: View {
     private func effectText(_ m: Mission) -> String? {
         switch m.effectType {
         case .none: nil
-        case .forward: "終わったら \(m.effectValue ?? 0) 駅 進む"
-        case .back: "終わったら \(m.effectValue ?? 0) 駅 戻る"
-        case .rollAgain: "終わったら もう一度サイコロを振る"
-        case .jump: "終わったら \(m.effectStation?.name ?? "?") へ移動する"
+        case .forward: appLocalized("終わったら \(m.effectValue ?? 0) 駅 進む")
+        case .back: appLocalized("終わったら \(m.effectValue ?? 0) 駅 戻る")
+        case .rollAgain: appLocalized("終わったら もう一度サイコロを振る")
+        case .jump: appLocalized("終わったら \(m.effectStation?.name ?? "?") へ移動する")
         }
     }
 }

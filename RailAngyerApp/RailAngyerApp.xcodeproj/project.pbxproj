@@ -11,6 +11,7 @@
 		034D555ADDE964E63F563C0D /* HowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B709382C671CEECC060BB237 /* HowToPlayView.swift */; };
 		045FA7877946D72F16F02494 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BE26FB8C5E7CF7D919233068 /* PrivacyInfo.xcprivacy */; };
 		04C0AE56A4F2D2F759E6D415 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36DD89E35D1609C0821E07B /* GamePhase.swift */; };
+		060378F4A3AD400ADB88BF33 /* AppLanguageLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5F1912EA76FF4A84AA25CC /* AppLanguageLocalizationTests.swift */; };
 		060D158EC31C6212979CE8B9 /* DocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732496349CF8E9CF1EFB2C60 /* DocumentView.swift */; };
 		082E2A379FE47761F6BD6976 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E8C15DCE6423AA6C330097 /* NotificationService.swift */; };
 		0B970CE292C1D02F674C526B /* MasterSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F5289A8DF49229292880FD /* MasterSeeder.swift */; };
@@ -117,6 +118,7 @@
 /* Begin PBXFileReference section */
 		04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrivalUITests.swift; sourceTree = "<group>"; };
 		05C6FD8CFBE707DD0130903A /* ScheduleListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleListView.swift; sourceTree = "<group>"; };
+		0C5F1912EA76FF4A84AA25CC /* AppLanguageLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguageLocalizationTests.swift; sourceTree = "<group>"; };
 		0E4DAEE06CECDA5997CE30E7 /* Terms.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Terms.md; sourceTree = "<group>"; };
 		114D8464D7F83CF32457259D /* RailAngyerAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RailAngyerAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1156CFFC9852BBD282BE20DE /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -418,6 +420,7 @@
 			isa = PBXGroup;
 			children = (
 				3690BE1B4A227DE6AC162B23 /* Fixtures */,
+				0C5F1912EA76FF4A84AA25CC /* AppLanguageLocalizationTests.swift */,
 				7601E3978780FCBEA0C739CB /* CourseDirectoryTests.swift */,
 				37E2B5CCF0C7C821376CEA9A /* CourseSelectionTests.swift */,
 				5B5942E186875BDDD8C3A2E0 /* DanglingReferenceTests.swift */,
@@ -545,6 +548,7 @@
 				en,
 				es,
 				fr,
+				hi,
 				ja,
 				ko,
 				ru,
@@ -616,6 +620,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				060378F4A3AD400ADB88BF33 /* AppLanguageLocalizationTests.swift in Sources */,
 				D96CB8A376C418A4182CAF8C /* CourseDirectoryTests.swift in Sources */,
 				13D49EE28BADFE00529E4BB2 /* CourseSelectionTests.swift in Sources */,
 				DAB117EF46FDCCD3A0CA9570 /* DanglingReferenceTests.swift in Sources */,

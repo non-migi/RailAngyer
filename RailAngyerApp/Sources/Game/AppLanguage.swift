@@ -13,7 +13,7 @@ import SwiftUI
 enum AppLanguage: String, CaseIterable, Identifiable {
     /// 端末の設定に従う（既定）
     case system
-    case ja, en, de, es, fr, ko, ru
+    case ja, en, de, es, fr, hi, ko, ru
     case zhHans = "zh-Hans"
 
     var id: String { rawValue }
@@ -27,17 +27,57 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     /// （読めない言語の名前を、読めない言語で探すことになるのを避ける）
     var label: String {
         switch self {
-        case .system: "端末の設定に合わせる"
+        case .system: appLocalized("端末の設定に合わせる")
         case .ja:     "日本語"
         case .en:     "English"
         case .de:     "Deutsch"
         case .es:     "Español"
         case .fr:     "Français"
+        case .hi:     "हिन्दी"
         case .ko:     "한국어"
         case .ru:     "Русский"
         case .zhHans: "简体中文"
         }
     }
+
+    /// `UserDefaults` の保存キー。`LanguageSetting` と共用する
+    static let storageKey = "appLanguage"
+
+    /// いま選ばれている言語。**ビュー階層の外から読むための入口**
+    /// （通知や共有文は `\.locale` の環境値を受け取れない）。
+    /// 保存キーと `locale` の導出は `LanguageSetting` と同じ
+    static var current: AppLanguage {
+        let raw = UserDefaults.standard.string(forKey: storageKey) ?? ""
+        return AppLanguage(rawValue: raw) ?? .system
+    }
+
+    /// いま選ばれている言語の `Locale`。`system` なら端末のものをそのまま使う
+    static var currentLocale: Locale {
+        current.locale ?? Locale.autoupdatingCurrent
+    }
+
+    /// いま選ばれている言語の文言が入った `Bundle`。
+    ///
+    /// `String(localized:)` を素で呼ぶと**端末のシステム言語**で解決され、
+    /// アプリ内の言語切り替えに追随しない。選んだ言語の `.lproj` を直接指した
+    /// バンドルを通すと、切り替えたその場から新しい言語で引ける。
+    /// `system` のときと、その言語の訳がまだ無いときは `.main` に任せる
+    static var bundle: Bundle {
+        guard let code = current.locale?.identifier,
+              let path = Bundle.main.path(forResource: code, ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return .main }
+        return bundle
+    }
+}
+
+/// アプリ内で選んだ言語で文言を引く。
+///
+/// **`String(localized:)` を直接使わず、必ずここを通す。**
+/// 素の `String(localized:)` は端末のシステム言語で固まり、
+/// アプリ内の言語切り替え（`AppLanguage` / `LanguageSetting`）に追随しない。
+/// 言語を切り替えたあと画面が描き直されれば、ここを通した文言は新しい言語で出る
+func appLocalized(_ key: String.LocalizationValue) -> String {
+    String(localized: key, bundle: AppLanguage.bundle, locale: AppLanguage.currentLocale)
 }
 
 /// いま選ばれている言語。画面のいちばん外側で `\.locale` に流す
@@ -45,7 +85,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 @MainActor
 final class LanguageSetting {
 
-    private static let key = "appLanguage"
+    private static let key = AppLanguage.storageKey
 
     var selected: AppLanguage {
         didSet {

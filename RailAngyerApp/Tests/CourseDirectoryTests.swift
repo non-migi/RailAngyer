@@ -125,11 +125,13 @@ struct CourseDirectoryTests {
 
         let japan = try #require(CourseDirectory(courses: store.courses)
             .countries.first { $0.id == "JP" })
-        let other = try #require(japan.regions.first { $0.name == "その他" })
+        // 「その他」は訳される文言になった。端末の言語がどこでも通るよう、キー経由で引く
+        let fallbackName = appLocalized("その他")
+        let other = try #require(japan.regions.first { $0.name == fallbackName })
 
         #expect(other.courses.map(\.name) == ["むかしのコース"])
         // 一覧に無い名前は後ろへ回す。既知の県が先に並ぶ
-        #expect(japan.regions.last?.name == "その他")
+        #expect(japan.regions.last?.name == fallbackName)
     }
 
     @Test("マスタを読み直しても国と県は消えない")

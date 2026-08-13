@@ -20,9 +20,9 @@ enum MissionOutcome: Equatable {
 
     var label: String {
         switch self {
-        case .inProgress: "進行中"
-        case .done:       "達成"
-        case .missed:     "未達成"
+        case .inProgress: appLocalized("進行中")
+        case .done:       appLocalized("達成")
+        case .missed:     appLocalized("未達成")
         }
     }
 

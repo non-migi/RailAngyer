@@ -126,7 +126,9 @@ struct MissionEditorView: View {
     private var sectionCaption: String {
         let name = course?.name ?? ""
         guard let start = stations.first, let goal = stations.last else { return name }
-        return isLap ? "\(name)　\(start.name) から一周" : "\(name)　\(start.name) → \(goal.name)"
+        return isLap
+            ? appLocalized("\(name)　\(start.name) から一周")
+            : appLocalized("\(name)　\(start.name) → \(goal.name)")
     }
 
     // MARK: - 自分のお題

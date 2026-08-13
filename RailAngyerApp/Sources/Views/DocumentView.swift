@@ -16,8 +16,8 @@ struct DocumentView: View {
 
         var title: String {
             switch self {
-            case .terms:   return "利用規約"
-            case .privacy: return "プライバシーポリシー"
+            case .terms:   return appLocalized("利用規約")
+            case .privacy: return appLocalized("プライバシーポリシー")
             }
         }
     }
@@ -48,7 +48,7 @@ struct DocumentView: View {
     private var text: AttributedString {
         guard let url = Bundle.main.url(forResource: kind.rawValue, withExtension: "md"),
               let raw = try? String(contentsOf: url, encoding: .utf8) else {
-            return AttributedString("本文を読み込めませんでした。")
+            return AttributedString(appLocalized("本文を読み込めませんでした。"))
         }
         return (try? AttributedString(
             markdown: raw,

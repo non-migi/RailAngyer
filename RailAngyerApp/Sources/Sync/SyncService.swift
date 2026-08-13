@@ -466,7 +466,7 @@ final class SyncService {
             return error.message
         } catch {
             lastError = String(describing: error)
-            return "みんなに届けられませんでした。電波が戻ったら設定を開き直してください"
+            return appLocalized("みんなに届けられませんでした。電波が戻ったら設定を開き直してください")
         }
     }
 

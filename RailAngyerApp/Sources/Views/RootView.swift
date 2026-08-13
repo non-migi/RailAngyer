@@ -412,6 +412,8 @@ private struct HomeDashboardView: View {
     let showRecords: () -> Void
     let showRoom: () -> Void
     let showSettings: () -> Void
+    /// 日付の言葉をアプリの言語設定に追随させる（`.formatted` は環境を見ない）
+    @Environment(\.locale) private var locale
 
     private var hasProgress: Bool { !(store.room?.turns.isEmpty ?? true) }
 
@@ -442,7 +444,7 @@ private struct HomeDashboardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(hasProgress ? "旅を続けよう" : "次の駅へ、歩き出そう")
                         .font(.title2.bold())
-                    Text(store.room?.course?.name ?? "コースを準備中")
+                    Text(store.room?.course?.name ?? appLocalized("コースを準備中"))
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -452,7 +454,7 @@ private struct HomeDashboardView: View {
 
             HStack(spacing: 0) {
                 metric("現在地", store.stationName(store.currentOrder))
-                metric("訪問", "\(store.visitedCount)駅")
+                metric("訪問", appLocalized("\(store.visitedCount)駅"))
                 metric("時間", DurationText.text(store.timing.elapsedSeconds))
             }
 
@@ -495,7 +497,7 @@ private struct HomeDashboardView: View {
                 if let schedule = store.nextSchedule {
                     Text(schedule.title).font(.headline)
                     Text(schedule.startAt.formatted(
-                        .dateTime.locale(Locale(identifier: "ja_JP"))
+                        .dateTime.locale(locale)
                             .month().day().weekday().hour().minute()))
                         .foregroundStyle(.secondary)
                     if !schedule.courseName.isEmpty {
@@ -576,7 +578,7 @@ private struct HomeDashboardView: View {
     }
 
     private func dateText(_ date: Date) -> String {
-        date.formatted(.dateTime.locale(Locale(identifier: "ja_JP")).year().month().day())
+        date.formatted(.dateTime.locale(locale).year().month().day())
     }
 
     /// 仲間と遊ぶための入口。設定の奥に置くと、そもそも在ることに気づけない。
@@ -603,7 +605,7 @@ private struct HomeDashboardView: View {
 
     private var joinedRoomBody: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(store.room?.name ?? "参加中")
+            Text(store.room?.name ?? appLocalized("参加中"))
                 .font(.title3.bold())
                 .lineLimit(2)
             Text(roomSummary)
@@ -638,7 +640,7 @@ private struct HomeDashboardView: View {
 
     /// コース名は無いことがある。そのときは人数だけを出す
     private var roomSummary: String {
-        let people = "\(max(store.room?.members.count ?? 1, 1))人が参加中"
+        let people = appLocalized("\(max(store.room?.members.count ?? 1, 1))人が参加中")
         guard let course = store.room?.course?.name, !course.isEmpty else { return people }
         return "\(course)・\(people)"
     }
@@ -650,11 +652,12 @@ private struct HomeDashboardView: View {
             .map(\.displayName)
         guard !names.isEmpty else { return "" }
         if names.count <= 3 { return names.joined(separator: "・") }
-        return names.prefix(3).joined(separator: "・") + "・ほか\(names.count - 3)人"
+        return names.prefix(3).joined(separator: "・") + "・"
+            + appLocalized("ほか\(names.count - 3)人")
     }
 
     private func dashboardCard<Content: View>(
-        title: String, icon: String, @ViewBuilder content: () -> Content
+        title: LocalizedStringKey, icon: String, @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {

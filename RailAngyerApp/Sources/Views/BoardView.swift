@@ -119,21 +119,22 @@ struct BoardView: View {
         HStack(spacing: 8) {
             // ホームの「お題」は**書く**ための入口。こちらは**この旅で引いたお題**を見るところで、
             // 行き先が違うので同じ導線の重複にはならない
-            quickAction("旅のお題", systemImage: "checkmark.circle",
+            quickAction(appLocalized("旅のお題"), systemImage: "checkmark.circle",
                         badge: store.unresolvedMissionTurns.count) {
                 showingJourneyMissions = true
             }
-            quickAction("ふりかえり", systemImage: "book.closed") {
+            quickAction(appLocalized("ふりかえり"), systemImage: "book.closed") {
                 showingSummary = true
             }
-            quickAction("設定", systemImage: "gearshape") {
+            quickAction(appLocalized("設定"), systemImage: "gearshape") {
                 showingSettings = true
             }
         }
         .padding(.top, 5)
     }
 
-    /// - Parameter badge: 0 より大きいときだけ数を添える（進行中のお題の件数）
+    /// - Parameter badge: 0 より大きいときだけ数を添える（進行中のお題の件数）。
+    /// - Parameter title: 訳し済みの文字列を渡す（数を添えて組むため `String` で受ける）
     private func quickAction(
         _ title: String,
         systemImage: String,
@@ -148,7 +149,7 @@ struct BoardView: View {
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle(radius: 10))
-        .accessibilityLabel(badge > 0 ? "\(title)　進行中 \(badge) 件" : title)
+        .accessibilityLabel(badge > 0 ? appLocalized("\(title)　進行中 \(badge) 件") : title)
     }
 
     // MARK: - 路線図
@@ -185,12 +186,12 @@ struct BoardView: View {
     /// 戻る口の文言。いま何の途中なのかが分かるようにする
     private var resumeTitle: String {
         switch store.phase {
-        case .walking(let next, _):        "\(store.stationName(next)) へ歩く"
-        case .effectWalking(let next, _):  "\(store.stationName(next)) へ歩く"
-        case .landed:                      "お題を引く"
-        case .mission:                     "お題を続ける"
-        case .arrivedPassing:              "次の駅へ"
-        default:                           "旅を続ける"
+        case .walking(let next, _):        appLocalized("\(store.stationName(next)) へ歩く")
+        case .effectWalking(let next, _):  appLocalized("\(store.stationName(next)) へ歩く")
+        case .landed:                      appLocalized("お題を引く")
+        case .mission:                     appLocalized("お題を続ける")
+        case .arrivedPassing:              appLocalized("次の駅へ")
+        default:                           appLocalized("旅を続ける")
         }
     }
 
@@ -250,18 +251,21 @@ struct BoardView: View {
         if !store.hasStartedJourney {
             Text("スタートの \(store.stationName(store.currentOrder)) も1駅目です")
                 .font(.caption).foregroundStyle(.secondary)
-            secondary("\(store.stationName(store.currentOrder)) に到着した",
+            secondary(appLocalized("\(store.stationName(store.currentOrder)) に到着した"),
                       systemImage: "mappin.and.ellipse") {
                 store.startJourney()
             }
         } else if store.currentVisit != nil {
-            secondary(CameraPicker.isCameraAvailable ? "この駅で写真を撮る" : "この駅の写真を選ぶ",
+            secondary(CameraPicker.isCameraAvailable
+                          ? appLocalized("この駅で写真を撮る")
+                          : appLocalized("この駅の写真を選ぶ"),
                       systemImage: "camera") {
                 showingCamera = true
             }
         }
     }
 
+    /// - Parameter title: 訳し済みの文字列を渡す（駅名を差し込んで組むため `String` で受ける）
     private func secondary(_ title: String, systemImage: String,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -331,7 +335,7 @@ private struct StationRow: View {
 
     private var dotSize: CGFloat { isCurrent ? 20 : 12 }
 
-    private func badge(_ text: String) -> some View {
+    private func badge(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.caption2)
             .padding(.horizontal, 6).padding(.vertical, 2)
@@ -436,7 +440,7 @@ private struct JourneyMissionsView: View {
     /// 何駅目の、誰が書いたお題か
     private func heading(_ turn: Turn) -> some View {
         let station = turn.landingPosition ?? turn.landingStation?.orderNo
-        let author = turn.selectedMission?.member?.displayName ?? "だれか"
+        let author = turn.selectedMission?.member?.displayName ?? appLocalized("だれか")
         return Text("\(station.map(store.stationName) ?? "-")　\(author) が書いた")
             .font(.caption).foregroundStyle(.secondary)
     }

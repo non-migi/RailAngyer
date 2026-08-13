@@ -333,7 +333,9 @@ final class GameSessionStore {
 
         let text = first.content.trimmingCharacters(in: .whitespacesAndNewlines)
         let head = text.count > limit ? text.prefix(limit) + "…" : text[...]
-        return missions.count > 1 ? "\(head)　ほか\(missions.count - 1)件" : String(head)
+        return missions.count > 1
+            ? appLocalized("\(String(head))　ほか\(missions.count - 1)件")
+            : String(head)
     }
 
     /// お題が書かれている駅の番号（地図にピンを立てるため）
@@ -402,11 +404,13 @@ final class GameSessionStore {
                      in course: Course? = nil) -> String? {
         let targetCourse = course ?? room?.course
         guard let room, let me,
-              let target = station(order, in: targetCourse) else { return "ルームがありません" }
+              let target = station(order, in: targetCourse) else {
+            return appLocalized("ルームがありません")
+        }
 
         // 同じ駅に2個目は作れない。差し替えは同じお題を編集する
         if let duplicate = myMission(at: order, in: targetCourse), duplicate.id != existing?.id {
-            return "\(target.name)にはすでにあなたのお題があります"
+            return appLocalized("\(target.name)にはすでにあなたのお題があります")
         }
 
         let jumpStation = effect.needsStation
@@ -570,9 +574,9 @@ final class GameSessionStore {
     /// - Returns: 適用できなければ理由
     @discardableResult
     func applySchedule(_ schedule: Schedule) -> String? {
-        guard let room else { return "ルームがありません" }
+        guard let room else { return appLocalized("ルームがありません") }
         if hasStartedJourney || !room.turns.isEmpty {
-            return "すでに歩き始めています。予定の「記録を保存して新しい旅へ」を押すと、この予定で始められます。"
+            return appLocalized("すでに歩き始めています。予定の「記録を保存して新しい旅へ」を押すと、この予定で始められます。")
         }
 
         // コースは予定に決めたものへ切り替える。
@@ -581,12 +585,14 @@ final class GameSessionStore {
             ?? (schedule.courseName.isEmpty ? nil : courses.first { $0.name == schedule.courseName })
         if !schedule.courseName.isEmpty && planned == nil {
             // 手元に無い路線へ半端に合わせるより、何もしない方が壊れない
-            return "この予定のコース（\(schedule.courseName)）が端末にありません"
+            return appLocalized("この予定のコース（\(schedule.courseName)）が端末にありません")
         }
 
         // コースが違うなら先に切り替える（区間とお題の後始末は updateCourse が引き受ける）
         if let planned, room.course !== planned {
-            guard updateCourse(planned) else { return "コースを切り替えられませんでした" }
+            guard updateCourse(planned) else {
+                return appLocalized("コースを切り替えられませんでした")
+            }
         }
 
         let stations = room.course?.stations ?? []
@@ -642,28 +648,28 @@ final class GameSessionStore {
                       arrivalRadius: Double? = nil,
                       isShared: Bool? = nil, timeZoneIdentifier: String? = nil) -> String? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return "予定の名前を入力してください" }
-        if trimmed.count > 100 { return "予定の名前は100文字までです" }
+        if trimmed.isEmpty { return appLocalized("予定の名前を入力してください") }
+        if trimmed.count > 100 { return appLocalized("予定の名前は100文字までです") }
 
         // サーバーでも同じ判定をしているが、圏外で書いたものが後から弾かれると分かりにくい
         if let existing, let owner = existing.createdById,
            let me = me?.id, owner != me {
-            return "予定を立てた人だけが変更できます"
+            return appLocalized("予定を立てた人だけが変更できます")
         }
 
         let selectedCourse = course ?? room?.course
         let selectedStart = startOrder ?? room?.startStation?.orderNo ?? 0
         let selectedGoal = goalOrder ?? room?.goalStation?.orderNo ?? 0
-        guard let selectedCourse else { return "コースを選んでください" }
+        guard let selectedCourse else { return appLocalized("コースを選んでください") }
 
         // **一周は同じ駅で始まって同じ駅で終わる。** 山手線を東京から出て東京へ戻る形。
         // 一周でないときだけ「別の駅」を求める
         let lapping = isLap ?? existing?.isLap ?? false
         if lapping && !selectedCourse.isLoop {
-            return "このコースは一周できません"
+            return appLocalized("このコースは一周できません")
         }
         if !lapping && selectedStart == selectedGoal {
-            return "スタートとゴールは別の駅にしてください"
+            return appLocalized("スタートとゴールは別の駅にしてください")
         }
 
         let schedule = existing ?? Schedule(title: trimmed, startAt: startAt)
@@ -989,7 +995,7 @@ final class GameSessionStore {
                                      localFileName: photo.localFileName.nilIfEmpty,
                                      stationName: visit.station?.name,
                                      takenAt: photo.takenAt,
-                                     authorName: author?.displayName ?? "だれか",
+                                     authorName: author?.displayName ?? appLocalized("だれか"),
                                      isMine: author == nil || author?.id == meId)
                 }
             }

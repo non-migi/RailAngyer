@@ -124,7 +124,8 @@ struct StartFromScheduleTests {
                                        meetPlace: nil, course: nanboku,
                                        startOrder: 1, goalOrder: 1, diceMax: 6, isLap: true)
 
-        #expect(error == "このコースは一周できません")
+        // 文言は訳される。端末の言語がどこでも通るよう、キー経由で引いて比べる
+        #expect(error == appLocalized("このコースは一周できません"))
     }
 
     @Test("一周でなければ、同じ駅の区間はこれまでどおり弾く")
@@ -133,7 +134,7 @@ struct StartFromScheduleTests {
                                        meetPlace: nil, course: try course("山手線"),
                                        startOrder: 3, goalOrder: 3, diceMax: 6)
 
-        #expect(error == "スタートとゴールは別の駅にしてください")
+        #expect(error == appLocalized("スタートとゴールは別の駅にしてください"))
     }
 
     @Test("一周の予定を選ぶと、一周する設定で始まる")

@@ -42,14 +42,14 @@ final class RouteProvider {
     var distanceText: String? {
         guard let route else { return nil }
         return route.distance >= 1000
-            ? String(format: "徒歩 約 %.1f km", route.distance / 1000)
-            : String(format: "徒歩 約 %.0f m", route.distance)
+            ? appLocalized("徒歩 約 \(String(format: "%.1f", route.distance / 1000)) km")
+            : appLocalized("徒歩 約 \(Int(route.distance.rounded())) m")
     }
 
     var durationText: String? {
         guard let route else { return nil }
         let minutes = max(1, Int(route.expectedTravelTime / 60))
-        return "約 \(minutes) 分"
+        return appLocalized("約 \(minutes) 分")
     }
 
     /// 最初の曲がり角の指示（あれば）

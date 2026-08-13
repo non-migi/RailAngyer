@@ -37,7 +37,7 @@ struct PhotoGalleryView: View {
         /// サムネイルに添える短い説明。仲間の写真なら誰が撮ったのかまで出す
         var caption: String {
             guard let photographer else { return stationName }
-            return "\(stationName)・\(photographer)"
+            return appLocalized("\(stationName)・\(photographer)")
         }
 
         init(photoId: UUID? = nil, fileName: String, stationName: String, takenAt: Date,
@@ -60,7 +60,7 @@ struct PhotoGalleryView: View {
     }
 
     let items: [Item]
-    var title: String = "写真"
+    var title: String = appLocalized("写真")
     /// 開いたときと、引っ張ったときに走らせる取り込み
     var onRefresh: (() async -> Void)?
     /// 自分の写真を消す。渡されなければ削除の導線を出さない
@@ -132,7 +132,7 @@ struct PhotoGalleryView: View {
 
         for archive in store.archives {
             let label = archive.roomName.isEmpty ? archive.courseName : archive.roomName
-            let journeyName = label.isEmpty ? "過去の旅" : label
+            let journeyName = label.isEmpty ? appLocalized("過去の旅") : label
             for photo in archive.photos
             where !seen.contains(photo.fileName) && PhotoStore.exists(photo.fileName) {
                 seen.insert(photo.fileName)
@@ -202,7 +202,7 @@ struct PhotoViewerView: View {
             .tabViewStyle(.page)
             .background(Color.black.ignoresSafeArea())
             .onAppear { if currentId.isEmpty { currentId = current.id } }
-            .navigationTitle(shown?.stationName ?? "写真")
+            .navigationTitle(shown?.stationName ?? appLocalized("写真"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // **端末の写真アプリへ持ち出せるようにする。**

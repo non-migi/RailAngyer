@@ -16,13 +16,15 @@ extension TimeZone {
 }
 
 extension Calendar {
-    /// 日本時間・日本語の暦。曜日は日曜始まり
+    /// 日本時間の暦。曜日は日曜始まり
     static var japanStandard: Calendar { japan(in: .japanStandard) }
 
-    /// 指定した時間帯の日本語暦
+    /// 指定した時間帯の暦。
+    /// **時間帯と週の始まりは場所の属性**なのでここで固定し、
+    /// 曜日などの言葉だけアプリの言語設定に追随させる
     static func japan(in timeZone: TimeZone) -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "ja_JP")
+        calendar.locale = AppLanguage.currentLocale
         calendar.timeZone = timeZone
         calendar.firstWeekday = 1
         return calendar
@@ -77,7 +79,7 @@ final class Course {
 
     /// 一覧に出す都道府県。古い端末のデータで空なら「その他」にまとめる
     var regionNamesForDisplay: [String] {
-        regionNames.isEmpty ? ["その他"] : regionNames
+        regionNames.isEmpty ? [appLocalized("その他")] : regionNames
     }
 
     var stationsInOrder: [Station] { stations.sorted { $0.orderNo < $1.orderNo } }
@@ -248,18 +250,20 @@ final class Mission {
     static func validationError(content: String, effectType: EffectType,
                                 effectValue: Int?, hasEffectStation: Bool) -> String? {
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return "お題が空です" }
-        if trimmed.count > 300 { return "お題は300文字までです" }
+        if trimmed.isEmpty { return appLocalized("お題が空です") }
+        if trimmed.count > 300 { return appLocalized("お題は300文字までです") }
 
         if effectType.needsValue {
-            guard let v = effectValue, (1...9).contains(v) else { return "駅数は1〜9で指定してください" }
+            guard let v = effectValue, (1...9).contains(v) else {
+                return appLocalized("駅数は1〜9で指定してください")
+            }
         } else if effectValue != nil {
-            return "この効果では駅数を指定できません"
+            return appLocalized("この効果では駅数を指定できません")
         }
         if effectType.needsStation {
-            guard hasEffectStation else { return "移動先の駅を選んでください" }
+            guard hasEffectStation else { return appLocalized("移動先の駅を選んでください") }
         } else if hasEffectStation {
-            return "この効果では移動先を指定できません"
+            return appLocalized("この効果では移動先を指定できません")
         }
         return nil
     }
@@ -453,8 +457,8 @@ enum ScheduleMissionVisibility: Int, CaseIterable {
 
     var label: String {
         switch self {
-        case .everyone:   return "全員に見える"
-        case .landedOnly: return "着いた人だけ"
+        case .everyone:   return appLocalized("全員に見える")
+        case .landedOnly: return appLocalized("着いた人だけ")
         }
     }
 }
@@ -541,9 +545,9 @@ enum AttendanceStatus: Int, CaseIterable {
 
     var label: String {
         switch self {
-        case .undecided: return "未定"
-        case .going:     return "参加"
-        case .notGoing:  return "不参加"
+        case .undecided: return appLocalized("未定")
+        case .going:     return appLocalized("参加")
+        case .notGoing:  return appLocalized("不参加")
         }
     }
 }
@@ -591,25 +595,25 @@ enum MissionStyle: Int, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .team:       return "みんなで1つ"
-        case .individual: return "めいめいで"
+        case .team:       return appLocalized("みんなで1つ")
+        case .individual: return appLocalized("めいめいで")
         }
     }
 
     var detail: String {
         switch self {
         case .team:
-            return "着いた駅でお題を1つ引いて、みんなで一緒に取り組みます。"
+            return appLocalized("着いた駅でお題を1つ引いて、みんなで一緒に取り組みます。")
         case .individual:
-            return "着いた駅で、めいめいが自分のお題を引きます。引いたお題はその人の端末に残ります。"
+            return appLocalized("着いた駅で、めいめいが自分のお題を引きます。引いたお題はその人の端末に残ります。")
         }
     }
 
     /// 画面の上部などに出す一言。**どちらの遊び方なのかを必ず伝える**
     var notice: String {
         switch self {
-        case .team:       return "みんなで1つのお題に取り組みます"
-        case .individual: return "めいめいで取り組みます（ここに出るのはあなたのぶん）"
+        case .team:       return appLocalized("みんなで1つのお題に取り組みます")
+        case .individual: return appLocalized("めいめいで取り組みます（ここに出るのはあなたのぶん）")
         }
     }
 }
@@ -630,17 +634,17 @@ enum MissionVisibility: Int, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .surprise: return "当日までのお楽しみ"
-        case .always:   return "いつでも見える"
+        case .surprise: return appLocalized("当日までのお楽しみ")
+        case .always:   return appLocalized("いつでも見える")
         }
     }
 
     var detail: String {
         switch self {
         case .surprise:
-            return "他の人のお題は件数だけが見えます。中身は着地して初めて分かります。"
+            return appLocalized("他の人のお題は件数だけが見えます。中身は着地して初めて分かります。")
         case .always:
-            return "みんなのお題を予定の段階から読めます。相談しながら決めたいときに。"
+            return appLocalized("みんなのお題を予定の段階から読めます。相談しながら決めたいときに。")
         }
     }
 }

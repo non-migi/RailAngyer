@@ -13,10 +13,11 @@ struct ScheduleListView: View {
     @Bindable var store: GameSessionStore
     let sync: SyncService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
 
     @State private var editing: ScheduleDraft?
     @State private var isLoading = false
-    @State private var loadingMessage = "予定を読み込み中…"
+    @State private var loadingMessage = appLocalized("予定を読み込み中…")
     @State private var sharing: SharingText?
     @State private var showingFinished = false
     @State private var showResetConfirm = false
@@ -209,13 +210,13 @@ struct ScheduleListView: View {
     /// 集合日時。**コースのある土地の時計で読む。**
     /// 海外のコースでは、日本時間のまま出すと集合できない
     private func dateText(_ schedule: Schedule) -> String {
-        let style = Date.FormatStyle(locale: Locale(identifier: "ja_JP"),
+        let style = Date.FormatStyle(locale: locale,
                                      calendar: .japan(in: schedule.timeZone),
                                      timeZone: schedule.timeZone)
             .month().day().weekday().hour().minute()
         let text = schedule.startAt.formatted(style)
         guard schedule.timeZone != .japanStandard else { return text }
-        return "\(text)（現地時間）"
+        return appLocalized("\(text)（現地時間）")
     }
 
     /// どこからどこまで歩くか
@@ -224,28 +225,30 @@ struct ScheduleListView: View {
         let start = course?.stations.first { $0.orderNo == schedule.startOrder }?.name ?? "—"
         if schedule.isLap {
             let direction = schedule.loopDirectionRaw >= 0
-                ? course?.forwardDirectionName ?? "順まわり"
-                : course?.backwardDirectionName ?? "逆まわり"
-            return "\(schedule.courseName)　\(start) から一周（\(direction)）"
+                ? course?.forwardDirectionName ?? appLocalized("順まわり")
+                : course?.backwardDirectionName ?? appLocalized("逆まわり")
+            return appLocalized("\(schedule.courseName)　\(start) から一周（\(direction)）")
         }
         let goal = course?.stations.first { $0.orderNo == schedule.goalOrder }?.name ?? "—"
-        return "\(schedule.courseName)　\(start) → \(goal)"
+        return appLocalized("\(schedule.courseName)　\(start) → \(goal)")
     }
 
     /// サイコロとお題をどう使うか。**「使わない」も立派な遊び方**なので、そのまま出す
     private func ruleText(_ schedule: Schedule) -> String {
         var parts: [String] = []
-        parts.append(schedule.usesDice ? "サイコロ1〜\(schedule.diceMax)" : "サイコロなし")
+        parts.append(schedule.usesDice
+                     ? appLocalized("サイコロ1〜\(schedule.diceMax)")
+                     : appLocalized("サイコロなし"))
         if schedule.usesMissions {
             // 取り組み方は当日の動きがいちばん変わるところなので、見え方より先に出す
-            parts.append("お題は\(schedule.missionStyle.label)")
+            parts.append(appLocalized("お題は\(schedule.missionStyle.label)"))
             parts.append(schedule.missionVisibility.label)
         } else {
-            parts.append("お題なし")
+            parts.append(appLocalized("お題なし"))
         }
         // 「共有しない」だと、送れていないのか送らない決めなのかが読み取れない。
         // 決めたとおりに端末の中だけへ置いている、と分かる言い方にする
-        if !schedule.isShared { parts.append("この端末だけ") }
+        if !schedule.isShared { parts.append(appLocalized("この端末だけ")) }
         return parts.joined(separator: "　")
     }
 
@@ -304,8 +307,7 @@ struct ScheduleListView: View {
                     .foregroundStyle(.secondary)
             }
         } footer: {
-            Text("集合日の翌日になった予定はここへ畳まれます。"
-                 + "消せるのは自分で立てた予定だけです。")
+            Text("集合日の翌日になった予定はここへ畳まれます。消せるのは自分で立てた予定だけです。")
         }
     }
 
@@ -335,7 +337,7 @@ struct ScheduleListView: View {
         now = Date()
         store.reloadSchedules()          // 端末に持っているぶんを先に出す
         guard sync.isJoined else { return }
-        loadingMessage = "予定を読み込み中…"
+        loadingMessage = appLocalized("予定を読み込み中…")
         isLoading = true
         defer { isLoading = false }
         await sync.push()
@@ -349,7 +351,7 @@ struct ScheduleListView: View {
         now = Date()
         store.reloadSchedules()
         guard sync.isJoined else { return }
-        loadingMessage = "みんなに共有中…"
+        loadingMessage = appLocalized("みんなに共有中…")
         isLoading = true
         defer { isLoading = false }
         await sync.push()
@@ -566,8 +568,9 @@ private struct ScheduleDraftView: View {
                 Toggle("一周する", isOn: $isLap)
                 if isLap {
                     Picker("まわる向き", selection: $loopDirection) {
-                        Text(selectedCourse?.forwardDirectionName ?? "順まわり").tag(1)
-                        Text(selectedCourse?.backwardDirectionName ?? "逆まわり").tag(-1)
+                        // `Text(String)` はキー扱いにならない。フォールバックの文言は自分で引く
+                        Text(selectedCourse?.forwardDirectionName ?? appLocalized("順まわり")).tag(1)
+                        Text(selectedCourse?.backwardDirectionName ?? appLocalized("逆まわり")).tag(-1)
                     }
                 }
             }
@@ -625,8 +628,7 @@ private struct ScheduleDraftView: View {
             } header: {
                 Text("4　歩く道のり")
             } footer: {
-                Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して時速5kmで歩いたときの値です。"
-                     + "お題や休憩の時間は含みません。")
+                Text("目安は駅と駅を直線で結び、迂回のぶん（1.3倍）を足して時速5kmで歩いたときの値です。お題や休憩の時間は含みません。")
             }
         }
     }
@@ -641,13 +643,12 @@ private struct ScheduleDraftView: View {
         } header: {
             Text("5　集合日時（\(timeZoneLabel)）")
         } footer: {
-            Text("コースのある土地の時計で入力します。"
-                 + "海外のコースでも、その土地の時刻で集合できます。")
+            Text("コースのある土地の時計で入力します。海外のコースでも、その土地の時刻で集合できます。")
         }
     }
 
     private var timeZoneLabel: String {
-        timeZone == .japanStandard ? "日本時間" : "現地時間"
+        timeZone == .japanStandard ? appLocalized("日本時間") : appLocalized("現地時間")
     }
 
     // MARK: - 6 集合場所
@@ -699,11 +700,13 @@ private struct ScheduleDraftView: View {
                             .font(.caption).foregroundStyle(.secondary)
 
                         Toggle("自分のお題も抽選に含める", isOn: $includesOwnMissions)
-                        Text(includesOwnMissions
-                             ? "自分で書いたお題が自分に当たることがあります。"
-                             : "自分で書いたお題は自分には当たりません。人数ぶんのお題が足りないと、"
-                               + "お題なしで進む駅が出ます。")
-                            .font(.caption).foregroundStyle(.secondary)
+                        if includesOwnMissions {
+                            Text("自分で書いたお題が自分に当たることがあります。")
+                                .font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            Text("自分で書いたお題は自分には当たりません。人数ぶんのお題が足りないと、お題なしで進む駅が出ます。")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
                     }
 
                     Picker("お題の見え方", selection: $missionVisibility) {
@@ -730,12 +733,7 @@ private struct ScheduleDraftView: View {
         } header: {
             Text("7　詳細設定")
         } footer: {
-            Text("決めなくても遊べます。"
-                 + "サイコロもお題も使わない、そのまま歩くだけの予定にもできます。"
-                 + "\nお題は既定で「みんなで1つ」です。着いた駅で引いた1つのお題に、"
-                 + "全員で同じように取り組みます。"
-                 + "\n半径を大きくしすぎると隣の駅の圏内と重なるため、"
-                 + "\(Int(ArrivalRule.radiusRange.upperBound))m までにしています。")
+            Text("決めなくても遊べます。サイコロもお題も使わない、そのまま歩くだけの予定にもできます。\nお題は既定で「みんなで1つ」です。着いた駅で引いた1つのお題に、全員で同じように取り組みます。\n半径を大きくしすぎると隣の駅の圏内と重なるため、\(Int(ArrivalRule.radiusRange.upperBound))m までにしています。")
         }
     }
 

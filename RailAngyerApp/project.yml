@@ -9,7 +9,7 @@
 name: RailAngyerApp
 
 options:
-  # 多言語対応（ParadoxLab と同じ8言語）。**正は日本語**
+  # 多言語対応（ParadoxLab の8言語 + ヒンディー語）。**正は日本語**
   developmentLanguage: ja
   bundleIdPrefix: com.non-migi
   deploymentTarget:
@@ -55,6 +55,7 @@ targets:
           - de
           - es
           - fr
+          - hi
           - ko
           - ru
           - zh-Hans

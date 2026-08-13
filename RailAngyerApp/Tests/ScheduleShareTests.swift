@@ -10,7 +10,7 @@ import Foundation
 /// 「日時・場所・区間・歩く目安が文だけで読めるか」と、
 /// **招待コードや内部のIDが混ざっていないか**（誘う相手とルームに入れる相手は別の話）。
 @MainActor
-struct ScheduleShareTests {
+final class ScheduleShareTests {
 
     private let context: ModelContext
     private let store: GameSessionStore
@@ -19,12 +19,28 @@ struct ScheduleShareTests {
     /// 日時が動くと確かめようがない。先の予定かどうかは見ていない
     private let startAt = Date(timeIntervalSince1970: 1_786_233_600)
 
+    /// 試験の前に選ばれていた言語。終わったら戻す
+    private let previousLanguage = UserDefaults.standard.string(forKey: AppLanguage.storageKey)
+
     init() throws {
+        // **言語は日本語に固定する。** 「8月9日(日) 9:00」の形を確かめる試験があり、
+        // 共有の文はアプリ内で選んだ言語に追随する。端末の言語に任せると
+        // 日本語以外のシミュレータで確かめようがなくなる
+        UserDefaults.standard.set(AppLanguage.ja.rawValue, forKey: AppLanguage.storageKey)
+
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: Schema(AppSchema.all), configurations: config)
         context = ModelContext(container)
         store = GameSessionStore(context: context)
         store.prepare(sampleMissions: false)
+    }
+
+    deinit {
+        if let previousLanguage {
+            UserDefaults.standard.set(previousLanguage, forKey: AppLanguage.storageKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: AppLanguage.storageKey)
+        }
     }
 
     private func course(_ name: String) throws -> Course {
