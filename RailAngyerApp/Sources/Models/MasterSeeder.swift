@@ -102,6 +102,30 @@ enum MasterSeeder {
         return room
     }
 
+    /// UIテスト用の仲間。**`RAILANGYER_SAMPLE_ROOM` があるときだけ呼ばれる。**
+    ///
+    /// 通報・非表示・ルームから外すの口は他人の行にしか出ないため、
+    /// 仲間が居ないと導線ごと画面に存在しない。本来はサーバーから取り込むものを、
+    /// 検証のために端末の中だけで用意する（サーバーへは何も送らない）
+    @discardableResult
+    static func seedSampleMembersIfNeeded(_ context: ModelContext,
+                                          room: MissionSet) throws -> [Member] {
+        let others = room.members.filter { !$0.isMe }
+        guard others.isEmpty else { return others }
+
+        // 参加した順に並ぶので、自分より後の時刻にしておく
+        let base = Date(timeIntervalSince1970: 1_785_000_000)
+        let seeded = ["ケンタ", "ミキ"].enumerated().map { index, name -> Member in
+            let member = Member(displayName: name)
+            member.joinedAt = base.addingTimeInterval(Double(index + 1) * 60)
+            member.missionSet = room
+            context.insert(member)
+            return member
+        }
+        try context.save()
+        return seeded
+    }
+
     /// フェーズ1用の仮ミッション。
     /// 本来はメンバーが自分で書くもの（SC-12）だが、フェーズ1では固定データでよい
     /// （04_ロードマップ.md「作らないもの」）。効果の動作確認を兼ねる。

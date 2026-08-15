@@ -32,6 +32,19 @@ enum TestHooks {
         ProcessInfo.processInfo.environment["RAILANGYER_NO_NOTIF_PROMPT"] == "1"
     }
 
+    /// 参加済みのルームを仲間ごと作って起動する（例: `RAILANGYER_SAMPLE_ROOM=1`）。
+    ///
+    /// **通報・非表示・ルームから外すの口は、他人のメンバー行にしか出ない。**
+    /// 仲間はサーバーから取り込んで初めて増えるので、サーバー無しでは
+    /// その導線を画面に出せず、UIテストで守れない。
+    /// （App Store ガイドライン 1.2 の要件なので、審査で触られる導線でもある）
+    ///
+    /// この変数があるときだけ、参加済み・仲間2人・自分が作成者、の状態を作る。
+    /// **通常の起動では環境変数が無いため、本番の挙動は変わらない**
+    static var seedsSampleRoom: Bool {
+        ProcessInfo.processInfo.environment["RAILANGYER_SAMPLE_ROOM"] == "1"
+    }
+
     /// 起動時に進行記録を消す（例: `RAILANGYER_RESET=1`）。
     /// 中断・復帰のテストでは、**保存を効かせたまま**初期状態から始める必要があるため、
     /// メモリ上の起動ではなくこちらを使う

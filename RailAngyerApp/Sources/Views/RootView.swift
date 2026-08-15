@@ -24,7 +24,12 @@ struct RootView: View {
         .environment(\.locale, language.locale)
         .task {
             guard store == nil else { return }
-            let credentials = KeychainCredentialStore()
+            // UIテストで「参加済み」の画面を出すときだけ、資格情報を差し替える。
+            // **キーチェーンには触らない**（端末に残して次の起動へ持ち越さないため）
+            let credentials: CredentialStoring = TestHooks.seedsSampleRoom
+                ? InMemoryCredentialStore(RoomCredentials(roomId: UUID(), memberId: UUID(),
+                                                          token: "ui-test"))
+                : KeychainCredentialStore()
             let client = ApiClient(baseURL: ApiConfiguration.baseURL, credentials: credentials)
             let syncService = SyncService(context: context, client: client, credentials: credentials)
 
@@ -124,6 +129,11 @@ private struct MainView: View {
     @State private var invitation: InviteLink.Invitation?
     /// 「旅をスタート」で出す、予定から選ぶ画面
     @State private var showingStartPicker = false
+    /// 同期の裏側で起きたことの知らせ（ルームから外された／退室の削除を諦めた）。
+    ///
+    /// **タブの外側で1つだけ持つ。** どのタブを開いていても出るし、
+    /// 同じ知らせを2か所から出そうとして取り合いになることもない
+    @State private var notice = SyncNotice.shared
     /// 初めて遊ぶ人に、最初の一度だけ遊び方を出す。
     /// **このアプリは初見で分かる作りではない**（サイコロ・お題・到着判定）
     @AppStorage("didReadHowToPlay") private var didReadHowToPlay = false
@@ -178,6 +188,11 @@ private struct MainView: View {
                 selectedTab = .journey
             }
         }
+        .alert(Text(notice.kind?.title ?? ""), isPresented: $notice.isPresented) {
+            Button("閉じる", role: .cancel) {}
+        } message: {
+            Text(notice.kind?.message ?? "")
+        }
         .sheet(isPresented: $showingSettings) {
             RuleSettingsView(store: store, sync: sync, language: language)
         }
@@ -203,7 +218,9 @@ private struct MainView: View {
                              },
                              onDelete: { item in
                                  if let id = item.photoId { store.deletePhoto(id: id) }
-                             })
+                             },
+                             roomName: store.room?.name,
+                             onBlock: { store.block(memberId: $0) })
         }
         .sheet(item: $invitation) { invite in
             InviteAcceptView(invitation: invite, store: store, sync: sync)
@@ -278,6 +295,10 @@ private struct MainView: View {
         }
         .onChange(of: scenePhase) {
             guard scenePhase == .active else { return }
+            // やり残した退室があれば、戻ってきたついでに片付ける。
+            // **参加中かどうかに関わらず呼ぶ**（控えは抜けたルームのものなので、
+            // `isJoined` で塞ぐと永久に送られない）。控えが無ければ何もしない
+            Task { await sync.retryPendingLeaveIfNeeded() }
             Task {
                 await exchange()
                 // 写真は**一覧だけ**軽く拾う。実体はギャラリーを開いたときに落とす。

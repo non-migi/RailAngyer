@@ -8,6 +8,7 @@ import Foundation
 ///
 /// 確かめたいことは一つに尽きる。**圏外で遊んでも後から揃うこと。**
 /// 実際の通信は `StubURLProtocol` で差し替えるので、サーバーには触らない。
+/// 差し替えはテストごとの `StubSession` に閉じているので、並べて走らせても混ざらない。
 @MainActor
 struct SyncServiceTests {
 
@@ -15,6 +16,9 @@ struct SyncServiceTests {
     private let context: ModelContext
     private let credentials: InMemoryCredentialStore
     private let room: MissionSet
+
+    /// この1件ぶんの通信の差し替え。**テストごとに新しく作られる**
+    private let stub = StubSession()
 
     init() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -34,12 +38,12 @@ struct SyncServiceTests {
             RoomCredentials(roomId: UUID(), memberId: UUID(), token: "test-token"))
     }
 
-    private func makeService(_ stub: StubURLProtocol.Behavior = .offline) -> SyncService {
+    private func makeService(_ behavior: StubURLProtocol.Behavior = .offline) -> SyncService {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [StubURLProtocol.self]
-        StubURLProtocol.behavior = stub
+        stub.open(behavior)
 
-        let client = ApiClient(baseURL: URL(string: "https://example.invalid")!,
+        let client = ApiClient(baseURL: stub.baseURL,
                                credentials: credentials,
                                session: URLSession(configuration: config))
         return SyncService(context: context, client: client, credentials: credentials)
@@ -293,7 +297,7 @@ struct SyncServiceTests {
         #expect(await service.push() == 0)
         #expect(service.pendingCount == 1)          // プレイはこのまま続けられる
 
-        StubURLProtocol.behavior = .json("{}")
+        stub.update(.json("{}"))
         #expect(await service.push() == 1)
         #expect(service.pendingCount == 0)
     }
@@ -311,7 +315,11 @@ struct SyncServiceTests {
         let turn = makeTurn()
         turn.selectedMission = mission
         turn.missionDone = true
-        turn.appliedEffectType = .none
+        // **`EffectType` と書く。** 型を省くと `Optional.none`（＝nil）が入り、
+        // 「判定の済んだお題」のつもりが判定前の形になってしまう。
+        // nil のままだと、下の `appliedEffectType == nil` は
+        // めいめい方式の除外が効いていなくても通ってしまい、試験にならない
+        turn.appliedEffectType = EffectType.none
         try context.save()
 
         let service = makeService()
@@ -325,6 +333,34 @@ struct SyncServiceTests {
         // 盤面（どこからどこへ動いたか）は共有する
         #expect(json["fromStationId"] as? Int == 1)
         #expect(json["landingStationId"] as? Int == 4)
+    }
+
+    /// みんなで1つのお題に取り組む旅では、**判定が仲間の端末にも届く**こと。
+    ///
+    /// `appliedEffectType` が nil のまま送られていたころは、
+    /// 送り主の画面では達成になっても、仲間の画面では永久に「進行中」だった
+    @Test("みんなで取り組む旅では、お題の判定も送る")
+    func sharedStyleSendsMissionResult() throws {
+        let mission = Mission(content: "駅名標を撮る")
+        mission.missionSet = room
+        mission.station = station(4)
+        context.insert(mission)
+
+        let turn = makeTurn()
+        turn.selectedMission = mission
+        turn.missionDone = true
+        turn.appliedEffectType = EffectType.none      // 効果なしのお題を、達成で片づけた
+        try context.save()
+
+        let service = makeService()
+        try service.enqueueTurn(turn)
+
+        let payload = try #require(try SyncQueue(context: context).pending().first?.payload)
+        let json = try #require(try JSONSerialization.jsonObject(with: payload) as? [String: Any])
+        #expect(json["selectedMissionId"] as? String != nil, "どのお題かが伝わらない")
+        #expect(json["missionDone"] as? Bool == true)
+        // 効果なし（0）も**入れて送る**。抜けると受け取った側は判定前と区別できない
+        #expect(json["appliedEffectType"] as? Int == 0, "判定が仲間に届かない")
     }
 
     @Test("チームで取り組む旅では、これまで通り引いたお題も送る")
@@ -361,7 +397,7 @@ struct SyncServiceTests {
 
         let ticket = """
         {"photoId":"\(photo.id.apiString)","blobPath":"room/visit/photo.jpg",
-         "uploadUrl":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+         "uploadUrl":"\(stub.blobHost)/room/visit/photo.jpg?sig=abc",
          "expiresAt":"2026-08-11T12:00:00Z"}
         """
         let service = makeService(.bodies([(match: "upload-url", body: ticket)]))
@@ -369,7 +405,7 @@ struct SyncServiceTests {
         #expect(await service.pushPhotos() == 1)
         #expect(photo.blobUrl == "room/visit/photo.jpg", "上げた印が付いていない")
 
-        let paths = StubURLProtocol.recordedPaths
+        let paths = stub.recordedPaths
         #expect(paths.count == 3)
         #expect(paths.first?.contains("/photos/upload-url") == true)
         // 実体は**APIを通らない**でBlobへ直接
@@ -391,7 +427,7 @@ struct SyncServiceTests {
         let service = makeService(.recordingPaths)
 
         #expect(await service.pushPhotos() == 0)
-        #expect(StubURLProtocol.recordedPaths.isEmpty)
+        #expect(stub.recordedPaths.isEmpty)
     }
 
     @Test("仲間の写真を取り込み、実体を端末に保存して訪問に紐づける")
@@ -405,7 +441,7 @@ struct SyncServiceTests {
         [{"photoId":"\(photoId.apiString)","visitId":"\(visit.id.apiString)","stationId":2,
           "takenBy":"\(takenBy.apiString)","takenByName":"ケンタ",
           "takenAt":"2026-08-11T09:30:00Z",
-          "url":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+          "url":"\(stub.blobHost)/room/visit/photo.jpg?sig=abc",
           "urlExpiresAt":"2026-08-11T12:00:00Z"}]
         """
         let service = makeService(.bodies([(match: "/photos", body: list)]))
@@ -436,7 +472,7 @@ struct SyncServiceTests {
         [{"photoId":"\(photoId.apiString)","visitId":"\(visit.id.apiString)","stationId":2,
           "takenBy":"\(UUID().apiString)","takenByName":"ケンタ",
           "takenAt":"2026-08-11T09:30:00Z",
-          "url":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+          "url":"\(stub.blobHost)/room/visit/photo.jpg?sig=abc",
           "urlExpiresAt":"2026-08-11T12:00:00Z"}]
         """
         let service = makeService(.bodies([(match: "/photos", body: list)]))
@@ -457,7 +493,7 @@ struct SyncServiceTests {
         [{"photoId":"\(UUID().apiString)","visitId":"\(visit.id.apiString)","stationId":2,
           "takenBy":"\(UUID().apiString)","takenByName":"ケンタ",
           "takenAt":"2026-08-11T09:30:00Z",
-          "url":"https://blob.invalid/room/visit/photo.jpg?sig=abc",
+          "url":"\(stub.blobHost)/room/visit/photo.jpg?sig=abc",
           "urlExpiresAt":"2026-08-11T12:00:00Z"}]
         """
         let service = makeService(.bodies([(match: "/photos", body: list)]))
@@ -466,7 +502,31 @@ struct SyncServiceTests {
 
         let saved = try #require(visit.photos.first)
         #expect(saved.localFileName.isEmpty, "実体を落とさない約束なのに落としている")
-        #expect(StubURLProtocol.recordedPaths.count == 1, "一覧のほかに叩いている")
+        #expect(stub.recordedPaths.count == 1, "一覧のほかに叩いている")
+    }
+
+    /// 差し替えの土台そのものの確認。
+    ///
+    /// 以前は状態を静的に1組しか持たず、テストが並んで走ると記録が混ざった。
+    /// **ここが崩れると、経路の数え上げを使っている確認が軒並み当てにならなくなる**ので、
+    /// 共有状態がうっかり戻ってこないように固定しておく
+    @Test("差し替えはテストごとに分かれ、別の差し替えの記録と混ざらない")
+    func stubSessionsAreIsolated() async throws {
+        let service = makeService(.recordingPaths)
+        try service.enqueueTurn(makeTurn())
+        await service.push()
+
+        // 別のテストが同時に走っている状況を作る
+        let other = StubSession()
+        other.open(.recordingPaths)
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        _ = try? await URLSession(configuration: config)
+            .data(from: other.baseURL.appendingPathComponent("elsewhere"))
+
+        #expect(other.recordedPaths == ["/elsewhere"])
+        #expect(!stub.recordedPaths.contains("/elsewhere"), "よその記録が混ざっている")
+        #expect(stub.recordedPaths.contains { $0.contains("/turns/") }, "自分の記録が消えている")
     }
 
     @Test("送る順序は操作した順になる")
@@ -478,7 +538,7 @@ struct SyncServiceTests {
 
         await service.push()
 
-        let paths = StubURLProtocol.recordedPaths
+        let paths = stub.recordedPaths
         #expect(paths.count == 2)
         // 訪問が先に届くと、まだ存在しないターンに紐づけようとして弾かれる
         #expect(paths.first?.contains("/turns/") == true)
@@ -496,7 +556,7 @@ struct SyncServiceTests {
 
         // 飛ばして次を送ると、あとから古い状態が上書きしてしまう
         #expect(sent == 0)
-        #expect(StubURLProtocol.recordedPaths.count == 1)
+        #expect(stub.recordedPaths.count == 1)
         #expect(service.pendingCount == 2)
     }
 
@@ -652,14 +712,14 @@ struct SyncServiceTests {
         #expect(currentOrder == 1, "進行中のターンでは現在地は動かない")
 
         // 相手がそのターンを終えた
-        StubURLProtocol.behavior = .json("""
+        stub.update(.json("""
         {"currentStationId":4,"isCleared":false,"activeTurn":null,
          "visits":[],"completedTurnCount":1,
          "completedTurns":[{"turnId":"\(turnId.uuidString)","turnNo":1,"diceValue":3,
            "fromStationId":1,"landingStationId":4,"rolledAt":"2026-08-09T00:00:00Z",
            "arrivedAt":"2026-08-09T00:20:00Z","selectedMissionId":null,"missionDone":true,
            "appliedEffectType":null,"endStationId":4,"completedAt":"2026-08-09T00:30:00Z"}]}
-        """)
+        """))
         _ = await service.pull()
 
         // **同じターンを書き換える。** 足すだけだと、いつまでも進行中のまま
@@ -680,11 +740,11 @@ struct SyncServiceTests {
     }
 
     @Test("参加をやめると未送信も消える")
-    func leaveClearsQueue() throws {
+    func leaveClearsQueue() async throws {
         let service = makeService()
         try service.enqueueTurn(makeTurn())
 
-        try service.leave()
+        await service.leave()
 
         #expect(service.pendingCount == 0)
         #expect(!service.isJoined)
@@ -730,7 +790,7 @@ struct SyncServiceTests {
         let service = makeService(.json(scheduleJSON(id: id)))
 
         _ = await service.pullSchedules()
-        StubURLProtocol.behavior = .json(scheduleJSON(id: id, title: "予定を直した"))
+        stub.update(.json(scheduleJSON(id: id, title: "予定を直した")))
         _ = await service.pullSchedules()
 
         let all = try context.fetch(FetchDescriptor<Schedule>()).filter { $0.id == id }
@@ -762,7 +822,7 @@ struct SyncServiceTests {
         let service = makeService(.json(scheduleJSON(id: id)))
         _ = await service.pullSchedules()
 
-        StubURLProtocol.behavior = .json("[]")
+        stub.update(.json("[]"))
         _ = await service.pullSchedules()
 
         // 消えた予定が端末に残ると、集合場所を取り違える
@@ -784,7 +844,48 @@ struct SyncServiceTests {
     }
 }
 
-/// 通信の差し替え。実際のHTTPは出さない
+/// テスト1件ぶんの差し替え。**テストごとに新しく作る。**
+///
+/// Swift Testing はテストごとにスイートを作り直すので、
+/// スイートに `let` で持たせておけば、これ自体がテスト1件に閉じる。
+/// 鍵はホスト名の先頭ラベルに載せて運ぶ（`<鍵>.api.invalid`）。
+/// こうしておくと、どのリクエストがどのテストのものか URL だけで分かる
+final class StubSession {
+
+    private let key = "s" + UUID().uuidString
+        .replacingOccurrences(of: "-", with: "").lowercased()
+
+    /// このテスト専用の API の宛先
+    var baseURL: URL { URL(string: "https://\(key).api.invalid")! }
+
+    /// 写真の実体は API を通らず Blob へ直に行くので、**別のホスト**として扱う。
+    /// 鍵は同じなので、同じテストの記録として並ぶ
+    var blobHost: String { "https://\(key).blob.invalid" }
+
+    /// 叩いた経路を、叩いた順に
+    var recordedPaths: [String] { StubURLProtocol.paths(key: key) }
+
+    /// 差し替えを用意する（記録は空から）
+    func open(_ behavior: StubURLProtocol.Behavior) {
+        StubURLProtocol.open(behavior, key: key)
+    }
+
+    /// 応答だけ差し替える。**記録は消さない**。
+    /// 「1回目と2回目でサーバーの返事が変わる」場面に使う
+    func update(_ behavior: StubURLProtocol.Behavior) {
+        StubURLProtocol.update(behavior, key: key)
+    }
+
+    deinit { StubURLProtocol.close(key: key) }
+}
+
+/// 通信の差し替え。実際のHTTPは出さない。
+///
+/// **差し替えの状態はテストごとに分けて持つ。**
+/// 以前は静的に1組しか持たず、`behavior` を入れ直すと記録も消えていたため、
+/// テストが並んで走ると「どの経路を叩いたか」が混ざり、
+/// 完全一致の確認が偶発的に落ちる余地があった。
+/// いまは `StubSession` の鍵ごとに分けて持つので、何本同時に走っても混ざらない
 final class StubURLProtocol: URLProtocol {
 
     enum Behavior {
@@ -799,18 +900,42 @@ final class StubURLProtocol: URLProtocol {
         /// URLの一部ごとに本文を返す。どれにも当たらなければ 200 の `{}`。
         /// 写真のように**行き先ごとに違う応答**が要る手順で使う
         case bodies([(match: String, body: String)])
+        /// 応答を遅らせて返す。**送信中の状態を掴んだまま**にしたいときに使う
+        /// （割り込みの試験で、順序を運任せにしないため）
+        case slow(String, seconds: TimeInterval)
+        /// 遅れて圏外になる。`slow` の失敗版
+        case slowOffline(seconds: TimeInterval)
     }
 
-    nonisolated(unsafe) private static var _behavior: Behavior = .offline
-    nonisolated(unsafe) private static var _paths: [String] = []
+    /// 差し替え1件ぶん。応答と、叩かれた経路の記録
+    private struct State {
+        var behavior: Behavior
+        var paths: [String] = []
+    }
+
+    nonisolated(unsafe) private static var states: [String: State] = [:]
     private static let lock = NSLock()
 
-    static var behavior: Behavior {
-        get { lock.withLock { _behavior } }
-        set { lock.withLock { _behavior = newValue; _paths = [] } }
+    static func open(_ behavior: Behavior, key: String) {
+        lock.withLock { states[key] = State(behavior: behavior) }
     }
 
-    static var recordedPaths: [String] { lock.withLock { _paths } }
+    static func update(_ behavior: Behavior, key: String) {
+        lock.withLock { states[key]?.behavior = behavior }
+    }
+
+    static func paths(key: String) -> [String] {
+        lock.withLock { states[key]?.paths ?? [] }
+    }
+
+    static func close(key: String) {
+        lock.withLock { states.removeValue(forKey: key) }
+    }
+
+    /// 鍵はホスト名の先頭ラベル（`<鍵>.api.invalid` / `<鍵>.blob.invalid`）
+    private static func key(for request: URLRequest) -> String? {
+        request.url?.host?.split(separator: ".").first.map(String.init)
+    }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -819,9 +944,14 @@ final class StubURLProtocol: URLProtocol {
     override func startLoading() {
         let path = request.url?.path ?? ""
         let fullURL = request.url?.absoluteString ?? ""
+        var delay: TimeInterval = 0
         let outcome: (status: Int, body: String)? = Self.lock.withLock {
-            Self._paths.append(path)
-            switch Self._behavior {
+            // 用意されていない宛先は圏外として扱う（取り違えて他のテストの記録に混ぜない）
+            guard let key = Self.key(for: request), var state = Self.states[key] else { return nil }
+            state.paths.append(path)
+            defer { Self.states[key] = state }
+
+            switch state.behavior {
             case .bodies(let table):
                 return (200, table.first { fullURL.contains($0.match) }?.body ?? "{}")
             case .offline:
@@ -833,9 +963,18 @@ final class StubURLProtocol: URLProtocol {
             case .recordingPaths:
                 return (200, "{}")
             case .failFirstThenSucceed(let status):
-                return Self._paths.count == 1 ? (status, "") : (200, "{}")
+                return state.paths.count == 1 ? (status, "") : (200, "{}")
+            case .slow(let body, let seconds):
+                delay = seconds
+                return (200, body)
+            case .slowOffline(let seconds):
+                delay = seconds
+                return nil
             }
         }
+
+        // 待つのは錠を放してから。掴んだままだと、割り込む側まで止めてしまう
+        if delay > 0 { Thread.sleep(forTimeInterval: delay) }
 
         guard let outcome else {
             client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))

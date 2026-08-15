@@ -37,7 +37,12 @@ final class LocalizationUITests: XCTestCase {
         guard picker.waitForExistence(timeout: 8) else { return }
         picker.tap()
 
-        let system = app.buttons["端末の設定に合わせる"]
+        // 画面が何語になっていても引けるよう、identifier を第一に、
+        // 効かない OS 版に備えて日英のラベルでも探す（gear と同じ流儀）
+        let system = app.buttons.matching(
+            NSPredicate(format: "identifier == %@ OR label IN %@",
+                        "language.system",
+                        ["端末の設定に合わせる", "Match device settings"])).firstMatch
         if system.waitForExistence(timeout: 5) { system.tap() }
 
         app.buttons.matching(NSPredicate(format: "label IN %@", ["閉じる", "Close"]))

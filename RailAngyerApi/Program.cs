@@ -73,6 +73,7 @@ app.MapGet("/health/db", async (RailAngyerDbContext db, CancellationToken ct) =>
 });
 
 app.MapRoomEndpoints();
+app.MapMemberEndpoints();
 app.MapMissionEndpoints();
 app.MapProgressEndpoints();
 app.MapPhotoEndpoints();

@@ -82,7 +82,7 @@ public struct CourseRef: Codable, Sendable {
 
 /// アプリに同梱したマスタの読み込み。
 ///
-/// 札幌3路線の座標は国土交通省「国土数値情報 鉄道データ（N02-22）」の
+/// 札幌3路線と山手線の座標は国土交通省「国土数値情報 鉄道データ（N02-22）」の
 /// 駅区間中央を採用している（測地系 JGD2011）。
 public enum StationMaster {
 
@@ -118,6 +118,7 @@ public enum StationMaster {
 
     /// 札幌市電（24電停・環状）。
     ///
+    /// 座標は OpenStreetMap の電停ノード（© OpenStreetMap contributors / ODbL）。
     /// **電停の間隔が短い**ため、到着判定の半径を路線ごとに持たせている。
     public static func shiden() throws -> CourseRef {
         try load(resource: "shiden")
@@ -143,6 +144,8 @@ public enum StationMaster {
 
     /// ロンドン サークル線（27駅・環状）。
     ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
     /// 2009年から実際の運行は「らせん」（ハマースミス発着）だが、
     /// **環になっている元の Inner Circle だけを扱う**。
     /// 直線距離の合計は約20.0kmで、Inner Circle の約21kmとよく合う。
@@ -153,6 +156,8 @@ public enum StationMaster {
 
     /// モスクワ 環状線（12駅・環状）。
     ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
     /// **いちばん手頃な一周**。直線18.4kmで、公称19.4kmとよく合う。
     /// 1950〜54年にできた古い環状線で、駅そのものが見どころになっている
     public static func moscowKoltsevaya() throws -> CourseRef {
@@ -160,18 +165,28 @@ public enum StationMaster {
     }
 
     /// モスクワ 大環状線（29駅・環状）。世界最長級の地下鉄環状。
+    ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
     /// 直線54.0km（公称57.5km）。**1日で歩き切るのは山手線より重い**
     public static func moscowBolshaya() throws -> CourseRef {
         try load(resource: "moscow_bolshaya")
     }
 
     /// 北京地下鉄10号線（45駅・環状）。直線54.7km（公称57.0km）。
+    ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
     /// 内環／外環という呼び分けが実在する
     public static func beijingLine10() throws -> CourseRef {
         try load(resource: "beijing_line10")
     }
 
     /// 大阪環状線（19駅・環状）。**山手線の次に歩かれている環状線**。
+    ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
+    /// 2026-08-15 に Overpass API で relation 10073682 と照合し、全駅一致を確認。
     /// 直線20.7km（営業キロ21.7km）。実際に歩くと35km前後になる
     public static func osakaLoop() throws -> CourseRef {
         try load(resource: "osaka_loop")
@@ -179,6 +194,9 @@ public enum StationMaster {
 
     /// ニューヨーク地下鉄7号線（22駅・直線）。
     ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
+    /// 2026-08-15 に Overpass API で relation 9699137 と照合し、全駅一致を確認。
     /// クイーンズ側は高架で、**線路沿いをそのまま歩ける**。
     /// 移民の街を貫くことから "International Express" とも呼ばれる。
     /// 直線15.9km。ハドソンヤードからフラッシングまで
@@ -188,6 +206,9 @@ public enum StationMaster {
 
     /// ロサンゼルス Eライン（29駅・直線）。
     ///
+    /// 座標と並び順は OpenStreetMap の路線リレーション
+    /// （© OpenStreetMap contributors / ODbL）。
+    /// 2026-08-15 に Overpass API で relation 6584633 と照合し、全駅一致を確認。
     /// ダウンタウンから**サンタモニカの海まで**。直線34.7km。
     /// 終点が浜辺なので、歩き切った先に分かりやすいご褒美がある
     public static func laEline() throws -> CourseRef {

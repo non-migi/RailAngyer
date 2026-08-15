@@ -78,5 +78,16 @@ final class SupportUITests: XCTestCase {
             NSPredicate(format: "label CONTAINS %@", "OpenStreetMap")).firstMatch.exists)
         XCTAssertTrue(app.staticTexts.matching(
             NSPredicate(format: "label CONTAINS %@", "国土数値情報")).firstMatch.exists)
+
+        // **ライセンス名と share-alike の説明は、消えると法的に問題になる。**
+        // 出典元の名前だけでは足りず、どの条件で使っているかまで出す義務がある（ODbL 4.2）。
+        // 画面の下のほうにあるので、見えるところまで送ってから確かめる
+        let license = scrollTo(app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS %@", "Open Database License")).firstMatch, in: app)
+        XCTAssertTrue(license.exists, "ODbL のライセンス表示が消えている")
+
+        let shareAlike = scrollTo(app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS %@", "同じ条件で公開")).firstMatch, in: app)
+        XCTAssertTrue(shareAlike.exists, "ODbL の継承条件（share-alike）の説明が消えている")
     }
 }

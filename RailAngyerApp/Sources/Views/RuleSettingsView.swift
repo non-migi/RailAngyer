@@ -26,7 +26,12 @@ struct RuleSettingsView: View {
             Form {
                 Section {
                     Picker("言語", selection: $language.selected) {
-                        ForEach(AppLanguage.allCases) { Text($0.label).tag($0) }
+                        // identifier は UI テストが言語に依らず行を引くための取っ手
+                        ForEach(AppLanguage.allCases) {
+                            Text($0.label)
+                                .accessibilityIdentifier("language.\($0.rawValue)")
+                                .tag($0)
+                        }
                     }
                 } header: {
                     Text("言語")

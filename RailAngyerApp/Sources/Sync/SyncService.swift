@@ -27,16 +27,38 @@ final class SyncService {
     private let client: ApiClient
     private let credentials: CredentialStoring
     private let queue: SyncQueue
+    private let pendingLeaves: PendingLeaveStoring
 
-    init(context: ModelContext, client: ApiClient, credentials: CredentialStoring) {
+    init(context: ModelContext, client: ApiClient, credentials: CredentialStoring,
+         pendingLeaves: PendingLeaveStoring? = nil) {
         self.context = context
         self.client = client
         self.credentials = credentials
         self.queue = SyncQueue(context: context)
+        self.pendingLeaves = pendingLeaves ?? PendingLeaveStores.forThisRun()
         self.pendingCount = (try? queue.count()) ?? 0
+
+        // UIテストで「外す」の口を出すには作成者として振る舞う必要がある。
+        // 本来は取り込み（`pullRoom`）で決まる値を、環境変数があるときだけ先に埋める
+        if TestHooks.seedsSampleRoom { roomCreatedBy = credentials.load()?.memberId }
+
+        // **起動のたびに、やり残した退室を確かめ直す。**
+        // 待たない（起動を止める理由がない）。控えが無ければ何もしないで終わる
+        Task { await retryPendingLeaveIfNeeded() }
     }
 
     var isJoined: Bool { credentials.load() != nil }
+
+    /// ルームを作った人のメンバーID。取り込み（`pullRoom`）のたびに更新される。
+    /// **端末には保存しない。** 起動直後は分からないが、キックの口が
+    /// 少し遅れて出るだけで、進行には関わらない
+    private(set) var roomCreatedBy: UUID?
+
+    /// 自分がルームの作成者か。メンバーを外す口を出すかどうかに使う
+    var isRoomCreator: Bool {
+        guard let roomCreatedBy else { return false }
+        return roomCreatedBy == credentials.load()?.memberId
+    }
 
     /// 参加していればサーバーを起こしておく。F1 とサーバーレスDBは寝ている（§1）
     func wakeUpIfJoined() async {
@@ -198,7 +220,11 @@ final class SyncService {
                 lastError = nil
             } catch let error as ApiError {
                 try? queue.recordFailure(change, message: error.message)
-                lastError = error.message
+
+                // **外された端末は、ここで送るのをやめる。**
+                // 資格を失った 401 は待っても通らないので、
+                // 残したままにすると1件目で永久に詰まり、以降の記録が一切送れない
+                if note(error) { break }
 
                 if error.isRetryable { break }
 
@@ -282,7 +308,7 @@ final class SyncService {
                 sent += 1
                 lastError = nil
             } catch let error as ApiError {
-                lastError = error.message
+                if note(error) { break }         // 外された端末はここで打ち切る
                 // 圏外や、写真置き場が未設定（503）なら、残りも同じ結果になる
                 if error.isRetryable { break }
                 // 何度上げても同じ失敗（400 など）。この起動のあいだは諦めて先へ進む
@@ -319,7 +345,7 @@ final class SyncService {
             if fetchBodies { await fetchPhotoBodies(from: remote) }
             return added
         } catch let error as ApiError {
-            lastError = error.message
+            note(error)
             return 0
         } catch {
             lastError = String(describing: error)
@@ -392,7 +418,7 @@ final class SyncService {
                 photo.localFileName = try PhotoStore.save(data: data)
                 try context.save()
             } catch let error as ApiError {
-                lastError = error.message
+                if note(error) { break }              // 外された端末はここで打ち切る
                 if error.isRetryable { break }        // 圏外。残りも落ちてこない
                 // 何度取っても同じ失敗。この起動のあいだは枠のままにして先へ進む
                 skippedPhotoIds.insert(photo.id)
@@ -441,7 +467,7 @@ final class SyncService {
             try applyRoom(remote, meId: saved.memberId)
             return true
         } catch let error as ApiError {
-            lastError = error.message
+            note(error)
             return false
         } catch {
             lastError = String(describing: error)
@@ -462,7 +488,7 @@ final class SyncService {
             await pullMissions(includeOthers: visibility == .always)
             return nil
         } catch let error as ApiError {
-            lastError = error.message
+            if note(error) { return SyncNotice.message }
             return error.message
         } catch {
             lastError = String(describing: error)
@@ -470,7 +496,37 @@ final class SyncService {
         }
     }
 
+    /// メンバーをルームから外す（**ルーム作成者だけ**）。
+    ///
+    /// 送信キューには積まない。名簿の操作は「後から届けばよい記録」ではなく、
+    /// その場で成否を本人に伝えるべき操作なので、直接叩いて結果を返す。
+    /// - Returns: 外せなければ理由。外せたら名簿を取り込み直してから nil
+    func removeMember(_ memberId: UUID) async -> String? {
+        guard let saved = credentials.load() else {
+            return appLocalized("ルームに参加していません")
+        }
+        do {
+            try await client.removeMember(roomId: saved.roomId, memberId: memberId)
+            await pullRoom()          // 消えた人を名簿からその場で下ろす
+            return nil
+        } catch let error as ApiError {
+            // 403 はサーバーの言い分をそのまま出しても意味が伝わらないので言い換える
+            if case .server(let status, _) = error, status == 403 {
+                let message = appLocalized("ルームの作成者だけがメンバーを外せます")
+                lastError = message
+                return message
+            }
+            // 外した側も、自分の資格が切れていれば同じ扱い（作成者が別の端末で外された等）
+            if note(error) { return SyncNotice.message }
+            return error.message
+        } catch {
+            lastError = String(describing: error)
+            return appLocalized("通信できませんでした")
+        }
+    }
+
     private func applyRoom(_ remote: RoomResponse, meId: UUID) throws {
+        roomCreatedBy = remote.createdBy
         guard let room = try localRoom() else { return }
 
         // ローカルのルームをサーバーのものと同じIDにしておく。
@@ -545,7 +601,7 @@ final class SyncService {
             try applyMissions(remote, meId: saved.memberId)
             return true
         } catch let error as ApiError {
-            lastError = error.message
+            note(error)
             return false
         } catch {
             lastError = String(describing: error)
@@ -564,7 +620,7 @@ final class SyncService {
             return try await client.missionSummary(roomId: saved.roomId,
                                                    includeContent: includeContent)
         } catch let error as ApiError {
-            lastError = error.message
+            note(error)
             return []
         } catch {
             lastError = String(describing: error)
@@ -687,7 +743,7 @@ final class SyncService {
             try applySchedules(remote)
             return true
         } catch let error as ApiError {
-            lastError = error.message
+            note(error)
             return false
         } catch {
             lastError = String(describing: error)
@@ -782,7 +838,7 @@ final class SyncService {
             lastError = nil
             return true
         } catch let error as ApiError {
-            lastError = error.message
+            note(error)
             return false
         } catch {
             lastError = String(describing: error)
@@ -862,6 +918,47 @@ final class SyncService {
         try context.fetch(FetchDescriptor<MissionSet>()).first
     }
 
+    // MARK: - 資格を失ったとき
+
+    /// 通信の失敗を受け止める共通の口。理由を控え、**資格を失った 401 だけ**を特別扱いする。
+    ///
+    /// 一時的な失敗（圏外・サーバーの寝起き・500）は巻き添えにしない。
+    /// 判断は `ApiError.isMembershipRevoked` に寄せてある（そこにその理由も書いた）。
+    /// - Returns: 資格を失っていたら true。呼び出し側はそこで打ち切る
+    @discardableResult
+    private func note(_ error: ApiError) -> Bool {
+        guard error.isMembershipRevoked else {
+            lastError = error.message
+            return false
+        }
+        forfeitMembership()
+        return true
+    }
+
+    /// ルームから外された（または退室済みの資格で叩いた）ときの後始末。
+    ///
+    /// キックはサーバーの Member 行ごと消す＝トークンの控えも消えるので、
+    /// **持っている資格情報は二度と通らない**。持ったままだと `isJoined` は true のままで、
+    /// 送信キューは通らない通信を繰り返し、以降の記録が一切送れなくなる。
+    ///
+    /// **端末の記録は消さない**（ローカルが正。歩いた記録は外されても本人のもの）。
+    /// 送れないまま残るキューだけは捨てる — `leave()` と同じで、
+    /// 次に別のルームへ参加したときに、前のルーム宛ての中身を送ってしまわないため。
+    private func forfeitMembership() {
+        guard credentials.load() != nil else { return }
+        do {
+            try credentials.clear()
+            try queue.removeAll()
+        } catch {
+            lastError = String(describing: error)
+        }
+        pendingCount = (try? queue.count()) ?? 0
+        roomCreatedBy = nil
+        lastError = SyncNotice.message
+        // 黙って参加していない状態に戻すと、**外されたことに気づけない**
+        SyncNotice.shared.raise(.removedFromRoom)
+    }
+
     // MARK: - 参加
 
     /// 招待コードで参加し、資格情報を保存する
@@ -881,11 +978,292 @@ final class SyncService {
         return created
     }
 
-    /// 参加をやめる。**未送信の記録も捨てる**（別のルームへ送ってしまわないように）
-    func leave() throws {
-        try credentials.clear()
-        try queue.removeAll()
-        pendingCount = 0
+    /// 参加をやめる。**未送信の記録も捨てる**（別のルームへ送ってしまわないように）。
+    ///
+    /// 順番が肝心。**まず控え（`PendingLeave`）を取り、資格情報を消してから**
+    /// サーバーの削除を投げる。
+    /// - 先に資格情報を消すので、押した時点で退室は成立する。
+    ///   削除の返事を待つあいだ「参加中」のままだと、取り込みが走って
+    ///   **抜けたはずの盤面が戻ってくる**（最長90秒、その隙がある）
+    /// - 削除に使うトークンは控えから渡す（端末にはもう資格情報が無い）
+    /// - 消せたか分からなくても控えが引き取り、次の起動で確かめ直す
+    ///
+    /// - Returns: サーバーのデータを消せたか分からないときの案内。消せたら nil
+    @discardableResult
+    func leave() async -> String? {
+        let saved = credentials.load()
+        if let saved {
+            // **前の退室が片付く前に、また退室した。** 控えは1つしか持てないので、
+            // 古いぶんはここで諦めることになる。黙って捨てずに、メールでの依頼を案内する
+            if pendingLeaves.load() != nil {
+                SyncNotice.shared.raise(.leaveDeletionGaveUp)
+            }
+            // 消し切れたか分からないまま資格情報を捨てるので、先に控えておく
+            try? pendingLeaves.save(PendingLeave(roomId: saved.roomId, token: saved.token,
+                                                 startedAt: Date(), attempts: 0))
+        }
+        do {
+            try credentials.clear()
+            try queue.removeAll()
+        } catch {
+            lastError = String(describing: error)
+        }
+        pendingCount = (try? queue.count()) ?? 0
+        roomCreatedBy = nil
+
+        guard saved != nil else { return nil }
+        // 1回目も、やり直しと**同じ道**を通す（送るところが1つなら二重送信も1つの番人で防げる）
+        if await sendPendingLeave() { return nil }
+
+        // **「残っています」と断定しない。** 90秒で諦めても、サーバーは
+        // 削除を最後まで完走することがある。消えたかどうかは、やり直して初めて分かる
+        return appLocalized("退室しました。サーバー上のあなたの写真・お題・出欠は、削除が完了しなかった可能性があります。あとで自動的に確かめ直します。")
+    }
+
+    // MARK: - やり残した退室
+
+    /// 何回まで送り直すか。これを超えたら人の手（メール）に渡す
+    private static let pendingLeaveMaxAttempts = 5
+
+    /// いつまで送り直すか。回数より先に日数で切れることもある
+    private static let pendingLeaveLimit: TimeInterval = 7 * 24 * 60 * 60
+
+    /// いま退室の削除を送っている最中か。
+    /// **同じ控えを二重に送らない** — 退室した直後は、控えを置いた瞬間に
+    /// 起動時のやり直しが走りうる（どちらも `@MainActor` なので、この印で足りる）
+    private var isSendingLeave = false
+
+    /// やり残した退室を送り直す。**起動のたびと、ルーム画面を開いたときに呼ぶ。**
+    ///
+    /// 送信キューと同じ考え方で、届くまで持ち越すだけ。違いは、
+    /// 資格情報を消したあとに走るので**控えたトークンを使う**ところ
+    func retryPendingLeaveIfNeeded() async {
+        // **退室が飛んでいる最中なら、何もしない。**
+        // 控えは送る前に保存する（送信中に落ちても意図を失わないため）ので、
+        // `leave()` が返事を待っているあいだ、控えは「未送」に見える。
+        // ここで割り込むと同じ退室をもう一度送るうえ、
+        // **打ち切りの回数だけが空回りして進み**、消えているのに
+        // 「メールで依頼してください」という嘘の案内に落ちる
+        guard !isSendingLeave else { return }
+        guard let pending = pendingLeaves.load() else { return }
+
+        // 打ち切りの判定は送る前に。期限切れの控えで通信しても意味がない
+        if pending.attempts >= Self.pendingLeaveMaxAttempts
+            || Date().timeIntervalSince(pending.startedAt) > Self.pendingLeaveLimit {
+            giveUpPendingLeave()
+            return
+        }
+        await sendPendingLeave()
+    }
+
+    /// 控えを1回ぶん送る。
+    /// - Returns: 片付いたら true（送れた／もう消えていた）
+    @discardableResult
+    private func sendPendingLeave() async -> Bool {
+        guard !isSendingLeave, var pending = pendingLeaves.load() else { return false }
+        isSendingLeave = true
+        defer { isSendingLeave = false }
+
+        do {
+            try await client.leaveRoom(roomId: pending.roomId, token: pending.token)
+            try? pendingLeaves.clear()
+            return true
+        } catch let error as ApiError where error.isAlreadyGone {
+            // もう消えている＝目的は達している（`isAlreadyGone` に理由を書いた）
+            try? pendingLeaves.clear()
+            return true
+        } catch let error as ApiError where error.isRetryable {
+            // 圏外やサーバーの寝起き。回数だけ数えて、次の機会に回す
+            pending.attempts += 1
+            try? pendingLeaves.save(pending)
+            return false
+        } catch {
+            // 何度送っても同じ失敗。数えて待つ意味がないので、ここで人の手に渡す
+            giveUpPendingLeave()
+            return false
+        }
+    }
+
+    /// 送り直しを諦める。**ここで初めてメールでの依頼を案内する**
+    /// （自動で片付くうちは、利用者に手間をかけさせない）
+    private func giveUpPendingLeave() {
+        try? pendingLeaves.clear()
+        SyncNotice.shared.raise(.leaveDeletionGaveUp)
+    }
+}
+
+// MARK: - やり残した退室の控え
+
+/// 退室の「消してください」を持ち越す控え。
+///
+/// クライアントは90秒で諦めるが、**諦めた＝消えていない、ではない**
+/// （サーバーは接続が切れても削除を完走する）。次の機会に確かめ直せるよう、
+/// ルームIDと**そのときのトークン**だけを取っておく。
+/// 資格情報と同じく秘密なので、置き場はキーチェーン
+struct PendingLeave: Codable, Equatable {
+    let roomId: UUID
+    let token: String
+    /// 最初に退室した時刻。日数での打ち切りの起点
+    let startedAt: Date
+    /// 送り直した回数
+    var attempts: Int
+}
+
+protocol PendingLeaveStoring: AnyObject {
+    func load() -> PendingLeave?
+    func save(_ pending: PendingLeave) throws
+    func clear() throws
+}
+
+enum PendingLeaveStores {
+
+    /// この実行で使う置き場。
+    ///
+    /// **テストの最中はキーチェーンに触らない。** シミュレータのキーチェーンは
+    /// 実行をまたいで共有されるので、テストのたびに消し残しが積もる
+    /// （見分け方は `Telemetry` と同じ）
+    static func forThisRun() -> PendingLeaveStoring {
+        isRunningTests ? InMemoryPendingLeaveStore() : KeychainPendingLeaveStore()
+    }
+
+    /// **UIテスト中のアプリ本体は、この2つでは引っかからない。**
+    /// テストの本体は別プロセスで動くので、アプリ側に XCTest は載っていない。
+    /// そのまま本物のキーチェーンを掴むと、消し残した控えが端末に残り、
+    /// **起動のたびに回数が積まれて、いつか「消せませんでした」の知らせが
+    /// 画面を塞ぐ**（症状は「画面上の文字が見つからない」形で出るため原因が追いにくい）。
+    /// UIテストの起動の仕方は2つ（メモリ上で起動／保存を効かせたまま記録だけ消す）なので、
+    /// **その両方**を見る。片方だけだと、保存を効かせて回すテストで控えが端末に残る
+    private static var isRunningTests: Bool {
+        NSClassFromString("XCTestCase") != nil
+            || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || TestHooks.usesInMemoryStore
+            || TestHooks.resetsProgressOnLaunch
+    }
+}
+
+/// キーチェーンに置く。資格情報とは別の口（`account`）に入れるだけで、作りは同じ
+final class KeychainPendingLeaveStore: PendingLeaveStoring {
+
+    private let service: String
+    private let account = "pendingLeave"
+
+    init(service: String = "com.non-migi.RailAngyerApp.credentials") {
+        self.service = service
+    }
+
+    func load() -> PendingLeave? {
+        var query = baseQuery()
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data else { return nil }
+        return try? JSONDecoder().decode(PendingLeave.self, from: data)
+    }
+
+    func save(_ pending: PendingLeave) throws {
+        let data = try JSONEncoder().encode(pending)
+        try clear()
+
+        var query = baseQuery()
+        query[kSecValueData as String] = data
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+
+        let status = SecItemAdd(query as CFDictionary, nil)
+        guard status == errSecSuccess else {
+            throw KeychainCredentialStore.KeychainError(status: status)
+        }
+    }
+
+    func clear() throws {
+        let status = SecItemDelete(baseQuery() as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainCredentialStore.KeychainError(status: status)
+        }
+    }
+
+    private func baseQuery() -> [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: account]
+    }
+}
+
+/// テストと、端末に何も残したくないときの置き場
+final class InMemoryPendingLeaveStore: PendingLeaveStoring {
+    private var stored: PendingLeave?
+
+    init(_ initial: PendingLeave? = nil) { stored = initial }
+
+    func load() -> PendingLeave? { stored }
+    func save(_ pending: PendingLeave) throws { stored = pending }
+    func clear() throws { stored = nil }
+}
+
+/// 同期の裏側で起きた、**利用者に伝えないと困ること**の知らせ。
+///
+/// `SyncService` は画面を持たない。気づける場所（主画面）から読めるよう、
+/// **共有の置き場を1つだけ**用意する。
+///
+/// 立てた印は `UserDefaults` に残す。取り込みも退室のやり直しも起動直後に走るので、
+/// 画面が出る前に立った知らせが、そのまま流れて消えてしまうのを防ぐ
+@Observable
+@MainActor
+final class SyncNotice {
+
+    /// 伝えることの種類。**増やすときはここに1つ足す**（画面側は触らない）
+    enum Kind: String {
+        /// ルームから外された（キック・退室でトークンが通らなくなった）
+        case removedFromRoom
+        /// 退室のときのサーバー削除を、送り直しても片付けられなかった
+        case leaveDeletionGaveUp
+
+        var title: String {
+            switch self {
+            case .removedFromRoom:     appLocalized("このルームから外れました")
+            case .leaveDeletionGaveUp: appLocalized("サーバーのデータを消せませんでした")
+            }
+        }
+
+        var message: String {
+            switch self {
+            case .removedFromRoom:
+                appLocalized("このルームから外れました。もう一度みんなで遊ぶには、招待コードを入れ直して参加してください。この端末に残っている記録はそのままです。")
+            case .leaveDeletionGaveUp:
+                appLocalized("退室したルームの、サーバー上のあなたの写真・お題・出欠を消せませんでした。お手数ですが、メール（\(ReportMail.address)）で削除を依頼してください。")
+            }
+        }
+    }
+
+    static let shared = SyncNotice()
+
+    private static let storageKey = "syncNoticeKind"
+
+    /// 「このルームから外れました」の文言。`SyncService.lastError` にも同じものを入れる
+    static var message: String { Kind.removedFromRoom.message }
+
+    private(set) var kind: Kind?
+
+    /// 知らせを出しているか。画面の `alert(isPresented:)` にそのまま渡せる形にしてある
+    var isPresented: Bool {
+        get { kind != nil }
+        set { if !newValue { store(nil) } }
+    }
+
+    private init() {
+        kind = UserDefaults.standard.string(forKey: Self.storageKey).flatMap(Kind.init(rawValue:))
+    }
+
+    func raise(_ kind: Kind) { store(kind) }
+
+    private func store(_ kind: Kind?) {
+        self.kind = kind
+        if let kind {
+            UserDefaults.standard.set(kind.rawValue, forKey: Self.storageKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.storageKey)
+        }
     }
 }
 

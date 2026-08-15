@@ -64,6 +64,21 @@ final class ApiClient {
         _ = try? await sendRaw(.get, "/health", rawBody: nil, authorized: false)
     }
 
+    /// 退室にあわせて、自分の痕跡（写真・お題・出欠・メンバー行）をサーバーから消す。
+    ///
+    /// - Parameter token: 使うトークン。**やり直しのときは端末に資格情報が無い**ので、
+    ///   控えておいたぶんをここで渡す（`SyncService` の `PendingLeave`）
+    func leaveRoom(roomId: UUID, token: String? = nil) async throws {
+        _ = try await sendRaw(.delete, "/rooms/\(roomId.apiString)/members/me",
+                              rawBody: nil, authorized: true, token: token)
+    }
+
+    /// メンバーをルームから外す。**ルーム作成者だけができる**（他の人は 403）
+    func removeMember(roomId: UUID, memberId: UUID) async throws {
+        _ = try await sendRaw(.delete, "/rooms/\(roomId.apiString)/members/\(memberId.apiString)",
+                              rawBody: nil, authorized: true)
+    }
+
     // MARK: - 状態
 
     func room(roomId: UUID) async throws -> RoomResponse {
@@ -207,7 +222,8 @@ final class ApiClient {
 
     private func sendRaw(_ method: HTTPMethod, _ path: String,
                          query: [URLQueryItem] = [],
-                         rawBody: Data?, authorized: Bool) async throws -> Data {
+                         rawBody: Data?, authorized: Bool,
+                         token: String? = nil) async throws -> Data {
         var request = URLRequest(url: url(path, query: query),
                                  timeoutInterval: Self.coldStartTimeout)
         request.httpMethod = method.rawValue
@@ -217,7 +233,9 @@ final class ApiClient {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         if authorized {
-            guard let token = credentials.load()?.token else { throw ApiError.notJoined }
+            // 渡されたトークンを優先する。退室のやり直しは資格情報を消したあとに走るので、
+            // 端末に残っているものからは引けない
+            guard let token = token ?? credentials.load()?.token else { throw ApiError.notJoined }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
@@ -273,12 +291,44 @@ enum ApiError: Error {
     /// 後で送り直す価値があるか。
     /// 4xx は何度送っても同じなので捨てる（キューに残すと以降が永久に詰まる）。
     /// ただし 401 は「トークンが無効」で、再参加すれば通るため残す
+    /// （**通らないままの 401** は `isMembershipRevoked` が拾い、
+    /// `SyncService` が資格情報ごと畳む。だからここに残しても詰まり続けない）
     var isRetryable: Bool {
         switch self {
         case .offline, .notJoined: return true
         case .malformedResponse: return false
         case .server(let status, _): return status == 401 || status >= 500
         }
+    }
+
+    /// 参加の資格そのものが無くなったか（外された・退室した後のトークン）。
+    ///
+    /// キックはサーバーの Member 行ごと消す＝`TokenHash` も消えるので、
+    /// **この 401 は待っても直らない**（`MemberEndpoints` の削除順を参照）。
+    ///
+    /// 一時的な失敗を巻き添えにしないため、条件を2つ重ねている。
+    /// - 圏外・切断は `.offline` になり、ここへ来ない（401 は**サーバーが応答して断った**印）
+    /// - うちのサーバーが返す本文（`unauthorized`）が付いているものだけを見る。
+    ///   前段のプロキシなどが返した素の 401 で、資格情報を捨ててしまわないように
+    var isMembershipRevoked: Bool {
+        guard case .server(let status, let detail) = self else { return false }
+        return status == 401 && detail?.error == "unauthorized"
+    }
+
+    /// 消そうとした相手が**もう居ない**か（退室のやり直し用）。
+    ///
+    /// サーバーは接続が切れても削除を最後まで完走する。つまり
+    /// **90秒で諦めた退室が、実は済んでいる**ことがある。やり直すとこうなる。
+    /// - 401（`unauthorized`）: メンバー行ごと消え、控えたトークンが通らない
+    /// - 404: `member_not_found`（本人が居ない）か、ルームごと無い（本文なし）
+    ///
+    /// どちらも「消したかった」目的は達している。**成功として畳む** —
+    /// 失敗のまま数えると、消えないやり直しが残り、無用なメール案内まで出てしまう。
+    /// 同じ 401 でも、参加中の通信で出たものは「外された」の意味になる
+    /// （`isMembershipRevoked`。使う場面が違うだけで、見ている印は同じ）
+    var isAlreadyGone: Bool {
+        guard case .server(let status, _) = self else { return false }
+        return isMembershipRevoked || status == 404
     }
 
     var message: String {
@@ -351,6 +401,9 @@ struct RoomResponse: Codable {
     /// お題の見え方（0=お楽しみ / 1=いつでも見える）。
     /// **古いサーバーは返さない**ので省略できるようにしてある
     let missionVisibility: Int?
+    /// ルームを作った人のメンバーID。メンバーを外せるのはこの人だけ。
+    /// **古いサーバーは返さない**ので省略できるようにしてある
+    let createdBy: UUID?
 }
 
 /// ルームの設定を変える（いまはお題の見え方だけ）。

@@ -139,6 +139,92 @@ struct GameSessionStoreTests {
         #expect(store.missionCandidates(at: 2).isEmpty)
     }
 
+    /// UIテスト用の播種は**環境変数があるときだけ**効くこと。
+    /// 通常の起動で仲間が勝手に増えると、そのまま出荷されてしまう
+    @Test("見本の仲間は、環境変数があるときだけ入る")
+    func sampleMembersAreOptIn() throws {
+        #expect(!TestHooks.seedsSampleRoom, "この実行環境で播種フックが立っている")
+
+        let store = try makeStore()
+        let members = store.room?.members ?? []
+        #expect(members.count == 1, "頼んでいないのに仲間が増えている")
+        #expect(members.first?.isMe == true)
+    }
+
+    // MARK: - 保留したお題の判定（出荷済みバグの回帰）
+
+    /// 保留したお題を、あとから盤面の「旅のお題」で判定できるか。
+    ///
+    /// **ビルド28から出荷されていた不具合の回帰。**
+    /// `turn.appliedEffectType = .none` は `EffectType?` への代入なので
+    /// Swift が `Optional.none`（＝nil）と解釈し、`MissionOutcome` が
+    /// 「判定前」と読む印が消えないままだった。利用者から見ると、
+    /// 達成／できなかったを押しても**何も起きない**
+    @Test("保留したお題を達成にすると、進行中から外れて達成になる")
+    func resolveDeferredMissionMarksDone() throws {
+        let store = try makeStore(diceMax: 1)
+        let station = try #require(store.station(2))
+        try addMission(store, at: station, content: "駅名標を撮る")
+
+        store.roll(dice: 1)
+        walkToLanding(store)
+        store.drawMission()
+        store.deferMission()
+
+        let turn = try #require(store.unresolvedMissionTurns.first)
+        #expect(MissionOutcome(turn) == .inProgress, "保留したのに進行中になっていない")
+
+        store.resolveMission(turn, done: true)
+
+        #expect(MissionOutcome(turn) == .done, "押しても進行中のまま")
+        #expect(store.unresolvedMissionTurns.isEmpty, "進行中の一覧に残っている")
+        #expect(store.resolvedMissionTurns.contains { $0.id == turn.id },
+                "判定済みの一覧に入っていない")
+    }
+
+    @Test("できなかったを選べば、未達成として片づく")
+    func resolveDeferredMissionMarksMissed() throws {
+        let store = try makeStore(diceMax: 1)
+        let station = try #require(store.station(2))
+        try addMission(store, at: station, content: "駅そばを食べる")
+
+        store.roll(dice: 1)
+        walkToLanding(store)
+        store.drawMission()
+        store.deferMission()
+
+        let turn = try #require(store.unresolvedMissionTurns.first)
+        store.resolveMission(turn, done: false)
+
+        #expect(MissionOutcome(turn) == .missed)
+        #expect(store.unresolvedMissionTurns.isEmpty)
+    }
+
+    @Test("ふりかえりの達成数と進行中の数が、判定に追いつく")
+    func summaryCountsFollowResolution() throws {
+        let store = try makeStore(diceMax: 1)
+        let station = try #require(store.station(2))
+        try addMission(store, at: station, content: "駅名標を撮る")
+
+        store.roll(dice: 1)
+        walkToLanding(store)
+        store.drawMission()
+        store.deferMission()
+
+        let room = try #require(store.room)
+        let before = JourneySummary(room: room, engine: store.engine)
+        #expect(before.inProgressMissionCount == 1)
+        #expect(before.achievedMissionCount == 0)
+
+        let turn = try #require(store.unresolvedMissionTurns.first)
+        store.resolveMission(turn, done: true)
+
+        // ここが動かないと、ふりかえりが永久に「進行中1件」のままになる
+        let after = JourneySummary(room: room, engine: store.engine)
+        #expect(after.inProgressMissionCount == 0)
+        #expect(after.achievedMissionCount == 1)
+    }
+
     // MARK: - 効果
 
     @Test("戻る効果でコマが戻り、その道のりも歩いて記録される")

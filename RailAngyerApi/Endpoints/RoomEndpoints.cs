@@ -113,6 +113,15 @@ public static class RoomEndpoints
             db.Members.Add(member);
             await db.SaveChangesAsync(ct);
 
+            // 作成者がいないルーム（全員が抜けたあと）なら、入り直した人を作成者にする。
+            // そうしないと除名が誰にも通らないルームのままになる。
+            // POST /rooms と同じく、Member を書いてから紐付ける（FK の循環を避けるため）
+            if (room.CreatedBy is null)
+            {
+                room.CreatedBy = member.MemberId;
+                await db.SaveChangesAsync(ct);
+            }
+
             return Results.Ok(new JoinedRoomDto(room.MissionSetId, room.InviteCode, member.MemberId, token));
         });
 
@@ -138,7 +147,8 @@ public static class RoomEndpoints
 
             return Results.Ok(new RoomDto(room.MissionSetId, room.Name, room.CourseId,
                                           room.StartStationId, room.GoalStationId, room.DiceMax,
-                                          room.InviteCode, members, room.MissionVisibility));
+                                          room.InviteCode, members, room.MissionVisibility,
+                                          room.CreatedBy));
         });
 
         // --- 設定の変更 ---------------------------------------------------------
@@ -236,6 +246,8 @@ public record JoinedRoomDto(Guid RoomId, string InviteCode, Guid MemberId, strin
 public record MemberDto(Guid MemberId, string DisplayName, DateTime JoinedAt);
 public record RoomDto(Guid RoomId, string Name, int CourseId, int StartStationId, int GoalStationId,
                       byte DiceMax, string InviteCode, List<MemberDto> Members,
-                      byte MissionVisibility = 0);
+                      byte MissionVisibility = 0,
+                      // ルーム作成者。除名ボタンを出すかの判定に使う。古いクライアントは無視する
+                      Guid? CreatedBy = null);
 public record CourseDto(int CourseId, string Name, string? LineColor, List<StationDto> Stations);
 public record StationDto(int StationId, string Name, int OrderNo, double Latitude, double Longitude);

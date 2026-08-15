@@ -31094,6 +31094,2484 @@
           }
         }
       }
+    },
+    "【レイルアンギャー】通報": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "【レイルアンギャー】通報"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] Report (通報)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] Meldung (通報)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] Denuncia (通報)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] Signalement (通報)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] 신고 (通報)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] Жалоба (通報)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] 举报 (通報)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[RailAngyer] रिपोर्ट (通報)"
+          }
+        }
+      }
+    },
+    "通報する投稿：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通報する投稿：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reported post: %@ (通報する投稿)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemeldeter Beitrag: %@ (通報する投稿)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publicación denunciada: %@ (通報する投稿)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publication signalée : %@ (通報する投稿)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "신고할 게시물: %@ (通報する投稿)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обжалуемая публикация: %@ (通報する投稿)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "举报的内容：%@ (通報する投稿)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रिपोर्ट की गई पोस्ट: %@ (通報する投稿)"
+          }
+        }
+      }
+    },
+    "ルーム名：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ルーム名：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Room: %@ (ルーム名)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raum: %@ (ルーム名)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sala: %@ (ルーム名)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salon : %@ (ルーム名)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방 이름: %@ (ルーム名)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Комната: %@ (ルーム名)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "房间名：%@ (ルーム名)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रूम का नाम: %@ (ルーム名)"
+          }
+        }
+      }
+    },
+    "投稿した人：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "投稿した人：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posted by: %@ (投稿した人)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verfasst von: %@ (投稿した人)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publicado por: %@ (投稿した人)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publié par : %@ (投稿した人)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게시한 사람: %@ (投稿した人)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автор: %@ (投稿した人)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发布者：%@ (投稿した人)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोस्ट करने वाला: %@ (投稿した人)"
+          }
+        }
+      }
+    },
+    "投稿日時：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "投稿日時：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posted at: %@ (投稿日時)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veröffentlicht am: %@ (投稿日時)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha de publicación: %@ (投稿日時)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publié le : %@ (投稿日時)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게시 일시: %@ (投稿日時)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дата публикации: %@ (投稿日時)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发布时间：%@ (投稿日時)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोस्ट का समय: %@ (投稿日時)"
+          }
+        }
+      }
+    },
+    "投稿の内容：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "投稿の内容：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post content: %@ (投稿の内容)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inhalt: %@ (投稿の内容)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contenido: %@ (投稿の内容)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contenu : %@ (投稿の内容)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게시물 내용: %@ (投稿の内容)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Содержание: %@ (投稿の内容)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容：%@ (投稿の内容)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोस्ट की सामग्री: %@ (投稿の内容)"
+          }
+        }
+      }
+    },
+    "通報の理由をここに書いてください：": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通報の理由をここに書いてください："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please write the reason for your report here: (通報の理由)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitte schreibe hier den Grund der Meldung: (通報の理由)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe aquí el motivo de la denuncia: (通報の理由)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrivez ici la raison du signalement : (通報の理由)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "신고 이유를 여기에 적어 주세요: (通報の理由)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Опишите здесь причину жалобы: (通報の理由)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在此写明举报理由：(通報の理由)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कृपया रिपोर्ट का कारण यहाँ लिखें: (通報の理由)"
+          }
+        }
+      }
+    },
+    "この写真を通報する": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この写真を通報する"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report this photo"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Foto melden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Denunciar esta foto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler cette photo"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 사진 신고하기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пожаловаться на это фото"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "举报此照片"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस फ़ोटो की रिपोर्ट करें"
+          }
+        }
+      }
+    },
+    "このお題を通報する": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このお題を通報する"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report this mission"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Aufgabe melden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Denunciar esta misión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler ce défi"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 미션 신고하기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пожаловаться на это задание"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "举报此任务"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस मिशन की रिपोर्ट करें"
+          }
+        }
+      }
+    },
+    "この人の投稿を非表示にする": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この人の投稿を非表示にする"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide this person’s posts"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beiträge dieser Person ausblenden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocultar las publicaciones de esta persona"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer les publications de cette personne"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 사람의 게시물 숨기기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть публикации этого человека"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏此人的内容"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस व्यक्ति की पोस्ट छिपाएँ"
+          }
+        }
+      }
+    },
+    "通報・非表示": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通報・非表示"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report / Hide"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melden / Ausblenden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Denunciar / Ocultar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler / Masquer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "신고·숨기기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пожаловаться / Скрыть"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "举报·隐藏"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रिपोर्ट / छिपाएँ"
+          }
+        }
+      }
+    },
+    "この人の投稿を非表示にしますか": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この人の投稿を非表示にしますか"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide this person’s posts?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beiträge dieser Person ausblenden?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Ocultar las publicaciones de esta persona?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer les publications de cette personne ?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 사람의 게시물을 숨길까요?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть публикации этого человека?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要隐藏此人的内容吗"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस व्यक्ति की पोस्ट छिपाएँ?"
+          }
+        }
+      }
+    },
+    "非表示にする": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "非表示にする"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausblenden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocultar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "숨기기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "छिपाएँ"
+          }
+        }
+      }
+    },
+    "この端末でだけ、この人の写真とお題が出なくなります。ルーム画面からいつでも解除できます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末でだけ、この人の写真とお題が出なくなります。ルーム画面からいつでも解除できます。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Their photos and missions will no longer appear on this device only. You can undo this anytime from the room screen."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotos und Aufgaben dieser Person erscheinen nur auf diesem Gerät nicht mehr. Du kannst das jederzeit im Raum-Bildschirm rückgängig machen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las fotos y misiones de esta persona dejarán de aparecer solo en este dispositivo. Puedes deshacerlo en cualquier momento desde la pantalla de la sala."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos et défis de cette personne n’apparaîtront plus, uniquement sur cet appareil. Vous pouvez annuler à tout moment depuis l’écran du salon."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 기기에서만 이 사람의 사진과 미션이 표시되지 않습니다. 방 화면에서 언제든지 해제할 수 있습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фото и задания этого человека перестанут отображаться только на этом устройстве. Это можно отменить в любой момент на экране комнаты."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在此设备上不再显示此人的照片和任务。可随时在房间页面取消。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "केवल इस डिवाइस पर इस व्यक्ति की फ़ोटो और मिशन दिखना बंद हो जाएँगे। रूम स्क्रीन से इसे कभी भी हटाया जा सकता है।"
+          }
+        }
+      }
+    },
+    "投稿を非表示中": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "投稿を非表示中"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posts hidden"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beiträge ausgeblendet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publicaciones ocultas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publications masquées"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게시물 숨김 중"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Публикации скрыты"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已隐藏其内容"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोस्ट छिपी हुई हैं"
+          }
+        }
+      }
+    },
+    "投稿の非表示を解除する": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "投稿の非表示を解除する"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unhide posts"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beiträge wieder einblenden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dejar de ocultar las publicaciones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne plus masquer les publications"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게시물 숨기기 해제"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать публикации снова"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消隐藏其内容"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोस्ट छिपाना हटाएँ"
+          }
+        }
+      }
+    },
+    "「投稿を非表示」は、この端末でその人の写真とお題を出さなくする設定です。相手には伝わりません。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「投稿を非表示」は、この端末でその人の写真とお題を出さなくする設定です。相手には伝わりません。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Hide posts” stops that person’s photos and missions from appearing on this device. They won’t be notified."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„Beiträge ausblenden“ sorgt dafür, dass Fotos und Aufgaben dieser Person auf diesem Gerät nicht mehr erscheinen. Die Person erfährt nichts davon."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Ocultar publicaciones» hace que las fotos y misiones de esa persona no aparezcan en este dispositivo. La persona no lo sabrá."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Masquer les publications » empêche les photos et défis de cette personne d’apparaître sur cet appareil. Elle n’en sera pas informée."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'게시물 숨기기'는 이 기기에서 그 사람의 사진과 미션을 표시하지 않는 설정입니다. 상대방에게는 알려지지 않습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Скрыть публикации» — настройка, из-за которой фото и задания этого человека не отображаются на этом устройстве. Он об этом не узнает."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“隐藏内容”是仅在此设备上不显示该用户照片和任务的设置。对方不会知道。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"पोस्ट छिपाएँ\" एक सेटिंग है जिससे उस व्यक्ति की फ़ोटो और मिशन इस डिवाइस पर नहीं दिखते। उस व्यक्ति को इसका पता नहीं चलेगा।"
+          }
+        }
+      }
+    },
+    "%@ の操作": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ の操作"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions for %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktionen für %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acciones para %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions pour %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 관련 작업"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действия: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对 %@ 的操作"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ के लिए कार्रवाइयाँ"
+          }
+        }
+      }
+    },
+    "ルームから外す": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ルームから外す"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from room"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus dem Raum entfernen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expulsar de la sala"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer du salon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방에서 내보내기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить из комнаты"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移出房间"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रूम से हटाएँ"
+          }
+        }
+      }
+    },
+    "ルームから外しますか": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ルームから外しますか"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from the room?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus dem Raum entfernen?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Expulsar de la sala?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer du salon ?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방에서 내보낼까요?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить из комнаты?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要移出房间吗"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रूम से हटाएँ?"
+          }
+        }
+      }
+    },
+    "%@ を外す": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を外す"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ entfernen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expulsar a %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 내보내기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移出 %@"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ को हटाएँ"
+          }
+        }
+      }
+    },
+    "外された人は、このルームの記録に手を出せなくなります。招待コードを知っていれば入り直せます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外された人は、このルームの記録に手を出せなくなります。招待コードを知っていれば入り直せます。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A removed member can no longer touch this room’s records. They can rejoin if they know the invite code."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wer entfernt wurde, kann die Aufzeichnungen dieses Raums nicht mehr verändern. Mit dem Einladungscode ist ein erneuter Beitritt möglich."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La persona expulsada ya no podrá tocar los registros de esta sala. Podrá volver a entrar si conoce el código de invitación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La personne retirée ne pourra plus toucher aux enregistrements de ce salon. Elle pourra revenir si elle connaît le code d’invitation."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내보내진 사람은 이 방의 기록을 더 이상 손댈 수 없게 됩니다. 초대 코드를 알고 있으면 다시 들어올 수 있습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалённый участник больше не сможет менять записи этой комнаты. Зная код приглашения, он сможет войти снова."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被移出的成员将无法再改动此房间的记录。知道邀请码的话可以重新加入。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हटाए गए व्यक्ति इस रूम के रिकॉर्ड नहीं बदल पाएँगे। निमंत्रण कोड पता होने पर वे फिर से शामिल हो सकते हैं।"
+          }
+        }
+      }
+    },
+    "サーバー上のあなたの写真・お題・出欠も削除されます。未送信の記録は送られないまま消えます。端末の記録は残ります。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サーバー上のあなたの写真・お題・出欠も削除されます。未送信の記録は送られないまま消えます。端末の記録は残ります。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your photos, missions, and attendance on the server will also be deleted. Unsent records will be discarded without being sent. Records on this device will remain."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auch deine Fotos, Aufgaben und Teilnahmen auf dem Server werden gelöscht. Nicht gesendete Aufzeichnungen gehen verloren. Die Aufzeichnungen auf dem Gerät bleiben erhalten."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "También se eliminarán tus fotos, misiones y asistencia del servidor. Los registros sin enviar se perderán. Los registros del dispositivo se conservarán."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos photos, défis et participations sur le serveur seront aussi supprimés. Les enregistrements non envoyés seront perdus. Ceux de l’appareil seront conservés."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "서버에 있는 나의 사진·미션·참석 여부도 삭제됩니다. 미전송 기록은 보내지지 않은 채 사라집니다. 기기의 기록은 남습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ваши фото, задания и отметки участия на сервере тоже будут удалены. Неотправленные записи пропадут. Записи на устройстве сохранятся."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服务器上你的照片、任务和出席记录也会被删除。未发送的记录将不再发送并消失。本机记录会保留。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर पर आपकी फ़ोटो, मिशन और उपस्थिति भी हटा दी जाएँगी। बिना भेजे गए रिकॉर्ड भेजे बिना ही मिट जाएँगे। डिवाइस के रिकॉर्ड बने रहेंगे।"
+          }
+        }
+      }
+    },
+    "ルームの作成者だけがメンバーを外せます": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ルームの作成者だけがメンバーを外せます"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the room’s creator can remove members"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur wer den Raum erstellt hat, kann Mitglieder entfernen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo quien creó la sala puede expulsar miembros"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seule la personne qui a créé le salon peut retirer des membres"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방을 만든 사람만 멤버를 내보낼 수 있습니다"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалять участников может только создатель комнаты"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只有房间创建者才能移出成员"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "केवल रूम बनाने वाला ही सदस्यों को हटा सकता है"
+          }
+        }
+      }
+    },
+    "退室しましたが、サーバー上のあなたの写真・お題・出欠は残っています。削除はメール（%@）で依頼できます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退室しましたが、サーバー上のあなたの写真・お題・出欠は残っています。削除はメール（%@）で依頼できます。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You left the room, but your photos, missions, and attendance are still on the server. You can request deletion by email (%@)."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast den Raum verlassen, aber deine Fotos, Aufgaben und Teilnahmen sind noch auf dem Server. Die Löschung kannst du per E-Mail (%@) anfragen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saliste de la sala, pero tus fotos, misiones y asistencia siguen en el servidor. Puedes solicitar su eliminación por correo (%@)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez quitté le salon, mais vos photos, défis et participations restent sur le serveur. Vous pouvez demander leur suppression par e-mail (%@)."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방에서 나갔지만, 서버에 있는 나의 사진·미션·참석 여부는 남아 있습니다. 삭제는 메일(%@)로 요청할 수 있습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вы вышли из комнаты, но ваши фото, задания и отметки участия остались на сервере. Удаление можно запросить по почте (%@)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已退出房间，但服务器上你的照片、任务和出席记录仍然保留。可通过邮件（%@）申请删除。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप रूम से निकल गए, लेकिन सर्वर पर आपकी फ़ोटो, मिशन और उपस्थिति अभी भी मौजूद हैं। हटाने का अनुरोध ईमेल (%@) से किया जा सकता है।"
+          }
+        }
+      }
+    },
+    "特定商取引法に基づく表記": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "特定商取引法に基づく表記"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disclosures under Japan’s Specified Commercial Transactions Act"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angaben nach dem japanischen Gesetz über spezifizierte Handelsgeschäfte"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Información conforme a la Ley japonesa de Transacciones Comerciales Específicas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mentions selon la loi japonaise sur les transactions commerciales spécifiées"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "특정상거래법에 따른 표기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сведения согласно японскому закону о специфических коммерческих сделках"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于《特定商业交易法》的标示"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जापान के विशिष्ट वाणिज्यिक लेनदेन अधिनियम के अंतर्गत जानकारी"
+          }
+        }
+      }
+    },
+    "支払いはApp Storeの決済で行われ、決済の完了後すぐに反映されます。デジタルコンテンツの性質上、購入確定後の返金はAppleの返金ポリシーに従います。表記の全文は利用規約にあります。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支払いはApp Storeの決済で行われ、決済の完了後すぐに反映されます。デジタルコンテンツの性質上、購入確定後の返金はAppleの返金ポリシーに従います。表記の全文は利用規約にあります。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payment is processed through the App Store and takes effect as soon as it completes. Because of the nature of digital content, refunds after purchase follow Apple’s refund policy. The full disclosure is in the Terms of Use."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Zahlung erfolgt über den App Store und wird sofort nach Abschluss wirksam. Aufgrund der Natur digitaler Inhalte richten sich Erstattungen nach dem Kauf nach Apples Erstattungsrichtlinie. Der vollständige Text steht in den Nutzungsbedingungen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El pago se realiza a través del App Store y se aplica en cuanto se completa. Por la naturaleza del contenido digital, los reembolsos tras la compra siguen la política de reembolsos de Apple. El texto completo está en los Términos de uso."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le paiement s’effectue via l’App Store et prend effet dès qu’il est terminé. En raison de la nature du contenu numérique, les remboursements après achat suivent la politique de remboursement d’Apple. Le texte complet figure dans les Conditions d’utilisation."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "결제는 App Store 결제로 이루어지며, 결제 완료 후 즉시 반영됩니다. 디지털 콘텐츠의 특성상 구매 확정 후 환불은 Apple의 환불 정책을 따릅니다. 표기 전문은 이용약관에 있습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оплата проходит через App Store и вступает в силу сразу после завершения. В силу природы цифрового контента возврат средств после покупки регулируется политикой возвратов Apple. Полный текст — в Условиях использования."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "付款通过 App Store 完成，付款完成后立即生效。鉴于数字内容的性质，购买确定后的退款遵循 Apple 的退款政策。完整标示见使用条款。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भुगतान App Store के माध्यम से होता है और पूरा होते ही लागू हो जाता है। डिजिटल सामग्री की प्रकृति के कारण, खरीद के बाद रिफ़ंड Apple की रिफ़ंड नीति के अनुसार होगा। पूरा विवरण उपयोग की शर्तों में है।"
+          }
+        }
+      }
+    },
+    "阪急京都本線・札幌市電・大阪環状線・ベルリン Ringbahn・ロンドン サークル線・モスクワ 環状線・モスクワ 大環状線・北京地下鉄10号線・ニューヨーク 7号線・ロサンゼルス Eラインの駅・電停の位置に使っています。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阪急京都本線・札幌市電・大阪環状線・ベルリン Ringbahn・ロンドン サークル線・モスクワ 環状線・モスクワ 大環状線・北京地下鉄10号線・ニューヨーク 7号線・ロサンゼルス Eラインの駅・電停の位置に使っています。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used for the station and tram-stop locations of the Hankyu Kyoto Main Line, the Sapporo Streetcar, the Osaka Loop Line, the Berlin Ringbahn, the London Circle line, the Moscow Koltsevaya line, the Moscow Big Circle line, Beijing Subway Line 10, the New York 7 line, and the Los Angeles E Line."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für die Stations- und Haltestellenstandorte der Hankyu-Kyoto-Hauptlinie, der Straßenbahn Sapporo, der Osaka-Ringlinie, der Berliner Ringbahn, der London Circle Line, der Moskauer Ringlinie, der Großen Moskauer Ringlinie, der Pekinger U-Bahn-Linie 10, der New Yorker Linie 7 und der E Line in Los Angeles."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se usa para la ubicación de las estaciones y paradas de la línea principal Hankyu Kioto, el tranvía de Sapporo, la línea circular de Osaka, el Ringbahn de Berlín, la línea Circle de Londres, la línea circular de Moscú, la gran línea circular de Moscú, la línea 10 del metro de Pekín, la línea 7 de Nueva York y la línea E de Los Ángeles."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisé pour la position des stations et arrêts de la ligne principale Hankyu Kyoto, du tramway de Sapporo, de la ligne circulaire d’Osaka, du Ringbahn de Berlin, de la Circle line de Londres, de la ligne circulaire de Moscou, de la grande ligne circulaire de Moscou, de la ligne 10 du métro de Pékin, de la ligne 7 de New York et de la ligne E de Los Angeles."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한큐 교토 본선, 삿포로 시덴, 오사카 순환선, 베를린 링반, 런던 서클선, 모스크바 순환선, 모스크바 대순환선, 베이징 지하철 10호선, 뉴욕 7호선, 로스앤젤레스 E라인의 역·정류장 위치에 사용합니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Используется для координат станций и остановок линии Ханкю Киото, трамвая Саппоро, кольцевой линии Осаки, берлинского Рингбана, лондонской линии Circle, Кольцевой линии Москвы, Большой кольцевой линии Москвы, линии 10 пекинского метро, линии 7 Нью-Йорка и линии E Лос-Анджелеса."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用于阪急京都本线、札幌市电、大阪环状线、柏林环线、伦敦环线、莫斯科环线、莫斯科大环线、北京地铁10号线、纽约7号线及洛杉矶E线的车站·电车站位置。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हांक्यू क्योटो मुख्य लाइन, साप्पोरो ट्राम, ओसाका लूप लाइन, बर्लिन रिंगबान, लंदन सर्कल लाइन, मॉस्को रिंग लाइन, मॉस्को बिग सर्कल लाइन, बीजिंग मेट्रो लाइन 10, न्यूयॉर्क लाइन 7 और लॉस एंजिलिस E लाइन के स्टेशनों व स्टॉप की स्थिति के लिए उपयोग किया जाता है।"
+          }
+        }
+      }
+    },
+    "この表示名を通報する": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この表示名を通報する"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report this display name"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Anzeigenamen melden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Denunciar este nombre"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler ce nom d’affichage"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 표시 이름 신고하기"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пожаловаться на это имя"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "举报此显示名称"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस प्रदर्शित नाम की रिपोर्ट करें"
+          }
+        }
+      }
+    },
+    "非表示にした人": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "非表示にした人"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden member"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgeblendete Person"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Persona oculta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personne masquée"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "숨긴 사람"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрытый участник"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已隐藏的成员"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "छिपाया गया सदस्य"
+          }
+        }
+      }
+    },
+    "%@ 参加": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 参加"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joined %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beigetreten %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se unió el %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rejoint le %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 참가"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Присоединился %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 加入"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ को शामिल हुए"
+          }
+        }
+      }
+    },
+    "その人がこのルームに出した写真・お題・出欠は、サーバーから削除されます。元には戻せません。招待コードで入り直すことはできますが、消えた記録は戻りません。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その人がこのルームに出した写真・お題・出欠は、サーバーから削除されます。元には戻せません。招待コードで入り直すことはできますが、消えた記録は戻りません。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The photos, missions, and RSVPs that person shared in this room will be deleted from the server. This cannot be undone. They can join again with the invite code, but the deleted records will not come back."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Fotos, Aufgaben und Zusagen, die diese Person in diesem Raum geteilt hat, werden vom Server gelöscht. Das lässt sich nicht rückgängig machen. Sie kann mit dem Einladungscode wieder beitreten, aber die gelöschten Einträge kehren nicht zurück."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las fotos, las misiones y las asistencias que esa persona compartió en esta sala se eliminarán del servidor. No se puede deshacer. Puede volver a entrar con el código de invitación, pero los registros eliminados no volverán."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos, les défis et les présences que cette personne a partagés dans ce salon seront supprimés du serveur. C’est irréversible. Elle pourra revenir avec le code d’invitation, mais les données supprimées ne reviendront pas."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "그 사람이 이 방에 올린 사진·미션·참석 여부는 서버에서 삭제됩니다. 되돌릴 수 없습니다. 초대 코드로 다시 참가할 수는 있지만, 삭제된 기록은 돌아오지 않습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фотографии, задания и отметки об участии, которые этот человек добавил в эту комнату, будут удалены с сервера. Отменить это нельзя. Он сможет снова войти по коду приглашения, но удалённые записи не вернутся."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该成员在此房间发布的照片、任务和出席情况将从服务器删除，且无法恢复。他可以用邀请码重新加入，但已删除的记录不会回来。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस रूम में उस व्यक्ति ने जो फ़ोटो, मिशन और उपस्थिति साझा की थी, वे सर्वर से हटा दी जाएँगी। इसे पहले जैसा नहीं किया जा सकता। वे आमंत्रण कोड से दोबारा शामिल हो सकते हैं, पर हटाए गए रिकॉर्ड वापस नहीं आएँगे।"
+          }
+        }
+      }
+    },
+    "「投稿を非表示」は、この端末でその人の写真・お題・表示名を出さなくする設定です。相手には伝わりません。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「投稿を非表示」は、この端末でその人の写真・お題・表示名を出さなくする設定です。相手には伝わりません。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Hide posts” stops that person’s photos, missions, and display name from appearing on this device. They won’t be notified."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„Beiträge ausblenden“ sorgt dafür, dass Fotos, Aufgaben und der Anzeigename dieser Person auf diesem Gerät nicht mehr erscheinen. Die Person erfährt nichts davon."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Ocultar publicaciones» hace que las fotos, las misiones y el nombre de esa persona no aparezcan en este dispositivo. La persona no lo sabrá."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Masquer les publications » empêche les photos, les défis et le nom d’affichage de cette personne d’apparaître sur cet appareil. Elle n’en sera pas informée."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'게시물 숨기기'는 이 기기에서 그 사람의 사진·미션·표시 이름을 표시하지 않는 설정입니다. 상대방에게는 알려지지 않습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Скрыть публикации» — настройка, из-за которой фото, задания и имя этого человека не отображаются на этом устройстве. Он об этом не узнает."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“隐藏内容”是仅在此设备上不显示该用户照片、任务和显示名称的设置。对方不会知道。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"पोस्ट छिपाएँ\" एक सेटिंग है जिससे उस व्यक्ति की फ़ोटो, मिशन और प्रदर्शित नाम इस डिवाइस पर नहीं दिखते। उस व्यक्ति को इसका पता नहीं चलेगा।"
+          }
+        }
+      }
+    },
+    "メールを開けませんでした": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メールを開けませんでした"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t open Mail"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail konnte nicht geöffnet werden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo abrir el correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’ouvrir l’e-mail"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "메일을 열 수 없습니다"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось открыть почту"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开邮件"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेल नहीं खुल सका"
+          }
+        }
+      }
+    },
+    "宛先をコピーする": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "宛先をコピーする"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy address"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse kopieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar dirección"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier l’adresse"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "주소 복사"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать адрес"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制地址"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पता कॉपी करें"
+          }
+        }
+      }
+    },
+    "この端末ではメールを開けませんでした。通報は %@ 宛のメールで受け付けています。宛先をコピーして、どの投稿のことか分かるように書いて送ってください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末ではメールを開けませんでした。通報は %@ 宛のメールで受け付けています。宛先をコピーして、どの投稿のことか分かるように書いて送ってください。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This device couldn’t open a mail app. Reports are accepted by email at %@. Copy the address and tell us which post you are reporting."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem Gerät konnte keine Mail-App geöffnet werden. Meldungen nehmen wir per E-Mail an %@ entgegen. Kopiere die Adresse und beschreibe, um welchen Beitrag es geht."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este dispositivo no pudo abrir el correo. Aceptamos denuncias por email en %@. Copia la dirección e indica de qué publicación se trata."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’a pas pu ouvrir d’application e-mail. Les signalements sont reçus par e-mail à %@. Copiez l’adresse et précisez de quelle publication il s’agit."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 기기에서는 메일을 열 수 없었습니다. 신고는 %@ 로 보내는 이메일로 접수합니다. 주소를 복사해 어떤 게시물인지 알 수 있도록 적어 보내주세요."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этом устройстве не удалось открыть почту. Жалобы принимаются по адресу %@. Скопируйте адрес и укажите, о какой публикации идёт речь."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备无法打开邮件。举报请发送邮件至 %@，复制地址并说明是哪一条内容。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस डिवाइस पर मेल नहीं खुल सका। रिपोर्ट ईमेल से %@ पर स्वीकार की जाती है। पता कॉपी करें और बताएँ कि यह किस पोस्ट के बारे में है।"
+          }
+        }
+      }
+    },
+    "このルームから外れました": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このルームから外れました"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You were removed from this room"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du wurdest aus diesem Raum entfernt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya no estás en esta sala"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez été retiré de ce salon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 방에서 나가게 되었습니다"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вас удалили из этой комнаты"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已被移出此房间"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपको इस रूम से हटा दिया गया"
+          }
+        }
+      }
+    },
+    "このルームから外れました。もう一度みんなで遊ぶには、招待コードを入れ直して参加してください。この端末に残っている記録はそのままです。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このルームから外れました。もう一度みんなで遊ぶには、招待コードを入れ直して参加してください。この端末に残っている記録はそのままです。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are no longer in this room. To play together again, enter the invite code and join once more. The records on this device stay as they are."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du bist nicht mehr in diesem Raum. Um wieder gemeinsam zu spielen, gib den Einladungscode erneut ein und tritt noch einmal bei. Die Aufzeichnungen auf diesem Gerät bleiben erhalten."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya no estás en esta sala. Para volver a jugar juntos, introduce de nuevo el código de invitación y únete otra vez. Los registros de este dispositivo se conservan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous n’êtes plus dans ce salon. Pour rejouer ensemble, saisissez à nouveau le code d’invitation et rejoignez le salon. Les données de cet appareil sont conservées."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 방에서 빠졌습니다. 다시 함께 놀려면 초대 코드를 입력해 다시 참가해 주세요. 이 기기에 남아 있는 기록은 그대로입니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вы больше не в этой комнате. Чтобы снова играть вместе, введите код приглашения и присоединитесь заново. Записи на этом устройстве сохранятся."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已不在此房间。想再一起玩，请重新输入邀请码加入。此设备上的记录会保留。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप अब इस रूम में नहीं हैं। फिर से साथ खेलने के लिए आमंत्रण कोड डालकर दोबारा शामिल हों। इस डिवाइस पर मौजूद रिकॉर्ड वैसे ही रहेंगे।"
+          }
+        }
+      }
+    },
+    "サーバーのデータを消せませんでした": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サーバーのデータを消せませんでした"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t delete your data on the server"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Daten auf dem Server konnten nicht gelöscht werden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron borrar tus datos del servidor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de supprimer vos données du serveur"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "서버의 데이터를 지우지 못했습니다"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось удалить ваши данные с сервера"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未能删除服务器上的数据"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर पर मौजूद आपका डेटा नहीं मिटाया जा सका"
+          }
+        }
+      }
+    },
+    "退室したルームの、サーバー上のあなたの写真・お題・出欠を消せませんでした。お手数ですが、メール（%@）で削除を依頼してください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退室したルームの、サーバー上のあなたの写真・お題・出欠を消せませんでした。お手数ですが、メール（%@）で削除を依頼してください。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn’t delete your photos, missions, and RSVPs on the server for the room you left. Sorry for the trouble — please request deletion by email at %@."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Fotos, Aufgaben und Zusagen auf dem Server konnten für den verlassenen Raum nicht gelöscht werden. Bitte fordere die Löschung per E-Mail an %@ an."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron borrar del servidor tus fotos, misiones y asistencias de la sala que abandonaste. Solicita el borrado por email a %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos photos, défis et présences n’ont pas pu être supprimés du serveur pour le salon que vous avez quitté. Merci de demander la suppression par e-mail à %@."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "나간 방의 서버에 있는 사진·미션·참석 여부를 지우지 못했습니다. 번거롭지만 이메일(%@)로 삭제를 요청해 주세요."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось удалить с сервера ваши фотографии, задания и отметки об участии для покинутой комнаты. Пожалуйста, запросите удаление по адресу %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未能删除你已退出房间在服务器上的照片、任务和出席记录。请通过邮件（%@）申请删除。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपने जो रूम छोड़ा, उसकी सर्वर पर मौजूद आपकी फ़ोटो, मिशन और उपस्थिति नहीं मिटाई जा सकी। कृपया ईमेल (%@) से हटाने का अनुरोध करें।"
+          }
+        }
+      }
+    },
+    "退室しました。サーバー上のあなたの写真・お題・出欠は、削除が完了しなかった可能性があります。あとで自動的に確かめ直します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退室しました。サーバー上のあなたの写真・お題・出欠は、削除が完了しなかった可能性があります。あとで自動的に確かめ直します。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You left the room. The deletion of your photos, missions, and RSVPs on the server may not have finished. The app will check again automatically later."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast den Raum verlassen. Das Löschen deiner Fotos, Aufgaben und Zusagen auf dem Server wurde möglicherweise nicht abgeschlossen. Die App prüft das später automatisch erneut."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Has salido de la sala. Puede que no se completara el borrado de tus fotos, misiones y asistencias en el servidor. La app volverá a comprobarlo automáticamente más tarde."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez quitté le salon. La suppression de vos photos, défis et présences sur le serveur n’est peut-être pas terminée. L’app vérifiera à nouveau automatiquement plus tard."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방에서 나왔습니다. 서버에 있는 사진·미션·참석 여부의 삭제가 끝나지 않았을 수 있습니다. 나중에 자동으로 다시 확인합니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вы вышли из комнаты. Удаление ваших фотографий, заданий и отметок об участии на сервере могло не завершиться. Приложение проверит это позже автоматически."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已退出房间。服务器上你的照片、任务和出席记录可能尚未删除完成，稍后会自动重新确认。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप रूम से बाहर आ गए। सर्वर पर आपकी फ़ोटो, मिशन और उपस्थिति का हटाया जाना शायद पूरा न हुआ हो। ऐप बाद में अपने आप दोबारा जाँच करेगा।"
+          }
+        }
+      }
+    },
+    "支払いはApp Storeの決済で行われ、決済の完了後すぐに反映されます。デジタルコンテンツの性質上、購入確定後の返金はAppleの返金ポリシーに従います。": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支払いはApp Storeの決済で行われ、決済の完了後すぐに反映されます。デジタルコンテンツの性質上、購入確定後の返金はAppleの返金ポリシーに従います。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payment is processed through the App Store and takes effect as soon as it completes. Because of the nature of digital content, refunds after purchase follow Apple’s refund policy."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Zahlung erfolgt über den App Store und wird sofort nach Abschluss wirksam. Aufgrund der Natur digitaler Inhalte richten sich Erstattungen nach dem Kauf nach Apples Erstattungsrichtlinie."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El pago se realiza a través del App Store y se aplica en cuanto se completa. Por la naturaleza del contenido digital, los reembolsos tras la compra siguen la política de reembolsos de Apple."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le paiement s’effectue via l’App Store et prend effet dès qu’il est terminé. En raison de la nature du contenu numérique, les remboursements après achat suivent la politique de remboursement d’Apple."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "결제는 App Store 결제로 이루어지며, 결제 완료 후 즉시 반영됩니다. 디지털 콘텐츠의 특성상 구매 확정 후 환불은 Apple의 환불 정책을 따릅니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оплата проходит через App Store и вступает в силу сразу после завершения. В силу природы цифрового контента возврат средств после покупки регулируется политикой возвратов Apple."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "付款通过 App Store 完成，付款完成后立即生效。鉴于数字内容的性质，购买确定后的退款遵循 Apple 的退款政策。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भुगतान App Store के माध्यम से होता है और पूरा होते ही लागू हो जाता है। डिजिटल सामग्री की प्रकृति के कारण, खरीद के बाद रिफ़ंड Apple की रिफ़ंड नीति के अनुसार होगा।"
+          }
+        }
+      }
     }
   }
 }

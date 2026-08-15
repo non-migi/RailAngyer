@@ -155,3 +155,20 @@ SELECT c.Name AS コース, COUNT(s.StationId) AS 駅数
 FROM dbo.Course c LEFT JOIN dbo.Station s ON s.CourseId = c.CourseId
 GROUP BY c.Name ORDER BY c.Name;
 GO
+
+/* ============================================================
+   出典の照合記録（2026-08-15 追記）
+
+   本ファイルの3コース（大阪環状線・ニューヨーク 7号線・ロサンゼルス Eライン）の
+   座標と並び順は OpenStreetMap 由来（© OpenStreetMap contributors / ODbL）。
+
+   2026-08-15 に Overpass API（https://overpass-api.de/api/interpreter）で
+   次の路線リレーションの停車ノードと突き合わせ、全駅が 0.1m 以内で
+   一致することを確認した。座標の差し替えは不要。
+
+     ニューヨーク 7号線   relation 9699137
+     ロサンゼルス Eライン relation 6584633
+     大阪環状線           relation 10073682（外回り）
+
+   アプリ側の出典表示は AttributionView（OSM由来の全コースを列挙）。
+   ============================================================ */

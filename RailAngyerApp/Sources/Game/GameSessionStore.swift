@@ -45,9 +45,14 @@ final class GameSessionStore {
             let course = try MasterSeeder.seedIfNeeded(context)
             let room = try MasterSeeder.seedLocalRoomIfNeeded(context, course: course)
             if sampleMissions { try MasterSeeder.seedSampleMissionsIfNeeded(context, room: room) }
+            // UIテストのときだけ仲間を用意する（通報・非表示・外すの導線を出すため）
+            if TestHooks.seedsSampleRoom {
+                try MasterSeeder.seedSampleMembersIfNeeded(context, room: room)
+            }
             try MasterSeeder.removeBundledSampleMissions(context, room: room)
             self.room = room
             repairDanglingReferences()
+            reloadBlockedMembers()
             reloadSchedules()
             if TestHooks.resetsProgressOnLaunch { resetProgress(archive: false) }
         } catch {
@@ -319,6 +324,7 @@ final class GameSessionStore {
         guard let room else { return [] }
         return room.missions
             .filter { $0.station?.orderNo == order && $0.station?.course?.name == room.course?.name }
+            .filter { !isBlocked(memberId: $0.member?.id) }   // 非表示にした人のぶんは出さない
             .sorted { ($0.member?.displayName ?? "") < ($1.member?.displayName ?? "") }
     }
 
@@ -344,6 +350,7 @@ final class GameSessionStore {
         let course = room.course?.name
         return Set(room.missions
             .filter { $0.station?.course?.name == course }
+            .filter { !isBlocked(memberId: $0.member?.id) }
             .compactMap { $0.station?.orderNo })
     }
 
@@ -363,6 +370,9 @@ final class GameSessionStore {
             guard mission.station?.id == station.id,
                   !used.contains(mission.persistentModelID) else { return false }
             if excludesMine, let meId, mission.member?.id == meId { return false }
+            // 非表示にした人のお題は**抽選からも外す**。画面で隠すだけだと、
+            // 引いた瞬間に見たくない投稿がそのまま出てしまう
+            if isBlocked(memberId: mission.member?.id) { return false }
             return true
         }
     }
@@ -510,7 +520,11 @@ final class GameSessionStore {
     func resolveMission(_ turn: Turn, done: Bool) {
         guard turn.selectedMission != nil, MissionOutcome(turn) == .inProgress else { return }
         turn.missionDone = done
-        turn.appliedEffectType = .none
+        // **`Optional` への `.none` は nil になる。** ここで欲しいのは「効果なし」を表す
+        // `EffectType.none` で、型を書かないと nil が入り、判定前の印
+        // （`MissionOutcome` は `appliedEffectType == nil` を「進行中」と読む）が消えず、
+        // 押しても永久に進行中のままになる
+        turn.appliedEffectType = EffectType.none
         save()
         // 直近のターンとは限らないので、このターンだけを名指しで積む
         try? sync?.enqueueTurn(turn)
@@ -736,6 +750,38 @@ final class GameSessionStore {
     func myAttendance(_ schedule: Schedule) -> AttendanceStatus {
         guard let me else { return .undecided }
         return schedule.attendees.first { $0.memberId == me.id }?.status ?? .undecided
+    }
+
+    // MARK: - ブロック（ローカル非表示。App Store ガイドライン 1.2）
+
+    /// このルームで非表示にしている相手。**端末の中だけの設定**（相手には伝わらない）
+    private(set) var blockedMemberIds: Set<UUID> = []
+
+    /// ブロックの一覧を端末の保存から読み直す。起動時と、ルームが替わったときに呼ぶ
+    func reloadBlockedMembers() {
+        guard let room else {
+            blockedMemberIds = []
+            return
+        }
+        blockedMemberIds = MemberBlockList.load(roomId: room.id)
+    }
+
+    func isBlocked(memberId: UUID?) -> Bool {
+        guard let memberId else { return false }
+        return blockedMemberIds.contains(memberId)
+    }
+
+    /// メンバーを非表示にする。写真とお題が一覧から消え、**お題の抽選からも外れる**
+    func block(memberId: UUID) {
+        guard let room, memberId != me?.id else { return }   // 自分は隠せない
+        blockedMemberIds.insert(memberId)
+        MemberBlockList.save(blockedMemberIds, roomId: room.id)
+    }
+
+    func unblock(memberId: UUID) {
+        guard let room else { return }
+        blockedMemberIds.remove(memberId)
+        MemberBlockList.save(blockedMemberIds, roomId: room.id)
     }
 
     // MARK: - 写真
@@ -977,6 +1023,8 @@ final class GameSessionStore {
         let stationName: String?
         let takenAt: Date
         let authorName: String
+        /// 撮った人のメンバーID。通報・ブロックの相手を特定するために持つ
+        let authorId: UUID?
         /// 自分が撮ったか。**名前ではなくメンバーIDで決める**
         /// （同じ名前で入り直した人と取り違えないため）
         let isMine: Bool
@@ -984,20 +1032,23 @@ final class GameSessionStore {
         var id: UUID { photoId }
     }
 
-    /// この旅の写真を、撮った順に。**仲間が撮ったぶんも含む**
+    /// この旅の写真を、撮った順に。**仲間が撮ったぶんも含む**（非表示にした人のぶんは除く）
     var galleryPhotos: [PhotoItem] {
         let meId = me?.id
         return (room?.visits ?? [])
             .flatMap { visit in
-                visit.photos.map { photo in
-                    let author = photo.member
-                    return PhotoItem(photoId: photo.id,
-                                     localFileName: photo.localFileName.nilIfEmpty,
-                                     stationName: visit.station?.name,
-                                     takenAt: photo.takenAt,
-                                     authorName: author?.displayName ?? appLocalized("だれか"),
-                                     isMine: author == nil || author?.id == meId)
-                }
+                visit.photos
+                    .filter { !isBlocked(memberId: $0.member?.id) }
+                    .map { photo in
+                        let author = photo.member
+                        return PhotoItem(photoId: photo.id,
+                                         localFileName: photo.localFileName.nilIfEmpty,
+                                         stationName: visit.station?.name,
+                                         takenAt: photo.takenAt,
+                                         authorName: author?.displayName ?? appLocalized("だれか"),
+                                         authorId: author?.id,
+                                         isMine: author == nil || author?.id == meId)
+                    }
             }
             .sorted { $0.takenAt < $1.takenAt }
     }
@@ -1035,7 +1086,8 @@ final class GameSessionStore {
                                   stationName: photo.stationName ?? "-",
                                   takenAt: photo.takenAt,
                                   photographer: photo.isMine ? nil : photo.authorName,
-                                  isMine: photo.isMine)
+                                  isMine: photo.isMine,
+                                  authorId: photo.authorId)
         }
     }
 

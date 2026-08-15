@@ -26,9 +26,11 @@ struct AttributionView: View {
                 }
 
                 Section {
+                    // ODbL の帰属表示義務があるため、OSM由来のコースは**全部**ここに並べる。
+                    // コースを足したら必ずこの列挙も更新すること
                     source(title: "OpenStreetMap",
                            holder: "© OpenStreetMap contributors",
-                           detail: "阪急京都本線と札幌市電の駅・電停の位置に使っています。",
+                           detail: "阪急京都本線・札幌市電・大阪環状線・ベルリン Ringbahn・ロンドン サークル線・モスクワ 環状線・モスクワ 大環状線・北京地下鉄10号線・ニューヨーク 7号線・ロサンゼルス Eラインの駅・電停の位置に使っています。",
                            license: "Open Database License（ODbL）",
                            url: "https://www.openstreetmap.org/copyright")
                 } footer: {

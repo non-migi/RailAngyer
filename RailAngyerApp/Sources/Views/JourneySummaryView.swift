@@ -56,7 +56,9 @@ struct JourneySummaryView: View {
                                  title: appLocalized("この旅の写真"),
                                  onDelete: { item in
                                      if let id = item.photoId { store.deletePhoto(id: id) }
-                                 })
+                                 },
+                                 roomName: store.room?.name,
+                                 onBlock: { store.block(memberId: $0) })
             }
         }
     }

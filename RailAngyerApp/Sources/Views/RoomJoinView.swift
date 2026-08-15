@@ -16,6 +16,7 @@ struct RoomJoinView: View {
     @Bindable var store: GameSessionStore
     let sync: SyncService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     private enum Mode: CaseIterable {
         case join, create
@@ -37,6 +38,10 @@ struct RoomJoinView: View {
     @State private var errorMessage: String?
     @State private var showingLeaveConfirm = false
     @State private var showingSwitchConfirm = false
+    /// 「ルームから外す」の確認に出している相手
+    @State private var kickTarget: Member?
+    /// 通報メールを開けなかった（`mailto:` を扱えない端末）
+    @State private var showingReportFallback = false
 
     /// 端末で進めている旅があるか。参加すると盤面はルームのものに入れ替わる
     private var hasLocalProgress: Bool { !(store.room?.turns.isEmpty ?? true) }
@@ -81,12 +86,32 @@ struct RoomJoinView: View {
                 if roomName.isEmpty, let course = store.room?.course?.name {
                     roomName = appLocalized("\(course)ツアー")
                 }
+                // 作成者かどうか（キックの口を出すか）は取り込みで分かる。
+                // 開いたときに名簿ごと最新にしておく
+                if sync.isJoined {
+                    Task { await sync.pullRoom() }
+                }
+                // 前の退室で消し残しがあれば、ここでも一度片付けにいく
+                // （起動時に圏外だったぶんを、そのままにしない）
+                Task { await sync.retryPendingLeaveIfNeeded() }
             }
             .confirmationDialog("このルームから抜けますか",
                                 isPresented: $showingLeaveConfirm, titleVisibility: .visible) {
                 Button("抜ける", role: .destructive) { leave() }
             } message: {
-                Text("未送信の記録は送られないまま消えます。端末の記録は残ります。")
+                Text("サーバー上のあなたの写真・お題・出欠も削除されます。未送信の記録は送られないまま消えます。端末の記録は残ります。")
+            }
+            .confirmationDialog("ルームから外しますか",
+                                isPresented: Binding(get: { kickTarget != nil },
+                                                     set: { if !$0 { kickTarget = nil } }),
+                                titleVisibility: .visible, presenting: kickTarget) { member in
+                Button(appLocalized("\(label(for: member)) を外す"), role: .destructive) {
+                    kick(member)
+                }
+            } message: { _ in
+                // **実際に起きることを言う。** サーバー側は写真の実体・お題・出欠まで
+                // 消してしまうので、「入り直せます」だけでは戻ると誤解される
+                Text("その人がこのルームに出した写真・お題・出欠は、サーバーから削除されます。元には戻せません。招待コードで入り直すことはできますが、消えた記録は戻りません。")
             }
             .confirmationDialog("いまの旅を保存して参加しますか",
                                 isPresented: $showingSwitchConfirm, titleVisibility: .visible) {
@@ -94,6 +119,7 @@ struct RoomJoinView: View {
             } message: {
                 Text("盤面はルームの旅に切り替わります。いま進めている旅は「過去の旅」に保存され、写真も残ります。")
             }
+            .reportMailFallbackAlert(isPresented: $showingReportFallback)
         }
     }
 
@@ -124,14 +150,16 @@ struct RoomJoinView: View {
             }
         }
 
-        Section("メンバー") {
+        Section {
             ForEach(members) { member in
-                HStack {
-                    Text(member.displayName)
-                    if member.isMe {
-                        Text("あなた").font(.caption).foregroundStyle(.secondary)
-                    }
-                }
+                memberRow(member)
+            }
+        } header: {
+            Text("メンバー")
+        } footer: {
+            // 非表示は端末の中だけの設定なので、何が起きるのかをここで言葉にしておく
+            if members.contains(where: { !$0.isMe }) {
+                Text("「投稿を非表示」は、この端末でその人の写真・お題・表示名を出さなくする設定です。相手には伝わりません。")
             }
         }
 
@@ -146,6 +174,94 @@ struct RoomJoinView: View {
 
     private var members: [Member] {
         (store.room?.members ?? []).sorted { $0.joinedAt < $1.joinedAt }
+    }
+
+    /// 名簿に出す名前。
+    ///
+    /// **非表示にした人の表示名は出さない。** 表示名も本人が決める文字（UGC）なので、
+    /// 見たくない相手を非表示にしたのに名前だけ目に入るのでは、非表示にした意味がない。
+    /// 伏せても行は残し、参加した日を添えて**誰の行かは分かる**ようにする
+    /// （分からないと、解除も「ルームから外す」もできなくなる）
+    private func label(for member: Member) -> String {
+        store.isBlocked(memberId: member.id) ? appLocalized("非表示にした人") : member.displayName
+    }
+
+    /// メンバー1人ぶんの行。他人の行には通報・非表示（ブロック）と、
+    /// 自分が作成者ならルームから外す操作を付ける
+    private func memberRow(_ member: Member) -> some View {
+        HStack {
+            Text(label(for: member))
+            if member.isMe {
+                Text("あなた").font(.caption).foregroundStyle(.secondary)
+            }
+            if store.isBlocked(memberId: member.id) {
+                Text("投稿を非表示中").font(.caption).foregroundStyle(.orange)
+                // 名前を伏せたぶん、参加した日で見分けられるようにする
+                Text(appLocalized("\(member.joinedAt.formatted(date: .abbreviated, time: .omitted)) 参加"))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if !member.isMe {
+                Menu {
+                    // **表示名にも通報の口を付ける**（App Store ガイドライン 1.2）。
+                    // 利用者が作るものは写真・お題・表示名の3つで、どれにも通報が要る
+                    Button {
+                        reportDisplayName(member)
+                    } label: {
+                        Label("この表示名を通報する", systemImage: "flag")
+                    }
+                    if store.isBlocked(memberId: member.id) {
+                        Button {
+                            store.unblock(memberId: member.id)
+                        } label: {
+                            Label("投稿の非表示を解除する", systemImage: "eye")
+                        }
+                    } else {
+                        Button {
+                            store.block(memberId: member.id)
+                        } label: {
+                            Label("この人の投稿を非表示にする", systemImage: "eye.slash")
+                        }
+                    }
+                    if sync.isRoomCreator {
+                        Button(role: .destructive) {
+                            kickTarget = member
+                        } label: {
+                            Label("ルームから外す", systemImage: "person.badge.minus")
+                        }
+                        .disabled(isWorking)
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel(appLocalized("\(label(for: member)) の操作"))
+            }
+        }
+    }
+
+    /// 表示名を通報する。
+    ///
+    /// **本文には伏せていない表示名を入れる。** 画面で伏せているのは
+    /// 見たくない人の目に触れさせないためで、受け取る側が誰のことか分からなければ対処できない。
+    /// 開けなかったときは届け先を出す（`mailto:` を扱えない端末がある）
+    private func reportDisplayName(_ member: Member) {
+        guard let url = ReportMail.url(target: .displayName,
+                                       roomName: store.room?.name,
+                                       authorName: member.displayName,
+                                       postedAt: member.joinedAt) else { return }
+        openURL(url) { accepted in
+            if !accepted { showingReportFallback = true }
+        }
+    }
+
+    /// メンバーをルームから外す。**成否をその場で伝える**（積んで後回しにしない）
+    private func kick(_ member: Member) {
+        isWorking = true
+        Task {
+            errorMessage = await sync.removeMember(member.id)
+            isWorking = false
+        }
     }
 
     // MARK: - 未参加
@@ -255,6 +371,8 @@ struct RoomJoinView: View {
                 Telemetry.roomJoined()
                 // 予定はルームで共有される。参加したその場で一覧に出す
                 store.reloadSchedules()
+                // ルームのIDが替わったので、非表示の設定も新しいルームのぶんに切り替える
+                store.reloadBlockedMembers()
             case .create:
                 // 作成には駅のサーバーIDが要る。まだ無ければ先にマスタを取りに行く
                 if store.room?.course?.serverId == nil { await sync.pullMaster() }
@@ -275,6 +393,8 @@ struct RoomJoinView: View {
                     displayName: displayName.trimmed))
                 // 作る側は、いまの旅をそのままみんなの旅にする（切り替えは起きない）
                 store.reloadSchedules()
+                // ルームのIDがサーバーのものに替わる。非表示の設定も引き直す
+                store.reloadBlockedMembers()
             }
             dismiss()
         } catch let error as ApiError {
@@ -306,13 +426,14 @@ struct RoomJoinView: View {
         await sync.pull()
     }
 
+    /// 退室する。**待たせない。**
+    ///
+    /// サーバーの削除は最大90秒かかることがあるが、押した時点で資格情報は消え、
+    /// 消し残しは控え（`PendingLeave`）が引き取って次の機会に送り直す。
+    /// 諦めたときだけ知らせが出るので、ここで返事を待って画面を止める理由がない
     private func leave() {
-        do {
-            try sync.leave()
-            dismiss()
-        } catch {
-            errorMessage = String(describing: error)
-        }
+        Task { await sync.leave() }
+        dismiss()
     }
 }
 

@@ -351,6 +351,9 @@ private struct StationRow: View {
 private struct JourneyMissionsView: View {
     @Bindable var store: GameSessionStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    /// 通報メールを開けなかった（`mailto:` を扱えない端末）
+    @State private var showingReportFallback = false
 
     var body: some View {
         NavigationStack {
@@ -401,6 +404,7 @@ private struct JourneyMissionsView: View {
                     Button("閉じる") { dismiss() }
                 }
             }
+            .reportMailFallbackAlert(isPresented: $showingReportFallback)
         }
     }
 
@@ -420,6 +424,7 @@ private struct JourneyMissionsView: View {
             .buttonBorderShape(.roundedRectangle(radius: 10))
         }
         .padding(.vertical, 4)
+        .contextMenu { reportMenu(for: turn) }
     }
 
     private func resolvedRow(_ turn: Turn) -> some View {
@@ -435,6 +440,30 @@ private struct JourneyMissionsView: View {
             }
         }
         .padding(.vertical, 2)
+        .contextMenu { reportMenu(for: turn) }
+    }
+
+    /// 他人が書いたお題への通報の口（App Store ガイドライン 1.2）。
+    /// 自分のお題には出さない（中身が空なら SwiftUI がメニューごと出さない）
+    @ViewBuilder
+    private func reportMenu(for turn: Turn) -> some View {
+        if let mission = turn.selectedMission,
+           let author = mission.member, !author.isMe {
+            Button {
+                guard let url = ReportMail.url(target: .mission,
+                                               roomName: store.room?.name,
+                                               authorName: author.displayName,
+                                               postedAt: mission.createdAt,
+                                               detail: mission.content) else { return }
+                // **開けたかどうかを見る。** `mailto:` を扱えない端末では
+                // 押しても何も起きず、通報の手段が無いのと同じになる
+                openURL(url) { accepted in
+                    if !accepted { showingReportFallback = true }
+                }
+            } label: {
+                Label("このお題を通報する", systemImage: "flag")
+            }
+        }
     }
 
     /// 何駅目の、誰が書いたお題か

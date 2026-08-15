@@ -10,6 +10,9 @@ struct SupportDeveloperView: View {
     @Bindable var tipJar: TipJar
     @Environment(\.dismiss) private var dismiss
 
+    /// 特定商取引法に基づく表記（利用規約内の節）を開く
+    @State private var showsCommerceDisclosure = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -69,6 +72,18 @@ struct SupportDeveloperView: View {
                 if let error = tipJar.lastError, tipJar.isAvailable {
                     Section { Text(error).font(.footnote).foregroundStyle(.red) }
                 }
+
+                // 課金がある画面なので、販売者情報への入口をここに置く（特定商取引法）
+                Section {
+                    Button {
+                        showsCommerceDisclosure = true
+                    } label: {
+                        Label("特定商取引法に基づく表記", systemImage: "doc.plaintext")
+                            .font(.subheadline)
+                    }
+                } footer: {
+                    Text("支払いはApp Storeの決済で行われ、決済の完了後すぐに反映されます。デジタルコンテンツの性質上、購入確定後の返金はAppleの返金ポリシーに従います。")
+                }
             }
             .navigationTitle("開発者を応援する")
             .navigationBarTitleDisplayMode(.inline)
@@ -78,6 +93,11 @@ struct SupportDeveloperView: View {
                 }
             }
             .task { await tipJar.load() }
+            .sheet(isPresented: $showsCommerceDisclosure) {
+                // **規約の全文ではなく、表記そのものへ。**
+                // 規約に飛ばすと、13節の中から §11 を探させることになる
+                DocumentView(kind: .commerce)
+            }
             .alert("ありがとうございます", isPresented: $tipJar.isThanking) {
                 Button("どういたしまして") { }
             } message: {

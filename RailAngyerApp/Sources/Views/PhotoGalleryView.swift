@@ -20,6 +20,9 @@ struct PhotoGalleryView: View {
         var photographer: String?
         /// 自分が撮ったか。畳んだ旅の写真は撮った人が残っていないので自分扱い
         var isMine: Bool = true
+        /// 撮った人のメンバーID。通報・ブロックの相手を特定するために持つ。
+        /// 畳んだ旅の写真には残っていないので nil
+        var authorId: UUID?
 
         /// 実体が届く前後で入れ替わらない値にする。
         /// ファイル名だけを id にすると、落ちてきた瞬間に別の写真として扱われる
@@ -41,21 +44,23 @@ struct PhotoGalleryView: View {
         }
 
         init(photoId: UUID? = nil, fileName: String, stationName: String, takenAt: Date,
-             photographer: String? = nil, isMine: Bool = true) {
+             photographer: String? = nil, isMine: Bool = true, authorId: UUID? = nil) {
             self.photoId = photoId
             self.fileName = fileName
             self.stationName = stationName
             self.takenAt = takenAt
             self.photographer = photographer
             self.isMine = isMine
+            self.authorId = authorId
         }
 
         /// 実体がまだ無い写真も受ける口（`GameSessionStore.photoItems` / `galleryPhotos` 用）。
         /// **nil は「まだ落ちてきていない」**の意味で、空文字として持つ
         init(photoId: UUID? = nil, fileName: String?, stationName: String, takenAt: Date,
-             photographer: String? = nil, isMine: Bool = true) {
+             photographer: String? = nil, isMine: Bool = true, authorId: UUID? = nil) {
             self.init(photoId: photoId, fileName: fileName ?? "", stationName: stationName,
-                      takenAt: takenAt, photographer: photographer, isMine: isMine)
+                      takenAt: takenAt, photographer: photographer, isMine: isMine,
+                      authorId: authorId)
         }
     }
 
@@ -65,6 +70,10 @@ struct PhotoGalleryView: View {
     var onRefresh: (() async -> Void)?
     /// 自分の写真を消す。渡されなければ削除の導線を出さない
     var onDelete: ((Item) -> Void)?
+    /// 通報メールに添えるルーム名
+    var roomName: String?
+    /// 撮った人を非表示にする。渡されなければブロックの導線を出さない
+    var onBlock: ((UUID) -> Void)?
     @Environment(\.dismiss) private var dismiss
 
     @State private var selected: Item?
@@ -100,7 +109,8 @@ struct PhotoGalleryView: View {
                 }
             }
             .fullScreenCover(item: $selected) { item in
-                PhotoViewerView(items: items, current: item, onDelete: onDelete)
+                PhotoViewerView(items: items, current: item, onDelete: onDelete,
+                                roomName: roomName, onBlock: onBlock)
             }
             // 開いた時点でいちど取りに行く。**待たせない**（届いたぶんから増えていく）
             .task { await onRefresh?() }
@@ -125,7 +135,8 @@ struct PhotoGalleryView: View {
                  stationName: photo.stationName ?? "-",
                  takenAt: photo.takenAt,
                  photographer: photo.isMine ? nil : photo.authorName,
-                 isMine: photo.isMine)
+                 isMine: photo.isMine,
+                 authorId: photo.authorId)
         }
         var seen = Set(current.map(\.fileName))
         var archived: [Item] = []
@@ -184,13 +195,21 @@ struct PhotoViewerView: View {
     let current: PhotoGalleryView.Item
     /// 自分の写真を消す。渡されなければ削除の導線を出さない
     var onDelete: ((PhotoGalleryView.Item) -> Void)?
+    /// 通報メールに添えるルーム名
+    var roomName: String?
+    /// 撮った人を非表示にする。渡されなければブロックの導線を出さない
+    var onBlock: ((UUID) -> Void)?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     /// めくっている写真。**実体そのものではなく id で持つ。**
     /// 写真は1枚ずつ落ちてくるので、めくっている最中に中身（ファイル名）が変わる。
     /// 値のまま持つと、落ちてきた瞬間に選択が迷子になって真っ黒な頁が出る
     @State private var currentId = ""
     @State private var showingDeleteConfirm = false
+    @State private var showingBlockConfirm = false
+    /// 通報メールを開けなかった（`mailto:` を扱えない端末）
+    @State private var showingReportFallback = false
 
     var body: some View {
         NavigationStack {
@@ -230,6 +249,30 @@ struct PhotoViewerView: View {
                         .accessibilityIdentifier("deletePhoto")
                     }
                 }
+                // **他人の投稿には通報の口を必ず付ける**（App Store ガイドライン 1.2）。
+                // 自分の写真には出さない（自分を通報しても仕方がない）
+                ToolbarItem(placement: .topBarLeading) {
+                    if let shown, !shown.isMine {
+                        Menu {
+                            Button {
+                                report(shown)
+                            } label: {
+                                Label("この写真を通報する", systemImage: "flag")
+                            }
+                            if onBlock != nil, shown.authorId != nil {
+                                Button(role: .destructive) {
+                                    showingBlockConfirm = true
+                                } label: {
+                                    Label("この人の投稿を非表示にする", systemImage: "eye.slash")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "flag")
+                        }
+                        .accessibilityLabel("通報・非表示")
+                        .accessibilityIdentifier("reportPhoto")
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("閉じる") { dismiss() }
                 }
@@ -254,6 +297,13 @@ struct PhotoViewerView: View {
             } message: {
                 Text("端末からも仲間の画面からも消えます。元には戻せません。")
             }
+            .confirmationDialog("この人の投稿を非表示にしますか",
+                                isPresented: $showingBlockConfirm, titleVisibility: .visible) {
+                Button("非表示にする", role: .destructive) { block() }
+            } message: {
+                Text("この端末でだけ、この人の写真とお題が出なくなります。ルーム画面からいつでも解除できます。")
+            }
+            .reportMailFallbackAlert(isPresented: $showingReportFallback)
         }
     }
 
@@ -284,6 +334,25 @@ struct PhotoViewerView: View {
     private func delete() {
         guard let shown else { return }
         onDelete?(shown)
+        dismiss()
+    }
+
+    /// 通報メールを開く。どの投稿の話かが分かる情報を本文に入れて渡す。
+    /// **開けたかどうかを見る** — `mailto:` を扱えない端末では黙って何も起きないため
+    private func report(_ item: PhotoGalleryView.Item) {
+        guard let url = ReportMail.url(target: .photo,
+                                       roomName: roomName,
+                                       authorName: item.photographer ?? appLocalized("だれか"),
+                                       postedAt: item.takenAt) else { return }
+        openURL(url) { accepted in
+            if !accepted { showingReportFallback = true }
+        }
+    }
+
+    /// 非表示にしたら閉じる。消えた写真を開いたままにしない（delete と同じ理由）
+    private func block() {
+        guard let shown, let authorId = shown.authorId else { return }
+        onBlock?(authorId)
         dismiss()
     }
 }
