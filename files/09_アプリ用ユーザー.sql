@@ -38,7 +38,10 @@ GRANT SELECT ON dbo.Station TO app_railangyer;   -- 駅・座標・並び順（S
 
 /* --- ルーム：作成と設定。削除は管理者作業 --- */
 GRANT SELECT, INSERT, UPDATE ON dbo.MissionSet TO app_railangyer;  -- SC-02 ルーム作成・CreatedBy の更新
-GRANT SELECT, INSERT, UPDATE ON dbo.Member     TO app_railangyer;  -- SC-03 参加・表示名の変更
+-- DELETE は退室と除名で要る（Member 行ごと消して TokenHash を無効にする）。
+-- 足し忘れると本番だけ「DELETE permission was denied」で 400 になり、
+-- テストは SQLite で権限の仕組みが無いため素通しする（29_migration_v8 で追加）
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.Member TO app_railangyer;  -- SC-03 参加・表示名の変更・退室
 
 /* --- ミッション：作成・差し替え・削除 --- */
 GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.Mission TO app_railangyer;  -- SC-12 編集シート
