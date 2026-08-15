@@ -32,6 +32,9 @@ final class GameSessionStore {
     /// 通り道の駅に着いたところ。写真を撮る間を置くための一時状態。
     /// 保存はしない（落ちて失われても、次の駅へ向かう画面に戻るだけで害がない）
     private(set) var pendingPassingStation: Int?
+    /// いま休んでいるあいだの記録。休憩中でなければ nil。
+    /// **保存してある**ので、休んでいる途中でアプリを畳んでも続きから数え直せる
+    private(set) var activeRest: RestPeriod?
 
     init(context: ModelContext) {
         self.context = context
@@ -52,6 +55,7 @@ final class GameSessionStore {
             try MasterSeeder.removeBundledSampleMissions(context, room: room)
             self.room = room
             repairDanglingReferences()
+            reloadActiveRest()
             reloadBlockedMembers()
             reloadSchedules()
             if TestHooks.resetsProgressOnLaunch { resetProgress(archive: false) }
@@ -244,6 +248,10 @@ final class GameSessionStore {
         guard let room, let engine, activeTurn == nil else { return }
         do {
             pendingPassingStation = nil
+            // **振った＝もう歩き出している。** 休憩を終え忘れたまま歩き続けると、
+            // それ以降の時間が丸ごと歩行時間から引かれ、記録が実態よりずっと速くなる。
+            // 現地では「休憩を終える」を押し忘れるほうが自然なので、ここで閉じる
+            endRest()
             try recordStartVisitIfNeeded(room)   // 押さずに振った場合もここで始点を残す
 
             // 着地駅 = 現在位置 + 向き × 出目（R-04）。
@@ -309,6 +317,42 @@ final class GameSessionStore {
     /// 通り道の駅での一拍を終えて、次の駅へ向かう
     func continueWalking() {
         pendingPassingStation = nil
+    }
+
+    // MARK: - 休憩
+
+    /// 休み始める。**歩いた時間から差し引くため**に、休んだ区間を記録する。
+    /// すでに休憩中なら何もしない（二重に押しても増えない）
+    func startRest() {
+        guard let room, activeRest == nil else { return }
+        let rest = RestPeriod()
+        rest.missionSet = room
+        context.insert(rest)
+        activeRest = rest
+        save()
+    }
+
+    /// 休憩を終える。休憩中でなければ何もしない。
+    ///
+    /// - Parameter date: 休憩の終わりとして記録する時刻。
+    ///   **やめる導線からは「やめると決めた瞬間」を渡す。** 既定の「いま」で閉じると、
+    ///   ふりかえりを眺めていた時間まで休憩として残ってしまう
+    func endRest(at date: Date = Date()) {
+        guard let rest = activeRest else { return }
+        rest.endedAt = date
+        activeRest = nil
+        save()
+    }
+
+    /// 保存してある休憩中の記録を拾い直す（起動時に1回）。
+    ///
+    /// 休んでいる最中にアプリが畳まれても、休憩は開いたまま端末に残る。
+    /// 万一2件以上開いていたら**いちばん新しいものだけを続き**として扱う
+    /// （古いほうは終わりが nil のままだが、重なりの計算では新しいほうに吸収される）
+    private func reloadActiveRest() {
+        activeRest = room?.restPeriods
+            .filter { $0.endedAt == nil }
+            .max { $0.startedAt < $1.startedAt }
     }
 
     /// 着地駅のミッション候補（R-07 / R-14 既出は除外）。
@@ -831,7 +875,7 @@ final class GameSessionStore {
     /// 歩いた時間の内訳（合計・移動・ミッション）
     var timing: WalkTiming.Total {
         guard let room else { return .init(walkingSeconds: 0, missionSeconds: 0,
-                                           elapsedSeconds: 0, meters: 0) }
+                                           restSeconds: 0, elapsedSeconds: 0, meters: 0) }
         return WalkTiming.total(in: room)
     }
 
@@ -888,10 +932,15 @@ final class GameSessionStore {
     /// - Parameter enqueue: サーバーの記録も消すか。
     ///   **別のルームへ移るために畳むときは false。** 積んでしまうと、
     ///   これから参加する先のルームの進行を消しに行ってしまう
-    func resetProgress(archive: Bool = true, enqueue: Bool = true) {
+    /// - Parameter now: 旅の終わりとして数える時刻。
+    ///   **途中でやめるときは「やめると決めた瞬間」を渡す。** 途中でやめた旅は
+    ///   最後のターンが終わっていないので、集計はそのターンを「いままで」で測る。
+    ///   既定の「いま」のまま畳むと、**ふりかえりを眺めていた時間が旅の長さに混ざり、
+    ///   どれだけ長く眺めてから確定したかで記録が変わる**
+    func resetProgress(archive: Bool = true, enqueue: Bool = true, now: Date = Date()) {
         guard let room else { return }
         do {
-            if archive { try archiveCurrentJourney(room) }
+            if archive { try archiveCurrentJourney(room, now: now) }
 
             // 画面に残る一時状態を先に落とす。消したターンや訪問を掴んだまま
             // 描き直しが走ると、SwiftData が「元のデータが無い」と言って落ちる
@@ -930,6 +979,12 @@ final class GameSessionStore {
                 point.missionSet = nil
                 context.delete(point)
             }
+            // 休憩も前の旅のもの。**残すと次の旅の区間から前の旅の休憩が引かれる**
+            for rest in Array(room.restPeriods) {
+                rest.missionSet = nil
+                context.delete(rest)
+            }
+            activeRest = nil
             try context.save()
 
             // 記録として残すなら実体は消さない。破棄するときだけ消す
@@ -949,18 +1004,31 @@ final class GameSessionStore {
         save()
     }
 
-    private func archiveCurrentJourney(_ room: MissionSet) throws {
-        guard !room.turns.isEmpty else { return }
-        let summary = JourneySummary(room: room, engine: engine)
-        let startedAt = room.turns.map(\.rolledAt).min() ?? Date()
-        let endedAt = room.turns.compactMap(\.completedAt).max()
-            ?? room.visits.map(\.arrivedAt).max() ?? Date()
+    /// 記録に残す値打ちのある旅か。
+    ///
+    /// **間違えて始めただけの旅を、ふりかえりに並べない。** 「旅を始める」を押すと
+    /// スタート駅の訪問が1件できるので、*訪問があること*だけでは判定にならない。
+    /// 一度も振っておらず、スタート駅から一歩も動いていない旅は、無かったことにする
+    private func hasArchivableProgress(_ room: MissionSet) -> Bool {
+        !room.turns.isEmpty || room.visits.contains { $0.visitKind != .start }
+    }
+
+    /// - Parameter now: 旅の終わりとして数える時刻（`resetProgress` から凍結して渡す）
+    private func archiveCurrentJourney(_ room: MissionSet, now: Date = Date()) throws {
+        guard hasArchivableProgress(room) else { return }
+        let summary = JourneySummary(room: room, engine: engine, now: now)
+        let startedAt = room.turns.map(\.rolledAt).min() ?? now
+        // **終わりは合計から逆算する。** 途中でやめた旅は最後のターンに `completedAt` が無く、
+        // 記録の最後（最後に着いた駅）で締めると、集計の `elapsedSeconds` と食い違う。
+        // 同じ数字から出しておけば「終わり − 始まり = 合計」が常に成り立つ
+        let endedAt = startedAt.addingTimeInterval(summary.timing.elapsedSeconds)
         let archive = JourneyArchive(roomName: summary.roomName,
                                      courseName: room.course?.name ?? "",
                                      startedAt: startedAt,
                                      endedAt: endedAt)
         archive.elapsedSeconds = summary.timing.elapsedSeconds
         archive.walkingSeconds = summary.timing.walkingSeconds
+        archive.restSeconds = summary.timing.restSeconds
         archive.meters = summary.timing.meters
         archive.visitedCount = summary.visitedCount
         archive.stationCount = summary.stationCount

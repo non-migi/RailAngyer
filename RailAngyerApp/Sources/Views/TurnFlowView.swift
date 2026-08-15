@@ -42,26 +42,34 @@ struct TurnFlowView: View {
         }
     }
 
-    /// 地図の出し方と、盤面へ抜ける口
+    /// 地図の出し方と、盤面へ抜ける口。それに休憩と「今日はここまでにする」。
+    ///
+    /// > **やめる口はこの画面にも要る。** 全画面のあいだはタブバーごと隠れるので、
+    /// > ここに無いと「盤面へ → 予定 → いちばん下まで送る」と辿らせることになる。
+    /// > 現地で疲れて即やめたい場面に、その道のりを歩かせない。
     private var header: some View {
-        HStack(spacing: 10) {
-            Picker("地図", selection: $showsWholeCourse) {
-                Text("次の駅").tag(false)
-                Text("全体マップ").tag(true)
-            }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 240)
-
-            Spacer(minLength: 0)
-
-            if let onMinimize {
-                Button(action: onMinimize) {
-                    Label("盤面へ", systemImage: "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .labelStyle(.titleAndIcon)
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
+                Picker("地図", selection: $showsWholeCourse) {
+                    Text("次の駅").tag(false)
+                    Text("全体マップ").tag(true)
                 }
-                .accessibilityIdentifier("minimizeTurn")
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 240)
+
+                Spacer(minLength: 0)
+
+                if let onMinimize {
+                    Button(action: onMinimize) {
+                        Label("盤面へ", systemImage: "chevron.down")
+                            .font(.caption.weight(.semibold))
+                            .labelStyle(.titleAndIcon)
+                    }
+                    .accessibilityIdentifier("minimizeTurn")
+                }
             }
+
+            JourneyPauseBar(store: store, isCompact: true)
         }
     }
 

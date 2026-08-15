@@ -10,6 +10,10 @@ struct StationDetailView: View {
     let order: Int
     @Environment(\.dismiss) private var dismiss
 
+    /// これより短い区間ではペースを出さない。
+    /// 休憩を引いた残りが数秒しかない区間の「分/km」は、速さではなく計算の端数になる
+    private static let minimumPaceSeconds: TimeInterval = 30
+
     private var visits: [Visit] { store.visits(at: order) }
     private var arrivingLegs: [WalkTiming.Leg] { store.legs(arrivingAt: order) }
     /// この駅に書かれているお題。**まだ訪れていなくても見せる**
@@ -86,7 +90,10 @@ struct StationDetailView: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(DurationText.text(leg.seconds))
                         .monospacedDigit()
-                    if let pace = leg.pace.text {
+                    // **ほとんど休憩だった区間では、ペースを出さない。**
+                    // 歩いた時間が数秒しか残らないと「0分/km」のような数字が立ち、
+                    // 記録が壊れているように見える
+                    if leg.seconds >= Self.minimumPaceSeconds, let pace = leg.pace.text {
                         Text(pace)
                             .font(.caption.monospacedDigit())
                             .foregroundStyle(PacePalette.color(
@@ -95,6 +102,15 @@ struct StationDetailView: View {
                 }
             } label: {
                 Label("\(leg.fromName)から", systemImage: "figure.walk")
+            }
+
+            // **休んだぶんを引いた時間だと分かるようにする。**
+            // 但し書きが無いと、40分かかった区間に「5分」とだけ出て数え損ないに見える。
+            // 休んでいない区間には出さない（いつも出すと注記だらけになる）
+            if leg.restSeconds > 0 {
+                Text("休憩 \(DurationText.text(leg.restSeconds)) をのぞく")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if leg.isEffectMove {

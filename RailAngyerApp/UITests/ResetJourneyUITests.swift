@@ -74,7 +74,7 @@ final class ResetJourneyUITests: XCTestCase {
         XCTAssertEqual(app.state, .runningForeground, "記録タブでアプリが落ちている")
     }
 
-    /// 区間を2駅に縮めてゴールし、盤面の「記録を保存して新しい旅へ」を押す。
+    /// 区間を2駅に縮めてゴールし、盤面の「ふりかえりを見る」から旅を畳む。
     ///
     /// クリア表示のまま記録を消す経路。**消したデータを掴んだ画面が残っていると落ちる**。
     func testResetsFromClearedBoard() {
@@ -92,8 +92,15 @@ final class ResetJourneyUITests: XCTestCase {
         let cleared = app.staticTexts["ゴールに到達しました"]
         XCTAssertTrue(cleared.waitForExistence(timeout: 10), "ゴールに到達できていない")
 
+        // ゴール後の口は「ふりかえりを見る」1つ。
+        // **畳むのはその画面の中**（旅の途中の「今日はここまでにする」と同じ構造）
+        let review = app.buttons["ふりかえりを見る"]
+        XCTAssertTrue(review.waitForExistence(timeout: 5))
+        review.tap()
+
         let reset = app.buttons["記録を保存して新しい旅へ"]
-        XCTAssertTrue(reset.waitForExistence(timeout: 5))
+        XCTAssertTrue(reset.waitForExistence(timeout: 10),
+                      "ふりかえりに旅を畳む口が出ていない")
         reset.tap()
 
         XCTAssertEqual(app.state, .runningForeground, "アプリが落ちている")

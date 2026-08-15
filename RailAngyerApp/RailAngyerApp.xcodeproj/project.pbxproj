@@ -26,6 +26,7 @@
 		2255CD8A38B9304186C7AEEA /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E8A6CD54AD50C8860C443 /* ModelsTests.swift */; };
 		22A5D43F082E8846A6E57A12 /* RailAngyerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 02DE3152D31178D49884EE7D /* RailAngyerCore */; };
 		22E31C693BCDEEC612186779 /* PhotoGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632603B8FE75E4C744FBC451 /* PhotoGalleryView.swift */; };
+		2C3D35F7F2512EA888170E8D /* RestPeriodTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1571144F78A946A57C19D4A3 /* RestPeriodTests.swift */; };
 		2EDB386C9C941320E6C69D7B /* Moderation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614CD9738C8CD4073AB588F9 /* Moderation.swift */; };
 		2FC555F24DCF7ACFD0621AC1 /* SyncServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */; };
 		33B9D7EAF1D582FD722FB1EC /* MapPlaceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EAF894752848EB4D03CA860 /* MapPlaceDetailView.swift */; };
@@ -130,6 +131,7 @@
 		1156CFFC9852BBD282BE20DE /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		123D346EADFB2719AB970A98 /* InviteAcceptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteAcceptView.swift; sourceTree = "<group>"; };
 		155472042CCA7F23234F9556 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		1571144F78A946A57C19D4A3 /* RestPeriodTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestPeriodTests.swift; sourceTree = "<group>"; };
 		15D222C291090136DEE94441 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
 		160DDAA2061EA7F475B61D12 /* SyncServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncServiceTests.swift; sourceTree = "<group>"; };
 		16793C854280C0258AE421C5 /* TimingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingUITests.swift; sourceTree = "<group>"; };
@@ -450,6 +452,7 @@
 				B3EC0430B67A5EB105EF13A4 /* ModerationTests.swift */,
 				84770443BF190B8FFC9D7511 /* PhotoStoreTests.swift */,
 				FFE244E3EF71098607B7D826 /* ResetProgressTests.swift */,
+				1571144F78A946A57C19D4A3 /* RestPeriodTests.swift */,
 				5EDE56F5B494ED7D2F503BE1 /* ScheduleShareTests.swift */,
 				5E1C14A07B1E38E0742354DC /* ScheduleTests.swift */,
 				CE87431E8C664179BE6DC00C /* StartFromScheduleTests.swift */,
@@ -655,6 +658,7 @@
 				D8211B78F757EBB90B06DECD /* ModerationTests.swift in Sources */,
 				1C0CF5689192F11B6FA3CB2E /* PhotoStoreTests.swift in Sources */,
 				EF2C45E0A5D3D32BC56F091E /* ResetProgressTests.swift in Sources */,
+				2C3D35F7F2512EA888170E8D /* RestPeriodTests.swift in Sources */,
 				72A2A0BB8838200538AD7AD1 /* ScheduleShareTests.swift in Sources */,
 				F045E39BD922B1C6A3A942D0 /* ScheduleTests.swift in Sources */,
 				D54180DB7B9867B3580BAF9D /* StartFromScheduleTests.swift in Sources */,

@@ -11,6 +11,12 @@ struct BoardView: View {
     @State private var showingSummary = false
     @State private var showingCamera = false
     @State private var showingJourneyMissions = false
+    /// ゴールしたあとの締めくくり。**畳む前に今日の記録を見せる**
+    @State private var showingFinishSummary = false
+    /// 締めくくりの画面で「畳む」と決めたか。畳むのは画面が閉じたあと
+    @State private var finishesOnDismiss = false
+    /// 終わりにすると決めた時刻。開いた瞬間に凍らせ、表示と保存で同じ値を使う
+    @State private var stoppedAt: Date?
     /// 既定は地図。全体の進捗と、マスタ座標のズレを一目で見るため
     @AppStorage("boardShowsMap") private var showsMap = true
 
@@ -37,6 +43,13 @@ struct BoardView: View {
         }
         .sheet(isPresented: $showingJourneyMissions) {
             JourneyMissionsView(store: store)
+        }
+        // ゴールしたときも締めくくりを挟む。**途中でやめるときと扱いを揃える。**
+        // 押した瞬間に旅が畳まれると、その日の記録を見る前に消したことになる
+        .sheet(isPresented: $showingFinishSummary, onDismiss: finishIfDecided) {
+            JourneySummaryView(store: store, finish: .cleared,
+                               onFinish: { finishesOnDismiss = true },
+                               stoppedAt: stoppedAt)
         }
         .navigationTitle(store.room?.name ?? "レイルアンギャー")
         .navigationBarTitleDisplayMode(.inline)
@@ -98,6 +111,13 @@ struct BoardView: View {
                         Label("ミッション \(DurationText.text(timing.missionSeconds))",
                               systemImage: "checkmark.seal")
                     }
+                    // **合計と移動の差が休憩のせいだと分かるようにする。**
+                    // 合計には休憩が入り、移動からは引かれているので、
+                    // 出さないと数え損ないに見える。休んでいない日は出さない
+                    if timing.restSeconds > 0 {
+                        Label("休憩 \(DurationText.text(timing.restSeconds))",
+                              systemImage: "cup.and.saucer")
+                    }
                     Spacer(minLength: 0)
                 }
                     if let pace = timing.pace.text {
@@ -116,18 +136,28 @@ struct BoardView: View {
     /// 盤面は歩いている最中の画面なので、**いま遊ぶのに要るものだけ**を置く。
     /// 予定とお題はホームから開く（同じ行き先のボタンを2か所に置かない）
     private var quickActions: some View {
-        HStack(spacing: 8) {
-            // ホームの「お題」は**書く**ための入口。こちらは**この旅で引いたお題**を見るところで、
-            // 行き先が違うので同じ導線の重複にはならない
-            quickAction(appLocalized("旅のお題"), systemImage: "checkmark.circle",
-                        badge: store.unresolvedMissionTurns.count) {
-                showingJourneyMissions = true
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                // ホームの「お題」は**書く**ための入口。こちらは**この旅で引いたお題**を見るところで、
+                // 行き先が違うので同じ導線の重複にはならない
+                quickAction(appLocalized("旅のお題"), systemImage: "checkmark.circle",
+                            badge: store.unresolvedMissionTurns.count) {
+                    showingJourneyMissions = true
+                }
+                quickAction(appLocalized("ふりかえり"), systemImage: "book.closed") {
+                    showingSummary = true
+                }
+                quickAction(appLocalized("設定"), systemImage: "gearshape") {
+                    showingSettings = true
+                }
             }
-            quickAction(appLocalized("ふりかえり"), systemImage: "book.closed") {
-                showingSummary = true
-            }
-            quickAction(appLocalized("設定"), systemImage: "gearshape") {
-                showingSettings = true
+            // **休むこととやめることは、旅が始まっていれば常に要る。**
+            // ゴールしたときだけの操作にすると、日が暮れて途中でやめる場面で
+            // 予定の画面の底まで探しに行かせることになる。
+            // ゴールしたあとだけは出さない。下に「記録を保存して新しい旅へ」があり、
+            // 着いたのに「今日はここまで」と言うのも筋が通らない
+            if store.hasStartedJourney, !isCleared {
+                JourneyPauseBar(store: store)
             }
         }
         .padding(.top, 5)
@@ -183,6 +213,28 @@ struct BoardView: View {
         store.phase.isInTurn || store.showingAnnouncement
     }
 
+    /// ゴールに到達しているか
+    private var isCleared: Bool {
+        if case .cleared = store.phase { return true }
+        return false
+    }
+
+    /// 締めくくりの画面で決めたとおりに旅を畳む。
+    ///
+    /// **畳むのは画面が閉じきってから。** 開いたまま消すと、消えたターンや訪問を
+    /// 掴んだ画面が描き直され、SwiftData が「元のデータが無い」と言って落ちる
+    private func finishIfDecided() {
+        guard finishesOnDismiss else { return }
+        finishesOnDismiss = false
+        // **画面に出した数字と、記録に残す数字を同じにする。**
+        // 開いた瞬間の時刻で数え、眺めていたあいだのぶんは入れない
+        let now = stoppedAt ?? Date()
+        stoppedAt = nil
+        // 終わりにすると決めた＝休憩も終わり
+        store.endRest(at: now)
+        store.resetProgress(now: now)
+    }
+
     /// 戻る口の文言。いま何の途中なのかが分かるようにする
     private var resumeTitle: String {
         switch store.phase {
@@ -201,15 +253,18 @@ struct BoardView: View {
             if case .cleared = store.phase {
                 Text("ゴールに到達しました")
                     .font(.headline).foregroundStyle(Theme.line)
-                Button("ふりかえりを見る") { showingSummary = true }
+                // **ゴールしたあとは一本道。** 「ふりかえりを見る」と
+                // 「記録を保存して新しい旅へ」が同じ画面を開くのに名前が違うと、
+                // 押す前に違いが分からない。畳む口はふりかえりの中に置き、
+                // 旅の途中の「今日はここまでにする」と構造を揃える
+                Button("ふりかえりを見る") {
+                    stoppedAt = Date()
+                    showingFinishSummary = true
+                }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(Theme.line)
                 .frame(maxWidth: .infinity, minHeight: 48)
-                Button("記録を保存して新しい旅へ") { store.resetProgress() }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: 48)
             } else if isTurnInProgress, let onResumeTurn {
                 // **進行中は「振る」を出さない。** 押しても何も起きない飾りになるうえ、
                 // 戻る口をその上に重ねると、どちらを押すのか分からなくなる
@@ -274,6 +329,108 @@ struct BoardView: View {
                 .frame(maxWidth: .infinity, minHeight: 40)
         }
         .buttonStyle(.bordered)
+    }
+}
+
+/// 休憩と「今日はここまでにする」。
+///
+/// **歩いている場所から届くところに置く。** 現地で疲れて休みたい、日が暮れたので
+/// 途中でやめたい、というのは歩いている最中に起きる。盤面（`BoardView`）と
+/// ターンの画面（`TurnFlowView`）の両方に同じ形で出し、どちらからでも同じ操作で済ませる。
+///
+/// > **「記録を保存して新しい旅へ」とは別の言葉にする。**
+/// > あちらは予定の画面にある**次を始める**ための口で、
+/// > ここは**今日をやめる**ための口。同じ結果になるとしても、
+/// > 探すときに思い浮かべる言葉が違う。
+struct JourneyPauseBar: View {
+    @Bindable var store: GameSessionStore
+    /// ターンの画面は上端の細い行に置くので、幅いっぱいには広げない
+    var isCompact = false
+    /// 締めくくりのふりかえり。**やめると決める前に、今日の記録を見せる**
+    @State private var showingFinishSummary = false
+    /// 締めくくりの画面で「畳む」と決めたか
+    @State private var finishesOnDismiss = false
+    /// 「今日はここまでにする」を押した時刻。
+    ///
+    /// **旅が終わったのは歩くのをやめたとき。** 途中でやめるとそのターンは未完了のままで、
+    /// 時間は「いま」まで数え続ける。凍らせないと、ふりかえりを眺めていた時間が
+    /// そのまま今日の旅の長さになる。「まだ続ける」で戻ったら、次に押した時刻で取り直す
+    @State private var stoppedAt: Date?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if let startedAt = store.activeRest?.startedAt {
+                resting(since: startedAt)
+                control(appLocalized("再開する"), systemImage: "figure.walk") {
+                    store.endRest()
+                }
+            } else {
+                control(appLocalized("休憩する"), systemImage: "cup.and.saucer") {
+                    store.startRest()
+                }
+            }
+            control(appLocalized("今日はここまでにする"), systemImage: "flag.checkered") {
+                stoppedAt = Date()
+                showingFinishSummary = true
+            }
+            if isCompact { Spacer(minLength: 0) }
+        }
+        // **やめる前に今日の記録を見せる。** 確認だけを出して畳むと、
+        // 歩いた跡も数字も見ないまま空の盤面が残る。ここが1日の締めくくりになる
+        .sheet(isPresented: $showingFinishSummary, onDismiss: finishIfDecided) {
+            JourneySummaryView(store: store, finish: .quit,
+                               onFinish: { finishesOnDismiss = true },
+                               stoppedAt: stoppedAt)
+        }
+    }
+
+    /// 締めくくりの画面で決めたとおりに旅を畳む。
+    /// **畳むのは画面が閉じきってから**（消した記録を掴んだまま描き直すと落ちる）
+    private func finishIfDecided() {
+        guard finishesOnDismiss else { return }
+        finishesOnDismiss = false
+        // **画面に出した数字と、記録に残す数字を同じにする。**
+        // 押した瞬間の時刻で数え、ふりかえりを眺めていたあいだは入れない
+        let now = stoppedAt ?? Date()
+        stoppedAt = nil
+        // 終わりにすると決めた＝休憩も終わり。
+        // 「まだ続ける」で戻ったときは休憩を続けたいので、閉じるのは確定した時だけ
+        store.endRest(at: now)
+        store.resetProgress(now: now)
+    }
+
+    /// 休憩中であることと、その経過。
+    ///
+    /// **休み始めたことに気づけないまま放置されるのがいちばん困る**ので、
+    /// ボタンではなく経過の出ている表示に変え、隣に「再開する」を置く
+    private func resting(since startedAt: Date) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            Label(appLocalized("休憩中 \(DurationText.text(context.date.timeIntervalSince(startedAt)))"),
+                  systemImage: "cup.and.saucer.fill")
+                .font(.caption.weight(.semibold).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundStyle(Theme.mission)
+                .padding(.horizontal, 10)
+                .frame(maxWidth: isCompact ? nil : .infinity, minHeight: 32)
+                .background(Theme.mission.opacity(0.12),
+                            in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    /// - Parameter title: 訳し済みの文字列を渡す（盤面の他のボタンと同じ作法）
+    private func control(_ title: String, systemImage: String,
+                         action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.caption.weight(.medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: isCompact ? nil : .infinity, minHeight: 32)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle(radius: 10))
+        .accessibilityLabel(title)
     }
 }
 

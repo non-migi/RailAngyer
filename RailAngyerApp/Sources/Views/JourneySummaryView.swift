@@ -8,6 +8,21 @@ import RailAngyerCore
 struct JourneySummaryView: View {
 
     @Bindable var store: GameSessionStore
+    /// 旅を畳む締めくくりとして開いたときだけ渡す。
+    /// **やめた直後に空の盤面だけが残らないように**、ここで今日の記録を見せてから畳む
+    var finish: JourneyFinish?
+    /// 畳むと決めたときに呼ぶ。
+    ///
+    /// **畳むのはこの画面が閉じたあと。** 消したターンや訪問を掴んだまま描き直しが走ると
+    /// SwiftData が落ちるので、呼ばれた側は `sheet(onDismiss:)` で片づける
+    var onFinish: (() -> Void)?
+    /// 「やめる」と決めた時刻。締めくくりで開いたときだけ渡す。
+    ///
+    /// > **旅が終わったのは歩くのをやめたときで、記録を眺め終えたときではない。**
+    /// > 途中でやめるとそのターンは未完了のままなので、渡さないと
+    /// > この画面を開いているあいだ合計時間もお題の時間も伸び続け、
+    /// > 「どれだけ長く眺めてから確定したか」がその日の旅の長さになってしまう
+    var stoppedAt: Date?
     @Environment(\.dismiss) private var dismiss
     /// 共有画像の描画に流す。`ImageRenderer` は画面の環境を継いでくれない
     @Environment(\.locale) private var locale
@@ -16,7 +31,8 @@ struct JourneySummaryView: View {
 
     private var summary: JourneySummary? {
         guard let room = store.room else { return nil }
-        return JourneySummary(room: room, engine: store.engine)
+        // 締めくくりで開いたときは、やめると決めた時刻で数字を止める
+        return JourneySummary(room: room, engine: store.engine, now: stoppedAt ?? Date())
     }
 
     var body: some View {
@@ -28,11 +44,12 @@ struct JourneySummaryView: View {
                     ContentUnavailableView("記録がありません", systemImage: "figure.walk")
                 }
             }
-            .navigationTitle("ふりかえり")
+            .navigationTitle(finish == nil ? "ふりかえり" : "今日のふりかえり")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("閉じる") { dismiss() }
+                    // 締めくくりで開いたときは、**閉じても旅は畳まれない**ことが分かる言葉にする
+                    Button(finish == nil ? "閉じる" : "まだ続ける") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     if let summary {
@@ -68,6 +85,23 @@ struct JourneySummaryView: View {
             Section {
                 SummaryCard(summary: summary)
                     .listRowInsets(EdgeInsets())
+            }
+
+            // **やめる口は、今日の数字を見たすぐ下に置く。**
+            // 押す前にその日の記録が目に入るので、畳んで空の盤面が残るだけ、ということにならない。
+            // ここまで来ずに閉じれば旅は続く（畳むのは押したときだけ）
+            if let finish {
+                Section {
+                    Button(finish.actionTitle, role: .destructive) {
+                        // 畳むのは呼び出し側が、この画面が閉じたあとに行う
+                        onFinish?()
+                        dismiss()
+                    }
+                } header: {
+                    Text(finish.question)
+                } footer: {
+                    Text(finish.note)
+                }
             }
 
             // **歩いた形をここでも見せる。** 数字だけでは、その日の道のりを思い出せない
@@ -198,6 +232,40 @@ struct JourneySummaryView: View {
     }
 }
 
+/// 旅の締めくくり方。**同じ「畳む」でも、言葉は場面で変える。**
+///
+/// ゴールした人には「新しい旅へ」、日が暮れて途中でやめる人には「今日はここまで」。
+/// どちらも `resetProgress()` を呼ぶが、探すときに思い浮かべる言葉が違う
+enum JourneyFinish {
+    /// 歩いている途中でやめる
+    case quit
+    /// ゴールに到達したあと畳む
+    case cleared
+
+    var question: LocalizedStringKey {
+        switch self {
+        case .quit:    "今日の記録を保存して旅を終えますか"
+        case .cleared: "現在の旅を保存して、新しい旅を始めますか"
+        }
+    }
+
+    var actionTitle: LocalizedStringKey {
+        switch self {
+        case .quit:    "今日はここまでにする"
+        case .cleared: "記録を保存して新しい旅へ"
+        }
+    }
+
+    var note: LocalizedStringKey {
+        switch self {
+        case .quit:
+            "ゴールしていませんが、ここまでの記録は「記録」に残ります。続きは新しい旅として、また「旅をスタート」から始められます。"
+        case .cleared:
+            "訪問記録と写真は過去の旅として残ります。"
+        }
+    }
+}
+
 /// 数字のまとめ。画面にも共有画像にも同じものを使う
 private struct SummaryCard: View {
     let summary: JourneySummary
@@ -230,6 +298,11 @@ private struct SummaryCard: View {
                         timeStat("合計", summary.timing.elapsedSeconds)
                         timeStat("移動", summary.timing.walkingSeconds)
                         timeStat("ミッション", summary.timing.missionSeconds)
+                        // **休んでいない日に「休憩 0秒」は出さない。**
+                        // 列が増えるほど1つあたりが細くなり、共有画像でも文字が詰まる
+                        if summary.timing.restSeconds > 0 {
+                            timeStat("休憩", summary.timing.restSeconds)
+                        }
                         timeStat("その他", summary.timing.otherSeconds)
                     }
 
@@ -405,6 +478,22 @@ private struct JourneyArchiveDetailView: View {
                     archiveStat("時間", DurationText.text(archive.elapsedSeconds))
                     archiveStat("駅", "\(archive.visitedCount) / \(archive.stationCount)")
                     archiveStat("ターン", "\(archive.turnCount)")
+                }
+
+                // **畳んだあとも、その日の内訳を同じ数字で読めるようにする。**
+                // 休憩の行（`RestPeriod`）は旅を畳むと消えるので、内訳はここにしか残らない。
+                // 休んでいない日と、休憩を入れる前の古い記録には出さない
+                if archive.walkingSeconds > 0 || archive.restSeconds > 0 {
+                    HStack(spacing: 14) {
+                        Label("移動 \(DurationText.text(archive.walkingSeconds))",
+                              systemImage: "figure.walk")
+                        if archive.restSeconds > 0 {
+                            Label("休憩 \(DurationText.text(archive.restSeconds))",
+                                  systemImage: "cup.and.saucer")
+                        }
+                    }
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
                 }
 
                 if !archive.routeSummary.isEmpty {

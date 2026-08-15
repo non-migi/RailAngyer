@@ -133,6 +133,8 @@ final class MissionSet {
     var visits: [Visit] = []
     @Relationship(deleteRule: .cascade, inverse: \TrackPoint.missionSet)
     var trackPoints: [TrackPoint] = []
+    @Relationship(deleteRule: .cascade, inverse: \RestPeriod.missionSet)
+    var restPeriods: [RestPeriod] = []
 
     init(name: String, diceMax: Int = 6) {
         self.name = name
@@ -477,6 +479,10 @@ final class JourneyArchive {
     var endedAt: Date = Date()
     var elapsedSeconds: Double = 0
     var walkingSeconds: Double = 0
+    /// 休んでいた時間。**`walkingSeconds` からは既に引いてある**。
+    /// 旅を畳むと休憩の行（`RestPeriod`）は消えるので、内訳はここにしか残らない。
+    /// 古い記録には無いので 0（休憩を入れる前の旅は、そもそも休憩を取れなかった）
+    var restSeconds: Double = 0
     var meters: Double = 0
     var visitedCount: Int = 0
     var stationCount: Int = 0
@@ -580,6 +586,30 @@ final class TrackPoint {
     }
 }
 
+/// 休んでいた時間（「疲れたので少し座る」「ごはんを食べる」）。
+///
+/// **歩いた時間から差し引くために残す。** 休んでいる間も時計は進むので、
+/// 記録しないと駅間のペースが実際より遅く出て、あとで見返したときに
+/// 「こんなに歩くのが遅かったのか」と読めてしまう。
+///
+/// `endedAt` が nil のあいだが休憩中。区間との重なりぶんだけを引く（`WalkTiming`）。
+///
+/// > ⚠️ **サーバーへは送らない。** 歩いた跡（`TrackPoint`）と同じで、
+/// > 共有するのは「到着した駅と時刻」だけ。休んだ時間は端末の中に閉じる。
+@Model
+final class RestPeriod {
+    var id: UUID = UUID()
+    var startedAt: Date = Date()
+    /// nil のあいだは休憩中
+    var endedAt: Date?
+
+    var missionSet: MissionSet?
+
+    init(startedAt: Date = Date()) {
+        self.startedAt = startedAt
+    }
+}
+
 /// お題をいつ見せるか（ルームの取り決め）。
 ///
 /// **遊び方が変わる。** 伏せれば当日の驚きが残り、見せれば
@@ -654,7 +684,7 @@ enum MissionVisibility: Int, CaseIterable, Identifiable {
 enum AppSchema {
     static let all: [any PersistentModel.Type] = [
         Course.self, Station.self, MissionSet.self, Member.self,
-        Mission.self, Turn.self, Visit.self, Photo.self, TrackPoint.self,
+        Mission.self, Turn.self, Visit.self, Photo.self, TrackPoint.self, RestPeriod.self,
         Schedule.self, Attendance.self, JourneyArchive.self,
         // 送信キュー。記録そのものではないが、圏外で落としても残す必要がある
         PendingChange.self
