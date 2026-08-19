@@ -44,6 +44,7 @@
 		5B961AED1559EB70F013838F /* JourneySummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525521B92A37E4A38094FC8D /* JourneySummaryTests.swift */; };
 		5D317FF6A05655153C649C2C /* ScheduleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */; };
 		61D5521E731DFC7E0520012D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155472042CCA7F23234F9556 /* LocationService.swift */; };
+		62BEA51DAF07C53CF6B2D31F /* StoreScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CBB44639FABC87D8045B5A /* StoreScreenshotTests.swift */; };
 		6404ED69DE04AC95DF1BB2E7 /* Credentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CDBAC8C60FB1763AE4CA74 /* Credentials.swift */; };
 		67054CAA369FC781E67852A7 /* StartFromScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E87BBBAE4AF5160E731DC77C /* StartFromScheduleView.swift */; };
 		6B90BA797C9F4391AB152AA5 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D222C291090136DEE94441 /* ApiClient.swift */; };
@@ -123,6 +124,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		02ABB2C7821A59E3C065B52C /* asc-submit.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "asc-submit.py"; sourceTree = "<group>"; };
 		04EB9F6EBC7249DE65B2C846 /* ArrivalUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrivalUITests.swift; sourceTree = "<group>"; };
 		05C6FD8CFBE707DD0130903A /* ScheduleListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleListView.swift; sourceTree = "<group>"; };
 		0C5F1912EA76FF4A84AA25CC /* AppLanguageLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguageLocalizationTests.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 		1E0CB81EAFFC74827CB26EBF /* room.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = room.json; sourceTree = "<group>"; };
 		1E7F563491D82043110DDCA5 /* TelemetryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryTests.swift; sourceTree = "<group>"; };
 		1F20D423F434E767B13723EB /* SupportDeveloperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportDeveloperView.swift; sourceTree = "<group>"; };
+		1FEE96554B6F4AA60479F62D /* shoot-screenshots.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "shoot-screenshots.sh"; sourceTree = "<group>"; };
 		221879CB631B13ABDD16A06A /* RoomJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomJoinView.swift; sourceTree = "<group>"; };
 		22A37C559F65A4BBB0C6E8C3 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = nanboku_full.gpx; sourceTree = "<group>"; };
@@ -176,6 +179,7 @@
 		632603B8FE75E4C744FBC451 /* PhotoGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGalleryView.swift; sourceTree = "<group>"; };
 		6EAF894752848EB4D03CA860 /* MapPlaceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPlaceDetailView.swift; sourceTree = "<group>"; };
 		732496349CF8E9CF1EFB2C60 /* DocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentView.swift; sourceTree = "<group>"; };
+		74CBB44639FABC87D8045B5A /* StoreScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshotTests.swift; sourceTree = "<group>"; };
 		7601E3978780FCBEA0C739CB /* CourseDirectoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDirectoryTests.swift; sourceTree = "<group>"; };
 		7B8B835B07A5F59A42BAE9FE /* JourneyTrackMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTrackMapView.swift; sourceTree = "<group>"; };
 		7D2BE0EAFD72AE67F5D28F5A /* CoursePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoursePickerView.swift; sourceTree = "<group>"; };
@@ -373,6 +377,7 @@
 				2C7F64663D8F88A6AF2C9CE2 /* ResumeButtonUITests.swift */,
 				56E97F2E9AD4006D7B8FAF18 /* ScheduleUITests.swift */,
 				62CF08BEF1DD2CC0B7D36EB1 /* ShareUITests.swift */,
+				74CBB44639FABC87D8045B5A /* StoreScreenshotTests.swift */,
 				5C2E5E2B5DA7E7520C6FC84B /* SummaryUITests.swift */,
 				CB09B4A51801DDC52446EDA9 /* SupportUITests.swift */,
 				16793C854280C0258AE421C5 /* TimingUITests.swift */,
@@ -472,11 +477,13 @@
 				3A80E587671BA007350148C7 /* asc-devices.py */,
 				5F5749FFB9626D14FB0D9674 /* asc-release.py */,
 				83453CDEB12A0F76E35CBED3 /* asc-setup.sh */,
+				02ABB2C7821A59E3C065B52C /* asc-submit.py */,
 				F1D30F8A1690F5515077A8A5 /* asc-whattotest.py */,
 				22A4C352CE2E5D3474D7ADB1 /* nanboku_full.gpx */,
 				D701D86DF2DC79B5F9E7D2A3 /* nanboku_sapporo_nakanoshima.gpx */,
 				17FD1F8322B5CA08A900795A /* nanboku_slow_asabu.gpx */,
 				F21752CFD8C22E0039BDF405 /* prepare-simulator.sh */,
+				1FEE96554B6F4AA60479F62D /* shoot-screenshots.sh */,
 			);
 			path = tools;
 			sourceTree = "<group>";
@@ -635,6 +642,7 @@
 				EF0CAB5579043DEC0609F9B6 /* ResumeButtonUITests.swift in Sources */,
 				5D317FF6A05655153C649C2C /* ScheduleUITests.swift in Sources */,
 				E9237B45FD57B871BC7F21EC /* ShareUITests.swift in Sources */,
+				62BEA51DAF07C53CF6B2D31F /* StoreScreenshotTests.swift in Sources */,
 				D1DC90E4DD017E7A2D148E08 /* SummaryUITests.swift in Sources */,
 				3F36FCD791FD8107A058AF4B /* SupportUITests.swift in Sources */,
 				18734296FA3F7B8E59C5AC71 /* TimingUITests.swift in Sources */,
@@ -805,7 +813,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -966,7 +974,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_LANGUAGE = ja;
 				DEVELOPMENT_TEAM = 949FXAWTYZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;

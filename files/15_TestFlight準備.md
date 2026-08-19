@@ -374,3 +374,53 @@ Exception Type: EXC_BREAKPOINT (SIGTRAP)
 > **クラッシュ報告が集まる条件**は、テスターが「フィードバックを送信」から送るか、
 > 端末で「iPhone解析を共有」がオンで TestFlight 経由のビルドが落ちるか、のどちらか。
 > どちらも満たさないと、落ちても記録は残らない。
+
+---
+
+## 10. App Store への申請（どこまで自動でやれるか）
+
+**ブラウザを開かずに済むところは、すべて道具にしてある。**
+残るのは下の表の「人がやる」だけで、これは API に口が無い。
+
+| やること | 自動 | どうやる |
+|---|---|---|
+| バージョンの文面（説明・キーワード・URL・リリースノート） | ✅ | `python3 tools/asc-release.py --push` |
+| ビルドの紐づけ | ✅ | `python3 tools/asc-release.py --push --build 32` |
+| 年齢レーティング | ✅ | 同上（`ageRatingDeclarations`） |
+| **スクリーンショットを撮る** | ✅ | `tools/shoot-screenshots.sh` |
+| **スクリーンショットを入れる** | ✅ | `python3 tools/asc-submit.py --screenshots /tmp/railangyer-shots --yes` |
+| **審査へ出す** | ✅ | `python3 tools/asc-submit.py --submit --yes` |
+| 価格（無料） | ✅ | `appPriceSchedules`（無料なら既定のままでよい） |
+| **「Appのプライバシー」の申告** | ❌ | **APIに口が無い**（`/v1/apps/{id}/appPrivacyDetails` は 404 `The relationship does not exist`）。ブラウザで入れる。中身は §4 |
+| 契約・銀行口座・税務情報 | ❌ | 有料App契約のみ必要。**無料アプリなら不要** |
+
+### 手順
+
+```bash
+# 1. いま何が足りないかを見る（何も送らない）
+python3 tools/asc-submit.py --show
+
+# 2. 文面とビルドを入れる
+python3 tools/asc-release.py --push --build 32
+
+# 3. スクリーンショットを撮って入れる
+tools/shoot-screenshots.sh                       # /tmp/railangyer-shots に4枚
+python3 tools/asc-submit.py --screenshots /tmp/railangyer-shots        # 下見
+python3 tools/asc-submit.py --screenshots /tmp/railangyer-shots --yes  # 実際に入れる
+
+# 4. 出す
+python3 tools/asc-submit.py --submit          # 下見（何が起きるか出るだけ）
+python3 tools/asc-submit.py --submit --yes    # 実際に出す
+```
+
+> ⚠️ **`--yes` を付けるまで、何も書き込まない。** App Store の申請は取り下げに
+> 手間がかかるので、既定を「見せるだけ」にしてある。
+
+### 踏んだ落とし穴
+
+| 症状 | 原因 | 対処 |
+|---|---|---|
+| スクリーンショットの枠を作ると 409 | **`APP_IPHONE_69` は API が受け取らない**（2026-08 時点。iPhone では `APP_IPHONE_67` がいちばん大きい）。エラー本文が有効な値を全部返してくるので、そこから拾える | 6.9インチで撮って **1290×2796 に直してから**出す（`shoot-screenshots.sh` がやる） |
+| 絵の実体を置きに行くと 400 `Invalid request` | 置き場は Apple の**署名付きURL**で、`Authorization: Bearer` を足すと署名と食い違う | 実体の PUT だけ Bearer を付けない（`asc-submit.py` の `authorize=False`） |
+| 撮った絵の名前が実行ごとに変わる | `xcresulttool export attachments` の名前は当てにならない（`01-home_0_<UUID>.png.png` だったり、ただの UUID だったり） | `manifest.json` の `suggestedHumanReadableName` から引き直す。**App Store Connect はファイル名の順に並べる**ので番号を頭に付ける |
+| 古いビルドのまま出してしまう | 文面だけ直すと、ビルドは前のまま残る | `--show` が**最新と食い違うと警告する**ようにしてある |
