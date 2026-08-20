@@ -19,6 +19,10 @@ BUNDLE="$(mktemp -d)/shots.xcresult"
 
 echo "撮る端末: $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true
+# **位置情報を許しておく。** 無いと画面に「位置情報が使えません」の赤い断りが出て、
+# そのままストアに並ぶ絵になってしまう
+xcrun simctl privacy "$DEVICE" grant location com.non-migi.RailAngyerApp 2>/dev/null || true
+xcrun simctl privacy "$DEVICE" grant location-always com.non-migi.RailAngyerApp 2>/dev/null || true
 
 xcodebuild -project "$ROOT/RailAngyerApp/RailAngyerApp.xcodeproj" \
   -scheme RailAngyerApp \

@@ -83,7 +83,14 @@ def request(method: str, path: str, token: str, body: dict | None = None,
 
 
 def get(path: str, token: str) -> dict:
-    return request("GET", path, token)
+    """**無いものは 404 で返る。** 価格や配信する国は「まだ決めていない」を
+    404 で表すので、例外にせず空として扱う"""
+    try:
+        return request("GET", path, token)
+    except SystemExit as error:
+        if "が 404 を返しました" in str(error):
+            return {}
+        raise
 
 
 def app_id(token: str) -> str:
@@ -177,6 +184,29 @@ def show(token: str, app: str) -> None:
         print(f"年齢レーティング: {answered}項目に回答済み")
         if answered == 0:
             blockers.append("年齢レーティングに回答する（asc-release.py が扱える）")
+
+        # **カテゴリが空のままだと提出そのものが弾かれる**（バージョンが
+        # 「有効な状態でない」と言われるだけで、何が足りないかは教えてくれない）
+        category = get(f"/v1/appInfos/{info[0]['id']}/primaryCategory",
+                       token).get("data")
+        print(f"カテゴリ: {category['id'] if category else '**未設定**'}")
+        if not category:
+            blockers.append("カテゴリを決める（ゲームなら副カテゴリも2つ要る）")
+
+    review = get(f"/v1/appStoreVersions/{version['id']}/appStoreReviewDetail",
+                 token).get("data")
+    print(f"審査への連絡先: {'あり' if review else '**未設定**'}")
+    if not review:
+        blockers.append("審査への連絡先（氏名・電話・メール）を入れる")
+
+    for path, label, what in (
+            (f"/v1/apps/{app}/appPriceSchedule", "価格", "価格を決める（無料でも設定が要る）"),
+            (f"/v1/apps/{app}/appAvailabilityV2", "配信する国", "配信する国を決める")):
+        found = get(path, token) if True else None
+        ok = bool(found.get("data")) if isinstance(found, dict) else False
+        print(f"{label}: {'あり' if ok else '**未設定**'}")
+        if not ok:
+            blockers.append(what)
 
     submissions = get(f"/v1/reviewSubmissions?filter[app]={app}&limit=5",
                       token).get("data", [])
@@ -274,12 +304,17 @@ def submit(token: str, app: str, apply: bool) -> None:
     print(f"出すもの: バージョン {attributes.get('versionString')}"
           f"（{attributes.get('appVersionState')}）")
 
-    existing = get(f"/v1/reviewSubmissions?filter[app]={app}"
-                   "&filter[state]=READY_FOR_REVIEW,WAITING_FOR_REVIEW,IN_REVIEW",
-                   token).get("data", [])
-    if existing:
-        state = existing[0]["attributes"].get("state")
-        raise SystemExit(f"すでに審査に出ています（{state}）。二重に出せません")
+    # **中身の空の入れ物は使い回す。** 一度作ると API からは消せず
+    # （DELETE も取り消しも通らない）、作り直すと空の入れ物が溜まっていく
+    reuse = None
+    for candidate in get(f"/v1/reviewSubmissions?filter[app]={app}"
+                         "&filter[state]=READY_FOR_REVIEW,WAITING_FOR_REVIEW,IN_REVIEW"
+                         "&include=items", token).get("data", []):
+        items = (candidate.get("relationships", {}).get("items", {}).get("data")) or []
+        if items:
+            state = candidate["attributes"].get("state")
+            raise SystemExit(f"すでに審査に出ています（{state}）。二重に出せません")
+        reuse = candidate["id"]
 
     if not apply:
         print("1. 提出の入れ物を作る（POST /v1/reviewSubmissions）")
@@ -288,12 +323,16 @@ def submit(token: str, app: str, apply: bool) -> None:
         print("\n（--yes を付けると実際に出します）")
         return
 
-    submission = request("POST", "/v1/reviewSubmissions", token, {
-        "data": {"type": "reviewSubmissions",
-                 "attributes": {"platform": PLATFORM},
-                 "relationships": {"app": {"data": {"type": "apps", "id": app}}}}})
-    submission_id = submission["data"]["id"]
-    print(f"1. 入れ物を作りました: {submission_id}")
+    if reuse:
+        submission_id = reuse
+        print(f"1. 空いている入れ物を使います: {submission_id}")
+    else:
+        submission = request("POST", "/v1/reviewSubmissions", token, {
+            "data": {"type": "reviewSubmissions",
+                     "attributes": {"platform": PLATFORM},
+                     "relationships": {"app": {"data": {"type": "apps", "id": app}}}}})
+        submission_id = submission["data"]["id"]
+        print(f"1. 入れ物を作りました: {submission_id}")
 
     request("POST", "/v1/reviewSubmissionItems", token, {
         "data": {"type": "reviewSubmissionItems",

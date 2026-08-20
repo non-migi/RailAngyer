@@ -40,15 +40,66 @@ final class StoreScreenshotTests: XCTestCase {
         if pickPlan.waitForExistence(timeout: 3) { pickPlan.tap() }
 
         XCTAssertTrue(app.buttons["サイコロを振る"].waitForExistence(timeout: 20), "盤面が出ていない")
+
+        // **数字が 0 のままの画面は撮らない。** ストアに並ぶ絵で
+        // 「0駅・0秒・記録なし」が続くと、動いていないアプリに見える。
+        // 実際に何駅か歩いてから撮る
+        startFromFirstStation()
+        playOneTurn()
+        playOneTurn()
+
         shoot("02-board")
 
         app.buttons["旅のお題"].firstMatch.tap()
         if app.navigationBars.firstMatch.waitForExistence(timeout: 5) { shoot("03-missions") }
         closeSheet()
 
-        app.buttons["ふりかえり"].firstMatch.tap()
-        if app.navigationBars["ふりかえり"].waitForExistence(timeout: 5) { shoot("04-summary") }
-        closeSheet()
+        // **ふりかえりは盤面にしか無い。** 歩いている最中の全画面から直接は開けないので、
+        // いったん盤面へ戻る
+        let toBoard = app.buttons["盤面へ"]
+        if toBoard.waitForExistence(timeout: 3) { toBoard.tap() }
+
+        let summary = app.buttons["ふりかえり"]
+        if summary.waitForExistence(timeout: 8) {
+            summary.firstMatch.tap()
+            if app.navigationBars["ふりかえり"].waitForExistence(timeout: 8) { shoot("04-summary") }
+            closeSheet()
+        }
+    }
+
+    /// スタート駅に着いたことにする（1駅目として数える）
+    private func startFromFirstStation() {
+        let arrived = app.buttons.matching(NSPredicate(format: "label ENDSWITH %@", "に到着した"))
+        if arrived.firstMatch.waitForExistence(timeout: 5) { arrived.firstMatch.tap() }
+    }
+
+    /// 振る → 止める → 向かう → 着く、を1回。
+    /// 位置情報を動かさないので、着いたことは手で押して伝える
+    private func playOneTurn() {
+        guard app.buttons["サイコロを振る"].waitForExistence(timeout: 10) else { return }
+        app.buttons["サイコロを振る"].tap()
+
+        let stop = app.buttons["サイコロを止める"]
+        if stop.waitForExistence(timeout: 10) { stop.tap() }
+
+        let go = app.buttons["向かう"]
+        if go.waitForExistence(timeout: 10) { go.tap() }
+
+        // 「◯◯ に到着した」「次の駅へ」を、盤面へ戻るまで押し続ける
+        for _ in 0..<8 {
+            if app.buttons["サイコロを振る"].exists { return }
+            let arrived = app.buttons.matching(NSPredicate(
+                format: "label ENDSWITH %@ OR label == %@", "に到着した", "次の駅へ"))
+            if arrived.firstMatch.waitForExistence(timeout: 8) {
+                arrived.firstMatch.tap()
+            } else if app.buttons["達成した"].exists {
+                app.buttons["達成した"].tap()
+            } else if app.buttons["ミッションを引く"].exists {
+                app.buttons["ミッションを引く"].tap()
+            } else {
+                return
+            }
+        }
     }
 
     /// 1枚撮って添付する。名前はファイル名になる
