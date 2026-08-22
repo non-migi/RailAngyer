@@ -494,10 +494,15 @@ struct TurnFlowView: View {
         }
     }
 
+    /// 局面ごとに文字が変わる、この画面の主操作。
+    ///
+    /// **識別子は変えない。** 文字は9言語で変わるので、
+    /// 言語ごとのスクリーンショットを撮るときはこれを頼りに進める
     private func primary(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title).font(.headline).frame(maxWidth: .infinity, minHeight: 48)
         }
+        .accessibilityIdentifier("primaryAction")
         .buttonStyle(.borderedProminent)
         .tint(Theme.line)
     }

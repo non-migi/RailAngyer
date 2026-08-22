@@ -144,9 +144,11 @@ struct BoardView: View {
                             badge: store.unresolvedMissionTurns.count) {
                     showingJourneyMissions = true
                 }
+                .accessibilityIdentifier("journeyMissions")
                 quickAction(appLocalized("ふりかえり"), systemImage: "book.closed") {
                     showingSummary = true
                 }
+                .accessibilityIdentifier("openSummary")
                 quickAction(appLocalized("設定"), systemImage: "gearshape") {
                     showingSettings = true
                 }
@@ -287,6 +289,8 @@ struct BoardView: View {
                         .frame(maxWidth: .infinity, minHeight: 48)
                 }
                 .buttonStyle(.borderedProminent)
+                // 文字は9言語で変わる。言語ごとに撮るときはこの名前で探す
+                .accessibilityIdentifier("rollDice")
                 .controlSize(.large)
                 .tint(Theme.line)
                 .disabled(isTurnInProgress)
@@ -321,6 +325,7 @@ struct BoardView: View {
     }
 
     /// - Parameter title: 訳し済みの文字列を渡す（駅名を差し込んで組むため `String` で受ける）
+    /// 盤面の補助操作。文字は9言語で変わるので、識別子で探せるようにしておく
     private func secondary(_ title: String, systemImage: String,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -329,6 +334,7 @@ struct BoardView: View {
                 .frame(maxWidth: .infinity, minHeight: 40)
         }
         .buttonStyle(.bordered)
+        .accessibilityIdentifier("boardSecondaryAction")
     }
 }
 
