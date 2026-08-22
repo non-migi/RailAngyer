@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import RailAngyerCore
 
 /// アプリの中で言語を切り替える（SC-30）。
 ///
@@ -91,12 +92,21 @@ final class LanguageSetting {
         didSet {
             guard selected != oldValue else { return }
             UserDefaults.standard.set(selected.rawValue, forKey: Self.key)
+            applyToCore()
         }
     }
 
     init() {
         let raw = UserDefaults.standard.string(forKey: Self.key) ?? ""
         selected = AppLanguage(rawValue: raw) ?? .system
+        applyToCore()
+    }
+
+    /// **時間の単位を `RailAngyerCore` にも伝える。**
+    /// `DurationText` は画面の文言と別の場所（訳文を持たない計算側）にいるので、
+    /// ここで渡さないと、英語で開いても「32秒」と日本語の単位が出る
+    private func applyToCore() {
+        DurationText.locale = locale
     }
 
     /// 画面に流す `Locale`。`system` なら端末のものをそのまま使う

@@ -27,14 +27,14 @@ struct PaceTests {
 
         #expect(pace.minutesPerKilometer == 12)
         #expect(pace.category == .normal)
-        #expect(pace.text == "12分/km")
+        #expect(pace.text(locale: Locale(identifier: "ja_JP")) == "12分/km")
         #expect(try #require(pace.kilometersPerHour) == 5)
     }
 
     @Test("秒が半端なときも読める形にする")
     func formatsFractionalPace() {
         // 1km を 11分30秒
-        #expect(Pace(meters: 1000, seconds: 690).text == "11分30秒/km")
+        #expect(Pace(meters: 1000, seconds: 690).text(locale: Locale(identifier: "ja_JP")) == "11分30秒/km")
     }
 
     @Test("止まっていたり距離が0なら求めない")
@@ -57,10 +57,22 @@ struct PaceTests {
 
     @Test("時間の表し方")
     func durationText() {
-        #expect(DurationText.text(45) == "45秒")
-        #expect(DurationText.text(600) == "10分")
-        #expect(DurationText.text(3_900) == "1時間5分")
+        // **言語を決めてから確かめる。** 単位は端末の言語で変わるので、
+        // 固定しないと英語の Mac で流したときに落ちる
+        let ja = Locale(identifier: "ja_JP")
+        #expect(DurationText.text(45, locale: ja) == "45秒")
+        #expect(DurationText.text(600, locale: ja) == "10分")
+        #expect(DurationText.text(3_900, locale: ja) == "1時間5分")
         #expect(DurationText.clock(3_930) == "1:05:30")
         #expect(DurationText.clock(90) == "1:30")
+    }
+
+    @Test("単位はその言語の言い方になる")
+    func durationTextFollowsLocale() {
+        // 直書きの「秒」に戻ると、英語で開いても日本語の単位が出る（実際に出ていた）
+        let text = DurationText.text(45, locale: Locale(identifier: "en_US"))
+        #expect(!text.contains("秒"), "英語なのに日本語の単位が出ている: \(text)")
+        #expect(text.contains("45"))
+        #expect(DurationText.text(45, locale: Locale(identifier: "ja_JP")).contains("秒"))
     }
 }

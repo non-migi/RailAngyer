@@ -77,13 +77,20 @@ public struct Pace: Sendable, Equatable {
         minutesPerKilometer.map(PaceCategory.init(minutesPerKilometer:))
     }
 
-    /// 「11分30秒/km」のような表示。求められなければ nil
-    public var text: String? {
+    /// 「11分30秒/km」のような表示。求められなければ nil。
+    /// 単位は `DurationText.locale` の言葉になる
+    public func text(locale: Locale = DurationText.locale) -> String? {
         guard let pace = minutesPerKilometer, pace.isFinite else { return nil }
         let minutes = Int(pace)
         let seconds = Int((pace - Double(minutes)) * 60)
-        return seconds == 0 ? "\(minutes)分/km" : "\(minutes)分\(seconds)秒/km"
+        let amount = DurationText.units(minutes: minutes,
+                                        seconds: seconds == 0 ? nil : seconds,
+                                        locale: locale)
+        return "\(amount)/km"
     }
+
+    /// 既定の言語での表示（呼び出し側を変えずに済ませるための入口）
+    public var text: String? { text() }
 
     /// 時速（km/h）
     public var kilometersPerHour: Double? {
@@ -92,18 +99,61 @@ public struct Pace: Sendable, Equatable {
     }
 }
 
-/// 時間の表示。集計と画面で同じ形にするためここにまとめる
+/// 時間の表示。集計と画面で同じ形にするためここにまとめる。
+///
+/// > ⚠️ **単位は訳文を持たず、`DateComponentsFormatter` に任せる。**
+/// > ここは `RailAngyerCore`（GPS・DB非依存の計算だけを置く場所）で、
+/// > 画面の文言と違って多言語化の仕組みが無い。かつて `秒` `分` `時間` を
+/// > 直書きしていたため、**英語で開いても「Total 32秒」と出ていた**。
+/// >
+/// > アプリの中で選んだ言語（`AppLanguage`）は Core からは見えないので、
+/// > `locale` に入れてもらう。入れなければ端末の言語で出る。
 public enum DurationText {
 
-    /// 「1時間5分」「12分」「45秒」
-    public static func text(_ seconds: TimeInterval) -> String {
+    /// どの言葉で単位を出すか。**アプリ側が言語を変えたら入れ直す**
+    /// （既定は端末の言語。入れ忘れても壊れない）
+    nonisolated(unsafe) public static var locale: Locale = .autoupdatingCurrent
+
+    /// 「1時間5分」「1 hr 5 min」など。言葉は `locale` に従う。
+    ///
+    /// **言語を渡せるようにしてある**のはテストのため。渡さなければ
+    /// `DurationText.locale`（＝アプリで選んだ言語）で出る。
+    /// テストが `locale` を書き換え合うと、並行して走る別のテストが巻き添えになる
+    public static func text(_ seconds: TimeInterval,
+                            locale: Locale = DurationText.locale) -> String {
         let total = Int(seconds.rounded())
-        if total < 60 { return "\(total)秒" }
+        if total < 60 { return units(seconds: total, locale: locale) }
 
         let hours = total / 3600
         let minutes = (total % 3600) / 60
-        if hours > 0 { return "\(hours)時間\(minutes)分" }
-        return "\(minutes)分"
+        if hours > 0 { return units(hours: hours, minutes: minutes, locale: locale) }
+        return units(minutes: minutes, locale: locale)
+    }
+
+    /// 数と単位を、その言語の言い方で並べる
+    static func units(hours: Int? = nil, minutes: Int? = nil, seconds: Int? = nil,
+                      locale: Locale = DurationText.locale) -> String {
+        let formatter = DateComponentsFormatter()
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        formatter.calendar = calendar
+        formatter.unitsStyle = .abbreviated
+        formatter.zeroFormattingBehavior = .dropAll
+
+        var units: NSCalendar.Unit = []
+        if hours != nil { units.insert(.hour) }
+        if minutes != nil { units.insert(.minute) }
+        if seconds != nil { units.insert(.second) }
+        formatter.allowedUnits = units
+
+        var components = DateComponents()
+        components.hour = hours
+        components.minute = minutes
+        components.second = seconds
+        // 0 は `dropAll` で消えるが、0 しか無いときは何も残らないので保険を置く
+        return formatter.string(from: components).flatMap {
+            $0.isEmpty ? nil : $0
+        } ?? "\(seconds ?? minutes ?? hours ?? 0)"
     }
 
     /// 「1:05:30」。細かく見たいときに使う

@@ -132,6 +132,8 @@ struct JourneySummaryTests {
         turn.completedAt = base.addingTimeInterval(3_900)
 
         let summary = try summary()
+        // 単位は言語で変わるので、日本語に固定してから確かめる
+        DurationText.locale = Locale(identifier: "ja_JP")
         #expect(summary.elapsedText == "1時間5分")
         #expect(summary.timing.walkingSeconds == 3_600)
         #expect(summary.timing.missionSeconds == 300)

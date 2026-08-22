@@ -65,7 +65,10 @@ struct WalkEstimateTests {
         let estimate = WalkEstimate(straightMeters: 10_000, meters: 13_000,
                                     seconds: 9_360, stationCount: 12)
         #expect(estimate.distanceText == "約 13.0 km")
-        #expect(estimate.durationText == "約 2時間36分")
+        // 単位は端末の言語で変わる。数字と「約」が入っていることだけを見る
+        #expect(estimate.durationText.hasPrefix("約 "))
+        #expect(estimate.durationText.contains("2"))
+        #expect(estimate.durationText.contains("36"))
         #expect(estimate.summaryText.contains("13.0 km"))
     }
 

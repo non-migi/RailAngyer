@@ -277,13 +277,13 @@ private struct SummaryCard: View {
 
             HStack(spacing: 0) {
                 stat("踏破", "\(summary.visitedCount) / \(summary.stationCount)")
-                stat("着地", "\(summary.landedCount) 駅")
+                stat("着地", appLocalized("\(summary.landedCount) 駅"))
                 // **歩いた距離は、その日いちばん語られる数字。**
                 // 跡が残っていれば実測、無ければ駅を結んだ長さ
                 stat(summary.isDistanceMeasured ? "歩いた距離" : "距離（目安）",
                      summary.distanceText)
                 stat("ターン", "\(summary.turnCount)")
-                stat("写真", "\(summary.photoCount) 枚")
+                stat("写真", appLocalized("\(summary.photoCount) 枚"))
             }
 
             ProgressView(value: summary.visitedRate)
